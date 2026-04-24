@@ -1,0 +1,53 @@
+# freestruct SEO config - all meta, OG, Twitter, and JSON-LD defined here
+# This file powers inject-brand.html - user sets nothing in the template
+
+site:
+  url: https://dhaupin.github.io/freestruct
+  name: freestruct
+  description: SEO layer for static doc sites
+
+author:
+  name: dhaupin
+  url: https://github.com/dhaupin
+
+# Twitter Card meta
+twitter:
+  username: "@dhaupin"
+  card: summary
+
+# Open Graph
+og:
+  image: /assets/og-image.png
+  locale: en_US
+  type: website
+
+# Keywords for search engines
+keywords:
+  - SEO
+  - prerender
+  - static site generator
+  - jekyll
+  - hugo
+  - docusaurus
+  - documentation
+
+# JSON-LD Structured Data
+jsonLd:
+  - "@context": "https://schema.org"
+    "@type": "Organization"
+    name: freestruct
+    url: https://dhaupin.github.io/freestruct
+    description: SEO layer for static doc sites
+    sameAs:
+      - https://github.com/dhaupin/freestruct
+
+  - "@context": "https://schema.org"
+    "@type": "WebSite"
+    name: freestruct
+    url: https://dhaupin.github.io/freestruct
+    potentialAction:
+      "@type": "SearchAction"
+      target:
+        "@type": "EntryPoint"
+        urlTemplate: https://dhaupin.github.io/freestruct/?s={search_term_string}
+      query-input: required name=search_term_string
