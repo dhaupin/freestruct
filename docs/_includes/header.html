@@ -30,7 +30,49 @@
   </div>
 </div>
 
-<script src="/pagefind/pagefind.js"></script>
+<script type="module">
+var pagefind = null;
+
+async function initPagefind() {
+  if (pagefind) return pagefind;
+  console.log('Dynamic importing pagefind...');
+  pagefind = await import('/pagefind/pagefind.js');
+  console.log('pagefind module loaded:', pagefind);
+  await pagefind.init();
+  console.log('pagefind initialized');
+  return pagefind;
+}
+
+window.doSearch = async function(q, resultsEl) {
+  if (q.length < 2) {
+    resultsEl.innerHTML = '';
+    return;
+  }
+  resultsEl.innerHTML = '<div style="padding:1rem 1.25rem;color:var(--color-text-muted)">Loading...</div>';
+  try {
+    var pf = await initPagefind();
+    console.log('Searching for:', q);
+    var resp = await pf.search(q);
+    console.log('Results:', resp);
+    if (resp.results.length === 0) {
+      resultsEl.innerHTML = '<div style="padding:1rem 1.25rem;color:var(--color-text-muted)">No results found</div>';
+      return;
+    }
+    var html = '';
+    for (var i = 0; i < resp.results.length && i < 8; i++) {
+      var r = resp.results[i];
+      var data = await r.data();
+      html += '<a href="' + data.url + '" class="search-result"><div class="search-result-title">' + (data.meta?.title || data.url) + '</div>';
+      if (data.excerpt) html += '<div class="search-result-excerpt">' + data.excerpt + '</div>';
+      html += '</a>';
+    }
+    resultsEl.innerHTML = html;
+  } catch (e) {
+    console.error('Search error:', e);
+    resultsEl.innerHTML = '<div style="padding:1rem 1.25rem;color:var(--color-text-muted)">Error: ' + (e.message || String(e)) + '</div>';
+  }
+};
+</script>
 <script>
 var searchModal=document.getElementById('searchModal');
 var searchInput=document.getElementById('searchInput');
@@ -38,41 +80,6 @@ var searchResults=document.getElementById('searchResults');
 var searchClose=document.getElementById('searchClose');
 var searchBarInput=document.getElementById('searchBarInput');
 
-async function doSearch(q,resultsEl){
-  if(q.length<2){
-    resultsEl.innerHTML='';
-    return;
-  }
-  resultsEl.innerHTML='<div style="padding:1rem 1.25rem;color:var(--color-text-muted)">Loading...</div>';
-  try{
-    console.log('pagefind:', typeof pagefind, window.pagefind);
-    if(!window.pagefind){
-      resultsEl.innerHTML='<div style="padding:1rem 1.25rem;color:var(--color-text-muted)">Search not loaded</div>';
-      return;
-    }
-    console.log('Initializing...');
-    await window.pagefind.init();
-    console.log('Searching:', q);
-    var resp=await window.pagefind.search(q);
-    console.log('Results:', resp);
-    if(resp.results.length===0){
-      resultsEl.innerHTML='<div style="padding:1rem 1.25rem;color:var(--color-text-muted)">No results found</div>';
-      return;
-    }
-    var html='';
-    for(var i=0;i<resp.results.length&&i<8;i++){
-      var r=resp.results[i];
-      var data=await r.data();
-      html+='<a href="'+data.url+'" class="search-result"><div class="search-result-title">'+(data.meta?.title||data.url)+'</div>';
-      if(data.excerpt)html+='<div class="search-result-excerpt">'+data.excerpt+'</div>';
-      html+='</a>';
-    }
-    resultsEl.innerHTML=html;
-  }catch(e){
-    console.error('Search error:', e);
-    resultsEl.innerHTML='<div style="padding:1rem 1.25rem;color:var(--color-text-muted)">Search error: '+e.message+'</div>';
-  }
-}
 document.addEventListener('keydown',function(e){
   if(!searchModal)return;
   if(e.key==='Escape')searchModal.classList.remove('open');
