@@ -97,17 +97,18 @@ function injectFile(filePath, config, template, outputDir, preserve) {
   seo = seo.replace(/<!--[\s\S]*?-->/g, '');
   
   // Inject into <head>
+  let injection;
   if (html.includes('<!-- freestruct SEO -->')) {
-    html = html.replace(/<!-- freestruct SEO -->[\s\S]*?<!-- \/freestruct SEO -->/, seo);
+    injection = seo;
   } else if (preserve) {
-    html = injectMissingSeo(html, seo);
+    injection = injectMissingSeo(html, seo);
   } else {
-    html = removeExistingSeo(html);
-    html = html.replace(/<\/head>/i, seo + '\n</head>');
+    removeExistingSeo(html);
+    injection = seo;
   }
   
-  // Add source comment
-  html = html.replace(/<\/head>/i, '\n<!-- injected by freestruct: https://github.com/dhaupin/freestruct -->\n</head>');
+  // Add source comment and inject
+  html = html.replace(/<\/head>/i, injection + '\n<!-- injected by freestruct: https://github.com/dhaupin/freestruct -->\n</head>');
   
   fs.writeFileSync(filePath, html);
 }
@@ -124,7 +125,7 @@ function injectMissingSeo(html, seo) {
     if (line.includes('rel="canonical"') && existing.has('canonical')) continue;
     tags += line + '\n';
   }
-  return html.replace(/<\/head>/i, tags + '\n</head>');
+  return tags;  // Return just the tags, not html.replace()
 }
 
 function getExistingTags(html) {
