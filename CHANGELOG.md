@@ -2,6 +2,16 @@
 
 All notable changes to freestruct will be documented here.
 
+## [0.2.2] - 2026-04-24
+
+### Fixed
+- 404.html now includes `<meta name="robots" content="noindex, nofollow">`
+- Sitemap excludes 404 page (exact match /404 and /404.html)
+
+### Added
+- Custom 404 support: if 404.html exists in output dir, use it instead of generating
+- Frame-agnostic sitemap.xml and 404.html generation (no SSG plugins needed)
+
 ## [0.2.1] - 2026-04-24
 
 ### Fixed

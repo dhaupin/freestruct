@@ -54,12 +54,14 @@ generateSitemap: false  # skip sitemap generation
 
 ### generate404
 
-Generate `404.html` automatically (default: true).
+Generate `404.html` automatically (default: true). If a custom `404.html` already exists in the output directory, freestruct will use it instead of generating one.
 
 ```yaml
-generate404: true   # generates 404.html
+generate404: true   # generates 404.html (or uses custom)
 generate404: false  # skip 404 page generation
 ```
+
+Custom 404: Place a `404.html` in your SSG's output directory before running freestruct. It will be used instead of generating a default page.
 
 ### basePath
 
