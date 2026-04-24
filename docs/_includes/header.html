@@ -31,15 +31,15 @@
 </div>
 
 <script>
-console.log('Search script loading');
-var searchTrigger=document.getElementById('searchTrigger');
-var searchModal=document.getElementById('searchModal');
-console.log('searchTrigger:',searchTrigger,'searchModal:',searchModal);
-if(searchTrigger&&searchModal){
-  console.log('Attaching click handler');
-  searchTrigger.addEventListener('click',function(){
-    console.log('Search trigger clicked');
+document.addEventListener('keydown',function(e){
+  console.log('Key:',e.key,'meta:',e.metaKey,'ctrl:',e.ctrlKey);
+  var searchModal=document.getElementById('searchModal');
+  if(!searchModal)return;
+  if(e.key==='Escape'){searchModal.classList.remove('open');}
+  if((e.metaKey||e.ctrlKey)&&e.key==='k'){
+    e.preventDefault();
+    console.log('Opening modal');
     searchModal.classList.add('open');
-  });
-}
+  }
+});
 </script>
