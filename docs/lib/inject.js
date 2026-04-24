@@ -42,7 +42,17 @@ function inject() {
   for (const file of files) {
     injectFile(file, config, template, outputDir, preserve);
   }
-  
+
+  // Generate sitemap if enabled
+  if (config.generateSitemap !== false) {
+    generateSitemap(files, config, outputDir);
+  }
+
+  // Generate 404 if enabled
+  if (config.generate404 !== false) {
+    generate404(config, outputDir);
+  }
+
   console.log('✅ freestruct: SEO injected');
 }
 
@@ -157,6 +167,70 @@ function extractTitle(html) {
 function extractDescription(html) {
   const match = html.match(/<meta name="description" content="([^"]+)"/i);
   return match ? match[1] : null;
+}
+
+// Generate sitemap.xml
+function generateSitemap(files, config, outputDir) {
+  let urls = '';
+  
+  for (const file of files) {
+    const pageUrl = '/' + path.relative(outputDir, file).replace(/\/index\.html$/, '/').replace(/\.html$/, '');
+    
+    // Skip 404 page
+    if (pageUrl.includes('404.html')) continue;
+    
+    // Strip basePath if configured
+    let cleanUrl = pageUrl;
+    if (config.basePath) {
+      cleanUrl = pageUrl.replace(new RegExp('^' + config.basePath), '') || '/';
+    }
+    
+    const fullUrl = config.site.url + cleanUrl;
+    urls += `  <url>
+    <loc>${fullUrl}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+`;
+  }
+
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls}</urlset>`;
+
+  fs.writeFileSync(path.join(outputDir, 'sitemap.xml'), sitemap);
+  console.log('📄 freestruct: sitemap.xml generated');
+}
+
+// Generate 404.html
+function generate404(config, outputDir) {
+  const pageUrl = config.site.url;
+  
+  const notFound = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>404 - Page Not Found | ${config.site.name}</title>
+  <meta name="description" content="Page not found">
+  <meta property="og:title" content="404 - Page Not Found">
+  <meta property="og:description" content="Page not found">
+  <meta property="og:url" content="${pageUrl}/404.html">
+  <meta property="og:type" content="website">
+  <link rel="canonical" href="${pageUrl}/404.html">
+  <!-- injected by freestruct: https://github.com/dhaupin/freestruct -->
+</head>
+<body>
+  <div style="text-align:center;padding:4rem;font-family:system-ui,sans-serif;">
+    <h1 style="font-size:4rem;margin:0;">404</h1>
+    <p style="font-size:1.5rem;">Page not found</p>
+    <p><a href="/" style="color:#2563eb;">← Go home</a></p>
+  </div>
+</body>
+</html>`;
+
+  fs.writeFileSync(path.join(outputDir, '404.html'), notFound);
+  console.log('📄 freestruct: 404.html generated');
 }
 
 module.exports = { inject };

@@ -5,8 +5,8 @@ baseurl:
 
 # Theme
 theme: null
-plugins:
-  - jekyll-sitemap
+# plugins:
+#   - jekyll-sitemap  # removed - freestruct generates sitemap.xml
 
 # Search
 search:

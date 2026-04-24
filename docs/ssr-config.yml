@@ -7,6 +7,12 @@ outputDir: docs/_site  # Jekyll: _site, Hugo: public/, Gatsby: dist/
 # Base path to strip from URLs (e.g., /freestruct from /freestruct/docs/foo)
 basePath: 
 
+# Generate sitemap.xml
+generateSitemap: true
+
+# Generate 404.html
+generate404: true
+
 # Preserve existing meta tags (default: true)
 # If true, freestruct only injects missing tags (no duplicates)
 # Set to false to remove existing SEO tags before injecting
