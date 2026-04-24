@@ -1,41 +1,49 @@
 // freestruct SEO injection - runs post-build
+// Frame-agnostic: works with any SSG, just configure output dir
 const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
 
-const OUTPUT_DIR = process.argv[2] || 'docs/_site';
+const OUTPUT_DIR = process.argv[2] || 'docs/_site'; // override: node inject.js _site
 const SSR_CONFIG = 'docs/ssr-config.yml';
 const TEMPLATE = 'docs/_includes/inject-brand.html';
 
 function inject() {
-  console.log('freestruct: Loading config...');
+  console.log('🔍 freestruct: Loading config...');
   
+  // Load config
   let config;
   try {
     config = yaml.load(fs.readFileSync(SSR_CONFIG, 'utf8'));
   } catch (e) {
-    console.error('Error: ssr-config.yml not found');
+    console.error(`Error: ${SSR_CONFIG} not found`);
     process.exit(1);
   }
   
+  // Override output dir from config
   const outputDir = config.outputDir || OUTPUT_DIR;
   
+  // Preserve existing meta (default: true)
+  const preserve = config.preserveExistingMeta ?? true;
+  
+  // Load template
   let template;
   try {
     template = fs.readFileSync(TEMPLATE, 'utf8');
   } catch (e) {
-    console.error('Error: inject-brand.html not found');
+    console.error(`Error: ${TEMPLATE} not found`);
     process.exit(1);
   }
   
+  // Process HTML files
   const files = getHtmlFiles(outputDir);
-  console.log('freestruct: Injecting ' + files.length + ' files...');
+  console.log(`📄 Found ${files.length} HTML files`);
   
   for (const file of files) {
-    injectFile(file, config, template, outputDir);
+    injectFile(file, config, template, outputDir, preserve);
   }
   
-  console.log('freestruct: SEO injected');
+  console.log('✅ freestruct: SEO injected');
 }
 
 function getHtmlFiles(dir) {
@@ -54,175 +62,96 @@ function getHtmlFiles(dir) {
   return files;
 }
 
-function injectFile(filePath, config, template, outputDir) {
+function injectFile(filePath, config, template, outputDir, preserve) {
   let html = fs.readFileSync(filePath, 'utf8');
   
-  const pageData = extractPageData(html, config);
+  // Extract page info from HTML
+  const pageTitle = extractTitle(html) || config.site.name;
+  const pageDescription = extractDescription(html) || config.site.description;
+  const pageUrl = '/' + path.relative(outputDir, filePath).replace(/\/index\.html$/, '/').replace(/\.html$/, '');
+  const canonicalUrl = config.site.url + pageUrl;
   
-  const preserve = config.preserveExistingMeta ?? true;
+  // Build replacements
   const replacements = {
-    '{{pageTitle}}': pageData.title,
-    '{{pageDescription}}': pageData.description,
-    '{{pageUrl}}': pageData.url,
-    '{{canonicalUrl}}': pageData.canonical,
+    '{{pageTitle}}': pageTitle + ' | ' + config.site.name,
+    '{{pageDescription}}': pageDescription,
+    '{{pageUrl}}': canonicalUrl,
+    '{{canonicalUrl}}': canonicalUrl,
     '{{siteUrl}}': config.site.url,
     '{{siteName}}': config.site.name,
     '{{siteDescription}}': config.site.description,
     '{{twitterUsername}}': config.twitter?.username || '',
-    '{{twitterCard}}': pageData.twitterCard || config.twitter?.card || 'summary',
-    '{{ogImage}}': pageData.ogImage || config.og?.image || '',
-    '{{ogType}}': pageData.ogType || config.og?.type || 'website',
+    '{{twitterCard}}': config.twitter?.card || 'summary',
+    '{{ogImage}}': config.og?.image || '',
+    '{{ogType}}': config.og?.type || 'website',
     '{{ogLocale}}': config.og?.locale || 'en_US',
-    '{{pagePublishedTime}}': pageData.publishedTime || '',
-    '{{pageAuthor}}': pageData.author || config.author?.name || '',
-    '{{pageSection}}': pageData.section || '',
   };
   
+  // Apply replacements to template
   let seo = template;
-  for (const key in replacements) {
-    seo = seo.split(key).join(replacements[key]);
+  for (const [placeholder, value] of Object.entries(replacements)) {
+    seo = seo.split(placeholder).join(value);
   }
   
+  // Remove comments
   seo = seo.replace(/<!--[\s\S]*?-->/g, '');
   
-  // Handle SEO tags based on preserveExistingMeta
-  if (preserve) {
-    // Preserve mode: only inject missing tags
-    html = html.replace(/<\/head>/i, injectMissingSeo(html, seo.trim()) + '\n</head>');
+  // Inject into <head>
+  if (html.includes('<!-- freestruct SEO -->')) {
+    html = html.replace(/<!-- freestruct SEO -->[\s\S]*?<!-- \/freestruct SEO -->/, seo);
+  } else if (preserve) {
+    html = injectMissingSeo(html, seo);
   } else {
-    // Default: remove existing and inject all
     html = removeExistingSeo(html);
-    html = html.replace(/<\/head>/i, seo.trim() + '\n</head>');
+    html = html.replace(/<\/head>/i, seo + '\n</head>');
   }
+  
+  // Add source comment
+  html = html.replace(/<\/head>/i, '\n<!-- injected by freestruct: https://github.com/dhaupin/freestruct -->\n</head>');
   
   fs.writeFileSync(filePath, html);
 }
 
-function extractPageData(html, config) {
-  const title = extractTitle(html) || config.site.name;
-  const description = extractDescription(html) || config.site.description;
-  const pagePath = extractPath(html) || 'index';
-  const pageUrl = config.site.url + pagePath;
-  
-  const pageConfig = extractPageConfig(html);
-  
-  return {
-    title: pageConfig.title || title + ' | ' + config.site.name,
-    description: pageConfig.description || description,
-    url: pageUrl,
-    canonical: pageUrl,
-    ogImage: pageConfig.ogImage,
-    ogType: pageConfig.ogType,
-    twitterCard: pageConfig.twitterCard,
-    publishedTime: pageConfig.publishedTime,
-    author: pageConfig.author,
-    section: pageConfig.section,
-  };
+// Selective injection - only add missing tags
+function injectMissingSeo(html, seo) {
+  const existing = getExistingTags(html);
+  let tags = '';
+  for (const line of seo.split('\n')) {
+    if (!line.trim()) continue;
+    if (line.includes('name="description"') && existing.has('description')) continue;
+    if (line.includes('property="og:') && existing.has(line.match(/property="([^"]+)/)?.[1])) continue;
+    if (line.includes('name="twitter:') && existing.has(line.match(/name="([^"]+)/)?.[1])) continue;
+    if (line.includes('rel="canonical"') && existing.has('canonical')) continue;
+    tags += line + '\n';
+  }
+  return html.replace(/<\/head>/i, tags + '\n</head>');
+}
+
+function getExistingTags(html) {
+  const tags = new Set();
+  for (const m of html.matchAll(/<meta[^>]*name="([^"]+)"[^>]*>/gi)) tags.add(m[1]);
+  for (const m of html.matchAll(/<meta[^>]*property="([^"]+)"[^>]*>/gi)) tags.add(m[1]);
+  if (html.includes('rel="canonical"')) tags.add('canonical');
+  return tags;
+}
+
+// Remove existing SEO tags
+function removeExistingSeo(html) {
+  html = html.replace(/<meta[^>]*name="description"[^>]*>/gi, '');
+  html = html.replace(/<link[^>]*rel="canonical"[^>]*>/gi, '');
+  html = html.replace(/<meta[^>]*property="og:[^"]+"[^>]*>/gi, '');
+  html = html.replace(/<meta[^>]*name="twitter:[^"]+"[^>]*>/gi, '');
+  return html;
 }
 
 function extractTitle(html) {
   const match = html.match(/<title>([^<]+)<\/title>/i);
-  return match ? match[1] : null;
+  return match ? match[1].split(' | ')[0] : null;
 }
 
 function extractDescription(html) {
   const match = html.match(/<meta name="description" content="([^"]+)"/i);
   return match ? match[1] : null;
-}
-
-function extractPath(html) {
-  const canonicalMatch = html.match(/<link[^>]*rel="canonical"[^>]*href="([^"]+)"/i);
-  if (canonicalMatch) {
-    return canonicalMatch[1].replace(/^https?:\/\/[^\/]+/, '');
-  }
-  return null;
-}
-
-function extractPageConfig(html) {
-  const match = html.match(/<!--\s*freestruct:\s*(\{[^}]+\})\s*-->/i);
-  if (match) {
-    try {
-      return JSON.parse(match[1]);
-    } catch (e) {}
-  }
-  return {};
-}
-
-function removeExistingSeo(html) {
-
-// Selective injection - only add missing tags (for preserve mode)
-function injectMissingSeo(html, seo) {
-  const existingTags = extractExistingTags(html);
-  let result = '';
-  
-  // Parse each line of SEO
-  const seoLines = seo.split('\n').filter(l => l.trim());
-  
-  for (const line of seoLines) {
-    // Check if this tag type already exists
-    if (!tagExists(line, existingTags)) {
-      result += line + '\n';
-    }
-  }
-  
-  return result;
-}
-
-function extractExistingTags(html) {
-  const tags = new Set();
-  // Extract name属性
-  const nameMatch = html.matchAll(/<meta[^>]*name="([^"]+)"[^>]*>/gi);
-  for (const m of nameMatch) tags.add(m[1]);
-  // Extract property
-  const propMatch = html.matchAll(/<meta[^>]*property="([^"]+)"[^>]*>/gi);
-  for (const m of propMatch) tags.add(m[1]);
-  // Extract twitter:*
-  const twMatch = html.matchAll(/<meta[^>]*name="(twitter:[^"]+)"[^>]*>/gi);
-  for (const m of twMatch) tags.add(m[1]);
-  // Extract link rel="canonical"
-  if (html.includes('rel="canonical"')) tags.add('canonical');
-  // Extract og:site_name
-  if (html.includes('og:site_name')) tags.add('og:site_name');
-  
-  return tags;
-}
-
-function tagExists(line, existingTags) {
-  if (line.includes('name="description"') && existingTags.has('description')) return true;
-  if (line.includes('property="og:') && existingTags.has(line.match(/property="([^"]+)/)[1])) return true;
-  if (line.includes('name="twitter:') && existingTags.has(line.match(/name="([^"]+)/)[1])) return true;
-  if (line.includes('rel="canonical"') && existingTags.has('canonical')) return true;
-  if (line.includes('property="og:site_name"') && existingTags.has('og:site_name')) return true;
-  if (line.includes('application/ld+json') && html.includes('application/ld+json')) return true; // simplified
-  return false;
-}
-  const tagsToRemove = [
-    /<meta[^>]*name="description"[^>]*>/gi,
-    /<link[^>]*rel="canonical"[^>]*>/gi,
-    /<meta[^>]*property="og:title"[^>]*>/gi,
-    /<meta[^>]*property="og:description"[^>]*>/gi,
-    /<meta[^>]*property="og:url"[^>]*>/gi,
-    /<meta[^>]*property="og:site_name"[^>]*>/gi,
-    /<meta[^>]*property="og:type"[^>]*>/gi,
-    /<meta[^>]*property="og:locale"[^>]*>/gi,
-    /<meta[^>]*property="og:image"[^>]*>/gi,
-    /<meta[^>]*name="twitter:card"[^>]*>/gi,
-    /<meta[^>]*name="twitter:title"[^>]*>/gi,
-    /<meta[^>]*name="twitter:description"[^>]*>/gi,
-    /<meta[^>]*name="twitter:site"[^>]*>/gi,
-    /<meta[^>]*name="twitter:creator"[^>]*>/gi,
-    /<meta[^>]*name="author"[^>]*>/gi,
-    /<meta[^>]*name="article:published_time"[^>]*>/gi,
-    /<meta[^>]*name="article:section"[^>]*>/gi,
-    /<script[^>]*type="application\/ld\+json"[^>]*>[\s\S]*?<\/script>/gi,
-  ];
-  
-  let cleaned = html;
-  for (const tag of tagsToRemove) {
-    cleaned = cleaned.replace(tag, '');
-  }
-  
-  return cleaned;
 }
 
 module.exports = { inject };
