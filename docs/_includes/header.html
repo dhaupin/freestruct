@@ -36,11 +36,8 @@ var pagefindPath = '/freestruct/pagefind/pagefind.js';
 
 async function initPagefind() {
   if (pagefind) return pagefind;
-  console.log('Dynamic importing pagefind from:', pagefindPath);
   pagefind = await import(pagefindPath);
-  console.log('pagefind module loaded:', pagefind);
   await pagefind.init();
-  console.log('pagefind initialized');
   return pagefind;
 }
 
@@ -52,9 +49,7 @@ window.doSearch = async function(q, resultsEl) {
   resultsEl.innerHTML = '<div style="padding:1rem 1.25rem;color:var(--color-text-muted)">Loading...</div>';
   try {
     var pf = await initPagefind();
-    console.log('Searching for:', q);
     var resp = await pf.search(q);
-    console.log('Results:', resp);
     if (resp.results.length === 0) {
       resultsEl.innerHTML = '<div style="padding:1rem 1.25rem;color:var(--color-text-muted)">No results found</div>';
       return;
@@ -69,8 +64,7 @@ window.doSearch = async function(q, resultsEl) {
     }
     resultsEl.innerHTML = html;
   } catch (e) {
-    console.error('Search error:', e);
-    resultsEl.innerHTML = '<div style="padding:1rem 1.25rem;color:var(--color-text-muted)">Error: ' + (e.message || String(e)) + '</div>';
+    resultsEl.innerHTML = '<div style="padding:1rem 1.25rem;color:var(--color-text-muted)">Search unavailable</div>';
   }
 };
 </script>
