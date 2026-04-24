@@ -1,13 +1,35 @@
 title: freestruct
 description: SEO layer for static doc sites
-theme: minima
-plugins:
-  - jekyll-feed
-  - jekyll-seo-tag
-  - jekyll-relative-links
+theme: null
 
-relative_links:
-  enabled: true
-  collections: true
+# Theme includes (copy to _layouts, _includes, assets)
+include:
+  - _theme
+
+# Search
+search:
+  provider: pagefind
+
+# Navigation
+nav:
+  - title: Home
+    url: /
+  - title: Getting Started
+    url: /getting-started
+  - title: Configuration
+    url: /configuration
+
+# Markdown
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
 
 permalink: pretty
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: page

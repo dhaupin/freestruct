@@ -1,15 +1,17 @@
 ---
 layout: home
 title: freestruct
+description: SEO layer for static doc sites
 ---
 
-# freestruct
+Build your docs with any static site generator. freestruct adds the SEO layer.
 
-**SEO layer for static doc sites.**
+## Features
 
-Build your docs with any static site generator. Freestruct adds the SEO layer.
-
----
+- **Search** - Pagefind baked in, works out of the box
+- **SEO** - Open Graph, Twitter cards, JSON-LD schema
+- **Sitemap** - Auto-generated sitemap.xml + robots.txt
+- **Fast** - Minimal dependencies, Pagespeed optimized
 
 ## Quick Start
 
@@ -18,12 +20,9 @@ npm install freestruct
 ```
 
 ```yaml
-# freestruct.config.js
-export default {
-  siteUrl: 'https://example.com/docs',
-  generator: 'jekyll',
-  search: { provider: 'pagefind' }
-}
+# _config.yml
+search:
+  provider: pagefind
 ```
 
 ```json
@@ -35,22 +34,10 @@ export default {
 }
 ```
 
----
-
-## Features
-
-- **Search** - Pagefind or Algolia baked in
-- **Meta** - Open Graph, Twitter cards, JSON-LD
-- **Sitemap** - Auto-generated sitemap.xml + robots.txt
-
----
-
 ## Supported Generators
 
-Jekyll, Hugo, Docusaurus, MkDocs, VitePress
-
----
-
-## Status
-
-Early concept. See [CONTRIBUTING](https://github.com/dhaupin/freestruct/blob/main/CONTRIBUTING.md) to shape the direction.
+- Jekyll
+- Hugo
+- Docusaurus
+- MkDocs
+- VitePress
