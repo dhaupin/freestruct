@@ -39,17 +39,6 @@ og:
   type: website
 ```
 
-## Add injection marker
-
-In your layout's `<head>`, add:
-
-```html
-<!-- freestruct SEO -->
-</head>
-```
-
-freestruct will inject SEO meta tags between the marker and `</head>`.
-
 ## Build
 
 ```bash

@@ -104,9 +104,7 @@ function injectFile(filePath, config, template, outputDir, preserve) {
   
   // Inject into <head>
   let injection;
-  if (html.includes('<!-- freestruct SEO -->')) {
-    injection = seo;
-  } else if (preserve) {
+  if (preserve) {
     injection = injectMissingSeo(html, seo);
   } else {
     removeExistingSeo(html);
