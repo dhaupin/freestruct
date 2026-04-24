@@ -7,7 +7,46 @@
     <nav class="site-nav">
       <a href="{{ '/getting-started' | relative_url }}">Getting Started</a>
       <a href="{{ '/configuration' | relative_url }}">Configuration</a>
+      <a href="#" id="search-trigger">Search</a>
       <a href="https://github.com/dhaupin/freestruct" target="_blank" rel="noopener">GitHub</a>
     </nav>
   </div>
 </header>
+
+<div id="search-modal" class="search-modal" hidden>
+  <div class="search-modal-content">
+    <div id="search"></div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var trigger = document.getElementById('search-trigger');
+  var modal = document.getElementById('search-modal');
+  
+  if (trigger && modal) {
+    trigger.addEventListener('click', function(e) {
+      e.preventDefault();
+      modal.hidden = false;
+      modal.querySelector('.pagefind-ui__search-input').focus();
+    });
+    
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) {
+        modal.hidden = true;
+      }
+    });
+    
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && !modal.hidden) {
+        modal.hidden = true;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        modal.hidden = false;
+        modal.querySelector('.pagefind-ui__search-input').focus();
+      }
+    });
+  }
+});
+</script>
