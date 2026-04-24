@@ -116,7 +116,8 @@ generate404: false # skip
 ```
 
 The generated 404 page includes:
-- `<meta name="robots" content="noindex, nofollow">` (prevents indexing)
+- `<meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">` (prevents indexing and caching)
+- Cache headers: `Cache-Control`, `Pragma`, `Expires`
 - Full SEO meta tags
 - Simple "Go home" link
 
