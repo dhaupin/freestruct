@@ -6,6 +6,19 @@ url: https://dhaupin.github.io/freestruct
 theme: null
 plugins:
   - jekyll-seo-tag
+  - jekyll-sitemap
+
+# SEO
+seo:
+  name: freestruct
+  title: false
+  description: "{description}"
+  url: "{url}{baseurl}"
+  logo: 
+  twitter:
+    username: "@dhaupin"
+  og:
+    image: /assets/og-image.png
 
 # Search
 search:

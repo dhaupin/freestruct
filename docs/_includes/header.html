@@ -22,7 +22,11 @@
 
 <div id="search-modal" class="search-modal" hidden>
   <div class="search-modal-content">
-    <div id="search"></div>
+    <div class="search-modal-header">
+      <input type="text" id="search-input" class="search-input" placeholder="Search docs..." autocomplete="off">
+      <button class="search-close" id="search-close">✕</button>
+    </div>
+    <div id="search-results"></div>
   </div>
 </div>
 
@@ -30,28 +34,55 @@
 document.addEventListener('DOMContentLoaded', function() {
   var trigger = document.getElementById('search-trigger');
   var modal = document.getElementById('search-modal');
+  var input = document.getElementById('search-input');
+  var close = document.getElementById('search-close');
+  var results = document.getElementById('search-results');
   
-  if (trigger && modal) {
+  if (trigger && modal && input) {
     trigger.addEventListener('click', function(e) {
       e.preventDefault();
       modal.hidden = false;
-      modal.querySelector('.pagefind-ui__search-input').focus();
+      input.focus();
+    });
+    
+    close?.addEventListener('click', function() {
+      modal.hidden = true;
     });
     
     modal.addEventListener('click', function(e) {
-      if (e.target === modal) {
-        modal.hidden = true;
+      if (e.target === modal) modal.hidden = true;
+    });
+    
+    // Search as you type
+    input.addEventListener('input', async function() {
+      var q = this.value.trim();
+      if (q.length < 2) {
+        results.innerHTML = '<p class="search-hint">Type to search...</p>';
+        return;
+      }
+      try {
+        var pf = await import('/pagefind/pagefind.js');
+        var search = await pf?.search?.(q, { limit: 5 });
+        if (search?.results?.length) {
+          results.innerHTML = '<ul class="search-list">' + 
+            search.results.slice(0,5).map(r => 
+              '<li><a href="' + r.url + '">' + (r.meta?.title || r.url) + '</a></li>'
+            ).join('') + 
+          '</ul>';
+        } else {
+          results.innerHTML = '<p class="search-empty">No results for "' + q + '"</p>';
+        }
+      } catch (e) {
+        results.innerHTML = '<p class="search-error">Search unavailable</p>';
       }
     });
     
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape' && !modal.hidden) {
-        modal.hidden = true;
-      }
+      if (e.key === 'Escape' && !modal.hidden) modal.hidden = true;
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         modal.hidden = false;
-        modal.querySelector('.pagefind-ui__search-input').focus();
+        input.focus();
       }
     });
   }
