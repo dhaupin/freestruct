@@ -95,16 +95,34 @@ basePath: /freestruct  # Strip this prefix from URLs
 
 This ensures canonical URLs point to the correct location (e.g., `/docs/foo` instead of `/freestruct/docs/foo`).
 
-## Preserve Existing Meta Tags
+## Sitemap Generation
 
-By default (`preserveExistingMeta: true`), freestruct **selectively injects** only what tags are missing. If your page already has `<meta name="description">`, OG tags, Twitter card, etc., freestruct adds everything else to complete the SEO stack without duplicates.
+freestruct generates `sitemap.xml` automatically (enabled by default):
 
 ```yaml
-preserveExistingMeta: true  # default - adds missing only
-preserveExistingMeta: false # removes existing SEO first
+generateSitemap: true  # default - generates sitemap.xml
+generateSitemap: false # skip
 ```
 
-## Per-Page Config
+The sitemap includes all HTML pages except 404.html. It uses your site's `url` from config.
+
+## 404 Page Generation
+
+freestruct generates `404.html` automatically (enabled by default):
+
+```yaml
+generate404: true  # default - generates 404.html
+generate404: false # skip
+```
+
+The generated 404 page includes:
+- `<meta name="robots" content="noindex, nofollow">` (prevents indexing)
+- Full SEO meta tags
+- Simple "Go home" link
+
+**Custom 404**: If a `404.html` already exists in your SSG's output directory, freestruct will use it instead of generating a default page. This lets you provide your own styled 404 while still getting SEO injection.
+
+## Preserve Existing Meta Tags
 
 For page-specific SEO, add a comment to your page content:
 
