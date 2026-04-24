@@ -7,6 +7,7 @@ All notable changes to freestruct docs are documented here.
 ### Added
 - PageFind search integration with custom modal UI
 - Search opens via click or Cmd/Ctrl+K
+- Organization + WebSite schema.org JSON-LD on every page
 
 ### Fixed
 - Search module path: `/freestruct/pagefind/pagefind.js` (not `/pagefind/...`)
