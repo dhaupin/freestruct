@@ -30,32 +30,32 @@
           {% endif %}
         {% endfor %}
       {% endif %}
-      
-      <div class="nav-right">
-        <div class="search-bar">
-          <input type="text" class="search-bar-input" id="searchBarInput" placeholder="Search..." autocomplete="off">
-          <button class="search-trigger" id="searchTrigger" aria-label="Search" onclick="document.getElementById('searchModal').classList.add('open')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"/>
-              <path d="M21 21l-4.35-4.35"/>
-            </svg>
-          </button>
-        </div>
-        <kbd class="search-bar-shortcut"></kbd>
-        
-        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" onclick="toggleTheme()">
-          <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="5"/>
-            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-          </svg>
-          <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-          </svg>
-        </button>
-        
-        <a href="https://github.com/dhaupin/freestruct" target="_blank" rel="noopener">GitHub</a>
-      </div>
     </nav>
+
+    <div class="header-actions">
+      <button class="search-trigger" id="searchTrigger" aria-label="Search" onclick="document.getElementById('searchModal').classList.add('open')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="M21 21l-4.35-4.35"/>
+        </svg>
+      </button>
+
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" onclick="toggleTheme()">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/>
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+
+      <a href="https://github.com/dhaupin/freestruct" class="github-link" target="_blank" rel="noopener" aria-label="GitHub">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.245-3.015.72-3.645-.72-3.645-1.44 0-.72.285-1.2.48-1.44-.255-.12-.48-.42-.48-.855 0-1.005.72-1.2 1.44-1.2-1.08-.435-2.22-.78-2.22-2.205 0-.78.285-1.44.72-1.935-.105-.24-.48-.855.12-1.68 0 0 .6-.195 1.965.72.555-.165 1.17-.24 1.755-.24.585 0 1.2.075 1.755.24 1.365-.915 1.965-.72 1.965-.72.6.825.225 1.44.12 1.68.435.495.72 1.155.72 1.935 0 1.425-1.14 1.77-2.22 2.205.96.405 1.44 1.26 1.44 2.34 0 1.44-.015 2.85-.015 3.06 0 .315.225.68.825.57C20.565 21.795 24 17.31 24 12c0-6.63-5.37-12-12-12z"/>
+        </svg>
+      </a>
+    </div>
   </div>
 </header>
 
@@ -150,7 +150,7 @@ var searchModal=document.getElementById('searchModal');
 var searchInput=document.getElementById('searchInput');
 var searchResults=document.getElementById('searchResults');
 var searchClose=document.getElementById('searchClose');
-var searchBarInput=document.getElementById('searchBarInput');
+var searchTrigger=document.getElementById('searchTrigger');
 
 document.addEventListener('keydown',function(e){
   if(!searchModal)return;
@@ -159,10 +159,8 @@ document.addEventListener('keydown',function(e){
 });
 if(searchClose)searchClose.addEventListener('click',function(){searchModal.classList.remove('open')});
 if(searchInput)searchInput.addEventListener('input',function(){doSearch(this.value,searchResults)});
-if(searchBarInput)searchBarInput.addEventListener('focus',function(){
+if(searchTrigger)searchTrigger.addEventListener('click',function(){
   searchModal.classList.add('open');
-  searchInput.value=this.value;
   searchInput.focus();
-  doSearch(this.value,searchResults);
 });
 </script>

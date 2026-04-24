@@ -202,12 +202,19 @@ li > ul, li > ol { margin: var(--space-2) 0 0; }
 .nav-group-items.open { display: flex; }
 
 /* Theme toggle */
-.theme-toggle { display: flex; align-items: center; justify-content: center; background: none; border: 1px solid var(--color-border); border-radius: var(--radius-md); cursor: pointer; padding: 8px; color: var(--color-text-muted); transition: all 0.15s; }
-.theme-toggle:hover { border-color: var(--color-primary); color: var(--color-text); }
+.theme-toggle { display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; padding: 8px; color: var(--color-text-muted); transition: all 0.15s; }
+.theme-toggle:hover { color: var(--color-text); }
 .theme-toggle .sun-icon { display: block; }
 .theme-toggle .moon-icon { display: none; }
 html.dark .theme-toggle .sun-icon { display: none; }
 html.dark .theme-toggle .moon-icon { display: block; }
+
+/* Header actions */
+.header-actions { display: flex; align-items: center; gap: var(--space-2); margin-left: auto; }
+.search-trigger { display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; padding: 8px; color: var(--color-text-muted); transition: all 0.15s; }
+.search-trigger:hover { color: var(--color-text); }
+.github-link { display: flex; align-items: center; justify-content: center; padding: 8px; color: var(--color-text-muted); transition: all 0.15s; }
+.github-link:hover { color: var(--color-text); }
 
 /* Mobile nav */
 @media (max-width: 768px) {
@@ -216,7 +223,7 @@ html.dark .theme-toggle .moon-icon { display: block; }
   .site-nav.open { display: flex; }
   .site-nav > a, .site-nav .nav-group { padding: var(--space-2) 0; }
   .nav-group-items { position: static; padding-left: var(--space-4); }
-  .nav-right { margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--color-border); }
+  .header-actions { position: fixed; bottom: var(--space-4); right: var(--space-4); background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-2); z-index: 50; }
 }
 
 /* Dark mode pagefind */
