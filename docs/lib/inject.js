@@ -4,9 +4,9 @@ const path = require('path');
 const yaml = require('js-yaml');
 
 // Config
-const SSR_CONFIG = 'ssr-config.yml';
-const TEMPLATE = '_includes/inject-brand.html';
-const OUTPUT_DIR = '_site';
+const SSR_CONFIG = 'docs/ssr-config.yml';
+const TEMPLATE = 'docs/_includes/inject-brand.html';
+const OUTPUT_DIR = 'docs/_site';
 
 function inject() {
   console.log('🔍 freestruct: Loading config...');
@@ -24,17 +24,11 @@ function inject() {
   // Load template
   let template;
   try {
-    const templatePath = path.join(process.cwd(), 'docs', TEMPLATE);
+    const templatePath = path.join(process.cwd(), TEMPLATE);
     template = fs.readFileSync(templatePath, 'utf8');
   } catch (e) {
-    // Try docs folder
-    try {
-      const templatePath = path.join(process.cwd(), TEMPLATE);
-      template = fs.readFileSync(templatePath, 'utf8');
-    } catch (e) {
-      console.error(`Error: ${TEMPLATE} not found`);
-      process.exit(1);
-    }
+    console.error(`Error: ${TEMPLATE} not found`);
+    process.exit(1);
   }
   
   // Process HTML files
@@ -70,7 +64,7 @@ function injectFile(filePath, config, template) {
   // Extract page info from HTML
   const pageTitle = extractTitle(html) || config.site.name;
   const pageDescription = extractDescription(html) || config.site.description;
-  const pageUrl = '/' + path.relative(OUTPUT_DIR, filePath).replace(/^_site\//, '').replace(/\/index\.html$/, '/').replace(/\.html$/, '');
+  const pageUrl = '/' + path.relative(OUTPUT_DIR, filePath).replace(/^docs\/_site\//, '').replace(/\/index\.html$/, '/').replace(/\.html$/, '');
   const canonicalUrl = config.site.url + pageUrl;
   
   // Build replacements
@@ -95,8 +89,8 @@ function injectFile(filePath, config, template) {
     seo = seo.split(placeholder).join(value);
   }
   
-  // Remove Liquid comments
-  seo = seo.replace(/<!--[\s\S]*?-->/g, '').replace(/{% comment %}[\s\S]*?{% endcomment %}/g, '');
+  // Remove comments
+  seo = seo.replace(/<!--[\s\S]*?-->/g, '');
   
   // Inject into <head>
   if (html.includes('<!-- freestruct SEO -->')) {

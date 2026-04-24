@@ -27,10 +27,12 @@ jobs:
           ruby-version: '3.3'
 
       - name: Install Ruby deps
+        working-directory: docs
         run: bundle install
 
       - name: Build Jekyll
-        run: bundle exec jekyll build --source docs --destination _site
+        working-directory: docs
+        run: bundle exec jekyll build
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -47,12 +49,12 @@ jobs:
         run: npm install -g pagefind
 
       - name: Index search
-        run: pagefind --site _site
+        run: pagefind --site docs/_site
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
+          path: docs/_site
 
   deploy:
     needs: build
