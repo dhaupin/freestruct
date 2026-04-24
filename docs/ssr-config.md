@@ -43,6 +43,24 @@ outputDir: public   # Hugo, Gatsby
 outputDir: build   # Docusaurus
 ```
 
+### generateSitemap
+
+Generate `sitemap.xml` automatically (default: true).
+
+```yaml
+generateSitemap: true   # generates sitemap.xml
+generateSitemap: false  # skip sitemap generation
+```
+
+### generate404
+
+Generate `404.html` automatically (default: true).
+
+```yaml
+generate404: true   # generates 404.html
+generate404: false  # skip 404 page generation
+```
+
 ### basePath
 
 Optional base path to strip from canonical URLs (for subpath deployments).
