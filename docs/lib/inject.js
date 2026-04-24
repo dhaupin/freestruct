@@ -68,7 +68,13 @@ function injectFile(filePath, config, template, outputDir, preserve) {
   // Extract page info from HTML
   const pageTitle = extractTitle(html) || config.site.name;
   const pageDescription = extractDescription(html) || config.site.description;
-  const pageUrl = '/' + path.relative(outputDir, filePath).replace(/\/index\.html$/, '/').replace(/\.html$/, '');
+  let pageUrl = '/' + path.relative(outputDir, filePath).replace(/\/index\.html$/, '/').replace(/\.html$/, '');
+  
+  // Strip basePath if configured
+  if (config.basePath) {
+    pageUrl = pageUrl.replace(new RegExp('^' + config.basePath), '') || '/';
+  }
+  
   const canonicalUrl = config.site.url + pageUrl;
   
   // Build replacements

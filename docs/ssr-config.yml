@@ -4,13 +4,16 @@
 # Output directory from SSG build
 outputDir: docs/_site  # Jekyll: _site, Hugo: public/, Gatsby: dist/
 
+# Base path to strip from URLs (e.g., /freestruct from /freestruct/docs/foo)
+basePath: 
+
 # Preserve existing meta tags (default: true)
 # If true, freestruct only injects missing tags (no duplicates)
 # Set to false to remove existing SEO tags before injecting
 preserveExistingMeta: true
 
 site:
-  url: https://dhaupin.github.io/freestruct
+  url: http://freestruct.creadev.org
   name: freestruct
   description: SEO layer for static doc sites
 
@@ -44,7 +47,7 @@ jsonLd:
   - "@context": "https://schema.org"
     "@type": "Organization"
     name: freestruct
-    url: https://dhaupin.github.io/freestruct
+    url: http://freestruct.creadev.org
     description: SEO layer for static doc sites
     sameAs:
       - https://github.com/dhaupin/freestruct
@@ -52,10 +55,10 @@ jsonLd:
   - "@context": "https://schema.org"
     "@type": "WebSite"
     name: freestruct
-    url: https://dhaupin.github.io/freestruct
+    url: http://freestruct.creadev.org
     potentialAction:
       "@type": "SearchAction"
       target:
         "@type": "EntryPoint"
-        urlTemplate: https://dhaupin.github.io/freestruct/?s={search_term_string}
+        urlTemplate: http://freestruct.creadev.org/?s={search_term_string}
       query-input: required name=search_term_string
