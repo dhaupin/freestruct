@@ -62,17 +62,18 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       try {
         var pf = await import('/pagefind/pagefind.js');
-        var search = await pf?.search?.(q, { limit: 5 });
+        var search = await pf.search(q, { limit: 5 });
         if (search?.results?.length) {
           results.innerHTML = '<ul class="search-list">' + 
-            search.results.slice(0,5).map(r => 
-              '<li><a href="' + r.url + '">' + (r.meta?.title || r.url) + '</a></li>'
+            search.results.map(r => 
+              '<li><a href="' + r.url + '">' + (r.meta?.title || r.url.replace('/','').replace('.html','') || 'Page') + '</a></li>'
             ).join('') + 
           '</ul>';
         } else {
           results.innerHTML = '<p class="search-empty">No results for "' + q + '"</p>';
         }
       } catch (e) {
+        console.error('Search error:', e);
         results.innerHTML = '<p class="search-error">Search unavailable</p>';
       }
     });
