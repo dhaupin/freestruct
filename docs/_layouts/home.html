@@ -1,0 +1,14 @@
+---
+layout: default
+---
+
+<section class="home-hero py-8">
+  <h1>{{ page.title | default: site.title }}</h1>
+  {% if page.description %}
+  <p class="text-lg text-muted">{{ page.description }}</p>
+  {% endif %}
+</section>
+
+<section class="home-content">
+  {{ content }}
+</section>

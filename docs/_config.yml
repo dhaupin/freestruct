@@ -1,10 +1,10 @@
 title: freestruct
 description: SEO layer for static doc sites
-theme: null
 
-# Theme includes (copy to _layouts, _includes, assets)
-include:
-  - _theme
+# Theme - use custom layouts in _theme
+theme: null
+plugins:
+  - jekyll-seo-tag
 
 # Search
 search:
