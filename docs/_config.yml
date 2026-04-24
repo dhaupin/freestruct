@@ -6,7 +6,7 @@ baseurl: ""
 # Theme
 theme: null
 plugins:
-  - jekyll-seo-tag
+# SEO handled by _includes/seo.html
   - jekyll-sitemap
 
 # SEO
