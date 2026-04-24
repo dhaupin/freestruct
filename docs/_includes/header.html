@@ -1,23 +1,60 @@
 <header class="site-header">
   <div class="container">
     <a href="{{ '/' | relative_url }}" class="site-logo">
-      freestruct<span class="nav-badge">v0.1</span>
+      {{ site.title }}<span class="nav-badge">beta</span>
     </a>
-    
-    <nav class="site-nav">
-      <a href="{{ '/getting-started' | relative_url }}">Getting Started</a>
-      <a href="{{ '/configuration' | relative_url }}">Configuration</a>
-      <div class="search-bar">
-        <input type="text" class="search-bar-input" id="searchBarInput" placeholder="Search..." autocomplete="off">
-        <button class="search-trigger" id="searchTrigger" aria-label="Search" onclick="document.getElementById('searchModal').classList.add('open')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/>
-            <path d="M21 21l-4.35-4.35"/>
+
+    <button class="burger-menu" id="burgerMenu" aria-label="Toggle menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <nav class="site-nav" id="siteNav">
+      {% if site.nav %}
+        {% for item in site.nav %}
+          {% if item.items %}
+          <div class="nav-group">
+            <button class="nav-group-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">
+              {{ item.title }}
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div class="nav-group-items">
+              {% for sub in item.items %}
+              <a href="{{ sub.url | relative_url }}">{{ sub.title }}</a>
+              {% endfor %}
+            </div>
+          </div>
+          {% else %}
+          <a href="{{ item.url | relative_url }}">{{ item.title }}</a>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+      
+      <div class="nav-right">
+        <div class="search-bar">
+          <input type="text" class="search-bar-input" id="searchBarInput" placeholder="Search..." autocomplete="off">
+          <button class="search-trigger" id="searchTrigger" aria-label="Search" onclick="document.getElementById('searchModal').classList.add('open')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="M21 21l-4.35-4.35"/>
+            </svg>
+          </button>
+        </div>
+        <kbd class="search-bar-shortcut"></kbd>
+        
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" onclick="toggleTheme()">
+          <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/>
+            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+          </svg>
+          <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
           </svg>
         </button>
+        
+        <a href="https://github.com/dhaupin/freestruct" target="_blank" rel="noopener">GitHub</a>
       </div>
-      <kbd class="search-bar-shortcut"></kbd>
-      <a href="https://github.com/dhaupin/freestruct" target="_blank" rel="noopener">GitHub</a>
     </nav>
   </div>
 </header>
@@ -30,7 +67,47 @@
   </div>
 </div>
 
-<script type="module">
+<script>
+// Theme toggle
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.classList.contains('dark');
+  html.classList.toggle('dark');
+  localStorage.setItem('theme', isDark ? 'light' : 'dark');
+}
+
+// Load theme on init
+(function() {
+  const saved = localStorage.getItem('theme');
+  const prefers = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  if (saved === 'dark' || (!saved && prefers)) {
+    document.documentElement.classList.add('dark');
+  }
+})();
+</script>
+
+<script>
+// Burger menu
+var burger = document.getElementById('burgerMenu');
+var nav = document.getElementById('siteNav');
+if (burger && nav) {
+  burger.addEventListener('click', function() {
+    burger.classList.toggle('open');
+    nav.classList.toggle('open');
+  });
+}
+
+// Close nav on link click (mobile)
+document.querySelectorAll('#siteNav a').forEach(function(link) {
+  link.addEventListener('click', function() {
+    nav.classList.remove('open');
+    burger.classList.remove('open');
+  });
+});
+</script>
+
+<script>
+// Search
 var pagefind = null;
 var pagefindPath = '/pagefind/pagefind.js';
 
