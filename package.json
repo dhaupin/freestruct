@@ -2,10 +2,9 @@
   "name": "freestruct",
   "version": "0.1.0",
   "description": "SEO layer for static doc sites",
-  "main": "lib/inject.js",
   "scripts": {
-    "build": "jekyll build && node lib/inject.js",
-    "inject": "node lib/inject.js"
+    "build": "jekyll build && npm run inject",
+    "inject": "node docs/lib/inject.js"
   },
   "dependencies": {
     "js-yaml": "^4.1.3"
