@@ -37,22 +37,28 @@ var searchInput=document.getElementById('searchInput');
 var searchResults=document.getElementById('searchResults');
 var searchBarInput=document.getElementById('searchBarInput');
 var searchClose=document.getElementById('searchClose');
-var pagefind;
+var pagefind,pagefindLoading;
 function initPagefind(){
-  if(pagefind)return;
+  if(pagefind||pagefindLoading)return;
+  pagefindLoading=true;
+  console.log('initPagefind');
   pagefind=new Pagefind();
+  console.log('pagefind:',typeof pagefind,pagefind);
 }
 async function doSearch(q,output){
   if(!q){output.innerHTML='';return;}
   initPagefind();
+  console.log('doSearch',q,'pagefind:',typeof pagefind);
   try{
     var res=await pagefind.search(q);
+    console.log('res:',res);
     var html='';
     res.results.slice(0,5).forEach(function(x){
       html+='<a href="'+x.url+'" class="search-result"><div class="search-result-title">'+(x.meta?.title||x.url)+'</div>';
     });
     output.innerHTML=html||'<div class="search-result"><div class="search-result-title">No results</div></div>';
   }catch(e){
+    console.log('error:',e);
     output.innerHTML='<div class="search-result"><div class="search-result-title">Search unavailable</div></div>';
   }
 }
