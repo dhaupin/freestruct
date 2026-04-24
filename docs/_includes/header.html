@@ -24,7 +24,8 @@
 
 <div class="search-modal" id="searchModal">
   <div class="search-modal-content">
-    <div data-pagefind-ui="{&quot;showSubResults&quot;:false}"></div>
+    <input type="text" class="search-input" id="searchInput" placeholder="Search docs..." autocomplete="off">
+    <div class="search-results" id="searchResults"></div>
     <button class="search-close" id="searchClose" aria-label="Close search">×</button>
   </div>
 </div>
@@ -32,15 +33,54 @@
 <script>
 var searchTrigger=document.getElementById('searchTrigger');
 var searchModal=document.getElementById('searchModal');
+var searchInput=document.getElementById('searchInput');
+var searchResults=document.getElementById('searchResults');
 var searchClose=document.getElementById('searchClose');
 var searchBarInput=document.getElementById('searchBarInput');
+
+async function doSearch(q,resultsEl){
+  if(q.length<2){
+    resultsEl.innerHTML='';
+    return;
+  }
+  resultsEl.innerHTML='<div style="padding:1rem 1.25rem;color:var(--text-2)">Loading...</div>';
+  try{
+    var pagefind=await import('/pagefind/pagefind.js');
+    await pagefind.init();
+    var resp=await pagefind.search(q);
+    if(resp.results.length===0){
+      resultsEl.innerHTML='<div style="padding:1rem 1.25rem;color:var(--text-2)">No results found</div>';
+      return;
+    }
+    var html='';
+    for(var i=0;i<resp.results.length&&i<8;i++){
+      var r=resp.results[i];
+      var data=await r.data();
+      var url=data.url;
+      html+='<a href="'+url+'" class="search-result"><div class="search-result-title">'+(data.meta?.title||url)+'</div>';
+      if(data.excerpt)html+='<div class="search-result-excerpt">'+data.excerpt+'</div>';
+      html+='</a>';
+    }
+    resultsEl.innerHTML=html;
+  }catch(e){
+    resultsEl.innerHTML='<div style="padding:1rem 1.25rem;color:var(--text-2)">Search unavailable</div>';
+  }
+}
+
 if(searchTrigger&&searchModal){
-  searchTrigger.addEventListener('click',function(){searchModal.classList.add('open')});
+  searchTrigger.addEventListener('click',function(){searchModal.classList.add('open');searchInput.focus()});
   searchClose.addEventListener('click',function(){searchModal.classList.remove('open')});
-  searchBarInput.addEventListener('focus',function(){searchModal.classList.add('open')});
+  searchInput.addEventListener('input',function(){doSearch(this.value,searchResults)});
+  searchBarInput.addEventListener('focus',function(){
+    searchModal.classList.add('open');
+    searchInput.value=this.value;
+    searchInput.focus();
+    doSearch(this.value,searchResults);
+  });
   document.addEventListener('keydown',function(e){
     if(e.key==='Escape')searchModal.classList.remove('open');
-    if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();searchModal.classList.add('open');}
+    if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();searchModal.classList.add('open');searchInput.focus();}
+    if(e.key==='k'&&searchBarInput===document.activeElement){e.preventDefault();searchModal.classList.add('open');searchInput.focus();}
   });
 }
 </script>
