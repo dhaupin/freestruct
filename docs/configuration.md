@@ -89,13 +89,13 @@ Available placeholders:
 
 ## Preserving Existing Meta Tags
 
-By default, freestruct removes existing SEO meta tags before injecting to avoid conflicts. To preserve existing tags:
+By default, freestruct removes existing SEO meta tags before injecting to avoid conflicts. To preserve:
 
 ```yaml
 preserveExistingMeta: true
 ```
 
-When true, freestruct will inject new SEO tags alongside any existing ones.
+In preserve mode, freestruct **selectively injects** only what tags are missing. If your page already has description, OG title, Twitter card, etc., freestruct adds everything else to complete the SEO stack without duplicates.
 
 ## Per-Page Config
 

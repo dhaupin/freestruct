@@ -85,13 +85,15 @@ function injectFile(filePath, config, template, outputDir) {
   
   seo = seo.replace(/<!--[\s\S]*?-->/g, '');
   
-  // Remove existing SEO tags to avoid conflicts
-  if (!preserve) {
+  // Handle SEO tags based on preserveExistingMeta
+  if (preserve) {
+    // Preserve mode: only inject missing tags
+    html = html.replace(/<\/head>/i, injectMissingSeo(html, seo.trim()) + '\n</head>');
+  } else {
+    // Default: remove existing and inject all
     html = removeExistingSeo(html);
+    html = html.replace(/<\/head>/i, seo.trim() + '\n</head>');
   }
-  
-  // Inject before </head>
-  html = html.replace(/<\/head>/i, seo.trim() + '\n</head>');
   
   fs.writeFileSync(filePath, html);
 }
@@ -147,6 +149,53 @@ function extractPageConfig(html) {
 }
 
 function removeExistingSeo(html) {
+
+// Selective injection - only add missing tags (for preserve mode)
+function injectMissingSeo(html, seo) {
+  const existingTags = extractExistingTags(html);
+  let result = '';
+  
+  // Parse each line of SEO
+  const seoLines = seo.split('\n').filter(l => l.trim());
+  
+  for (const line of seoLines) {
+    // Check if this tag type already exists
+    if (!tagExists(line, existingTags)) {
+      result += line + '\n';
+    }
+  }
+  
+  return result;
+}
+
+function extractExistingTags(html) {
+  const tags = new Set();
+  // Extract name属性
+  const nameMatch = html.matchAll(/<meta[^>]*name="([^"]+)"[^>]*>/gi);
+  for (const m of nameMatch) tags.add(m[1]);
+  // Extract property
+  const propMatch = html.matchAll(/<meta[^>]*property="([^"]+)"[^>]*>/gi);
+  for (const m of propMatch) tags.add(m[1]);
+  // Extract twitter:*
+  const twMatch = html.matchAll(/<meta[^>]*name="(twitter:[^"]+)"[^>]*>/gi);
+  for (const m of twMatch) tags.add(m[1]);
+  // Extract link rel="canonical"
+  if (html.includes('rel="canonical"')) tags.add('canonical');
+  // Extract og:site_name
+  if (html.includes('og:site_name')) tags.add('og:site_name');
+  
+  return tags;
+}
+
+function tagExists(line, existingTags) {
+  if (line.includes('name="description"') && existingTags.has('description')) return true;
+  if (line.includes('property="og:') && existingTags.has(line.match(/property="([^"]+)/)[1])) return true;
+  if (line.includes('name="twitter:') && existingTags.has(line.match(/name="([^"]+)/)[1])) return true;
+  if (line.includes('rel="canonical"') && existingTags.has('canonical')) return true;
+  if (line.includes('property="og:site_name"') && existingTags.has('og:site_name')) return true;
+  if (line.includes('application/ld+json') && html.includes('application/ld+json')) return true; // simplified
+  return false;
+}
   const tagsToRemove = [
     /<meta[^>]*name="description"[^>]*>/gi,
     /<link[^>]*rel="canonical"[^>]*>/gi,
