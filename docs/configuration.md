@@ -22,6 +22,10 @@ site:
 # Output directory from SSG build
 outputDir: _site
 
+# Preserve existing meta tags (default: true)
+# Set to false to remove existing SEO and inject fresh
+preserveExistingMeta: true
+
 # Site info
 site:
   url: https://example.com
@@ -51,30 +55,24 @@ keywords:
   - api
 ```
 
-## Template Customization
+## Template Placeholders
 
-The `inject-brand.html` template controls what gets injected. Edit it to add/remove meta tags:
+Available `{{placeholder}}` values in `inject-brand.html`:
 
-```html
-<!-- inject-brand.html -->
-<meta property="og:title" content="{{pageTitle}}">
-<meta property="og:description" content="{{pageDescription}}">
-<!-- Add your custom tags here -->
-```
-
-Available placeholders:
-- `{{pageTitle}}` - Page title (from HTML or config)
-- `{{pageDescription}}` - Page description
-- `{{pageUrl}}` - Full page URL
-- `{{canonicalUrl}}` - Canonical URL
-- `{{siteUrl}}` - Site base URL
-- `{{siteName}}` - Site name
-- `{{siteDescription}}` - Site description
-- `{{twitterUsername}}` - Twitter handle
-- `{{twitterCard}}` - Twitter card type
-- `{{ogImage}}` - OG image path
-- `{{ogType}}` - OG content type
-- `{{ogLocale}}` - OG locale
+| Placeholder | Description |
+|-------------|-------------|
+| `{{pageTitle}}` | Page title |
+| `{{pageDescription}}` | Page description |
+| `{{pageUrl}}` | Full page URL |
+| `{{canonicalUrl}}` | Canonical URL |
+| `{{siteUrl}}` | Site base URL |
+| `{{siteName}}` | Site name |
+| `{{siteDescription}}` | Site description |
+| `{{twitterUsername}}` | Twitter handle |
+| `{{twitterCard}}` | Twitter card type |
+| `{{ogImage}}` | OG image path |
+| `{{ogType}}` | OG content type |
+| `{{ogLocale}}` | OG locale |
 
 ## Frame-specific Output Dirs
 
@@ -87,14 +85,13 @@ Available placeholders:
 | MkDocs | `site` |
 | Gatsby | `public` |
 
-## Preserving Existing Meta Tags
+## Preserve Existing Meta Tags
 
-By default (`preserveExistingMeta: true`), freestruct **selectively injects** only what tags are missing. If your page already has description, OG title, Twitter card, etc., freestruct adds everything else to complete the SEO stack without duplicates.
-
-To remove existing SEO tags before injecting:
+By default (`preserveExistingMeta: true`), freestruct **selectively injects** only what tags are missing. If your page already has `<meta name="description">`, OG tags, Twitter card, etc., freestruct adds everything else to complete the SEO stack without duplicates.
 
 ```yaml
-preserveExistingMeta: false
+preserveExistingMeta: true  # default - adds missing only
+preserveExistingMeta: false # removes existing SEO first
 ```
 
 ## Per-Page Config
@@ -111,6 +108,14 @@ Available per-page options:
 - `ogImage`
 - `twitterCard` (summary_large_image)
 - `publishedTime`, `author`, `section`
+
+## Source Attribution
+
+Injected HTML includes a source comment:
+
+```html
+<!-- injected by freestruct: https://github.com/dhaupin/freestruct -->
+```
 
 ## Environment Overrides
 
