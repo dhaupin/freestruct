@@ -32,11 +32,12 @@
 
 <script type="module">
 var pagefind = null;
+var pagefindPath = '/freestruct/pagefind/pagefind.js';
 
 async function initPagefind() {
   if (pagefind) return pagefind;
-  console.log('Dynamic importing pagefind...');
-  pagefind = await import('/pagefind/pagefind.js');
+  console.log('Dynamic importing pagefind from:', pagefindPath);
+  pagefind = await import(pagefindPath);
   console.log('pagefind module loaded:', pagefind);
   await pagefind.init();
   console.log('pagefind initialized');
