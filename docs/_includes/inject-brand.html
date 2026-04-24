@@ -1,31 +1,46 @@
-{% comment %}Jekyll fallback SEO - removed when freestruct tool runs{% endcomment %}
-{% assign page_title = page.title | default: site.title %}
-{% assign page_description = page.description | default: site.description %}
+<!-- freestruct SEO template - post-build injection -->
+<!-- Placeholders: {{pageTitle}}, {{pageDescription}}, {{pageUrl}}, {{canonicalUrl}} -->
+<!-- Config: {{siteUrl}}, {{siteName}}, {{siteDescription}}, {{twitterUsername}}, {{twitterCard}}, {{ogImage}}, {{ogType}}, {{ogLocale}} -->
 
-<title>{{ page_title }}{% if page.title and site.title %} | {% endif %}{{ site.title }}</title>
-<meta name="description" content="{{ page_description }}">
-<link rel="canonical" href="{{ site.url }}{{ page.url }}">
+<title>{{pageTitle}}</title>
+<meta name="description" content="{{pageDescription}}">
+<link rel="canonical" href="{{canonicalUrl}}">
 
 <!-- Open Graph -->
-<meta property="og:title" content="{{ page_title }}">
-<meta property="og:description" content="{{ page_description }}">
-<meta property="og:url" content="{{ site.url }}{{ page.url }}">
-<meta property="og:site_name" content="{{ site.title }}">
-<meta property="og:type" content="website">
-<meta property="og:locale" content="en_US">
+<meta property="og:title" content="{{pageTitle}}">
+<meta property="og:description" content="{{pageDescription}}">
+<meta property="og:url" content="{{pageUrl}}">
+<meta property="og:site_name" content="{{siteName}}">
+<meta property="og:type" content="{{ogType}}">
+<meta property="og:locale" content="{{ogLocale}}">
+<meta property="og:image" content="{{siteUrl}}{{ogImage}}">
 
 <!-- Twitter -->
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="{{ page_title }}">
-<meta name="twitter:site" content="@dhaupin">
-<meta name="twitter:creator" content="@dhaupin">
+<meta name="twitter:card" content="{{twitterCard}}">
+<meta name="twitter:title" content="{{pageTitle}}">
+<meta name="twitter:site" content="{{twitterUsername}}">
+<meta name="twitter:creator" content="{{twitterUsername}}">
 
 <!-- JSON-LD -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "Organization",
-  "name": "{{ site.title }}",
-  "url": "{{ site.url }}"
+  "name": "{{siteName}}",
+  "url": "{{siteUrl}}",
+  "description": "{{siteDescription}}"
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "{{siteName}}",
+  "url": "{{siteUrl}}",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "{{siteUrl}}/?s={search_term_string}"
+  }
 }
 </script>
