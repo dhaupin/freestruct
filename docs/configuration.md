@@ -37,5 +37,5 @@ og:
 
 ## Related
 
-- [Getting Started](/getting-started)
-- [ssr-config.yml Reference](/guides/ssr-config)
+- [Getting Started](/getting-started) - Install and set up freestruct
+- [ssr-config.yml Reference](/guides/ssr-config) - All available options

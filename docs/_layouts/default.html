@@ -83,10 +83,30 @@ pre { margin: 0 0 var(--space-6); padding: var(--space-4); background: var(--col
 pre code { padding: 0; background: none; }
 :not(pre) > code { color: var(--color-primary-dark); }
 
+/* Syntax highlighting */
+pre .comment, pre .c { color: #6b7280; }
+pre .keyword, pre .k { color: #8b5cf6; }
+pre .string, pre .s { color: #10b981; }
+pre .number, pre .n { color: #f59e0b; }
+pre .function, pre .f { color: #3b82f6; }
+pre .tag, pre .t { color: #ef4444; }
+pre .attr, pre .a { color: #3b82f6; }
+pre .builtin, pre .b { color: #06b6d4; }
+
+/* Copy button */
+.copy-btn { position: absolute; top: var(--space-2); right: var(--space-2); padding: var(--space-1) var(--space-2); background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-sm); font-size: var(--font-size-xs); cursor: pointer; opacity: 0; transition: opacity 0.15s; }
+pre:hover .copy-btn { opacity: 1; }
+
 /* Lists */
 ul, ol { margin: 0 0 var(--space-4); padding-left: var(--space-6); }
 li { margin-bottom: var(--space-2); }
 li > ul, li > ol { margin: var(--space-2) 0 0; }
+
+/* Tables */
+table { width: 100%; margin: 0 0 var(--space-6); border-collapse: collapse; font-size: var(--font-size-sm); }
+th, td { padding: var(--space-3) var(--space-4); text-align: left; border-bottom: 1px solid var(--color-border); }
+th { font-weight: 600; background: var(--color-bg-alt); }
+tr:hover td { background: var(--color-bg-alt); }
 
 /* Header */
 .site-header{position:sticky;top:0;z-index:100;height:var(--header-height);background:var(--color-bg);backdrop-filter:blur(8px);border-bottom:1px solid var(--color-border)}
@@ -248,6 +268,15 @@ html.dark .pagefind-ui__result { border-color: var(--color-border); }
 
 /* Dark mode overlay */
 html.dark .search-modal { background: rgba(0,0,0,.7); }
+
+/* Dark mode tables */
+html.dark th { background: var(--color-bg-alt); }
+html.dark tr:hover td { background: var(--color-bg-alt); }
+
+/* Dark mode code */
+html.dark code { background: #1f2937; }
+html.dark pre { background: #1f2937; }
+html.dark .copy-btn { background: #1f2937; border-color: #374151; }
 
   </style>
   
