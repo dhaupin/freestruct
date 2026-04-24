@@ -31,15 +31,50 @@
 </div>
 
 <script>
-document.addEventListener('keydown',function(e){
-  console.log('Key:',e.key,'meta:',e.metaKey,'ctrl:',e.ctrlKey);
-  var searchModal=document.getElementById('searchModal');
-  if(!searchModal)return;
-  if(e.key==='Escape'){searchModal.classList.remove('open');}
-  if((e.metaKey||e.ctrlKey)&&e.key==='k'){
-    e.preventDefault();
-    console.log('Opening modal');
-    searchModal.classList.add('open');
+var searchModal=document.getElementById('searchModal');
+var searchInput=document.getElementById('searchInput');
+var searchResults=document.getElementById('searchResults');
+var searchClose=document.getElementById('searchClose');
+var searchBarInput=document.getElementById('searchBarInput');
+
+async function doSearch(q,resultsEl){
+  if(q.length<2){
+    resultsEl.innerHTML='';
+    return;
   }
+  resultsEl.innerHTML='<div style="padding:1rem 1.25rem;color:var(--color-text-muted)">Loading...</div>';
+  try{
+    var pagefind=await import('/pagefind/pagefind.js');
+    await pagefind.init();
+    var resp=await pagefind.search(q);
+    if(resp.results.length===0){
+      resultsEl.innerHTML='<div style="padding:1rem 1.25rem;color:var(--color-text-muted)">No results found</div>';
+      return;
+    }
+    var html='';
+    for(var i=0;i<resp.results.length&&i<8;i++){
+      var r=resp.results[i];
+      var data=await r.data();
+      html+='<a href="'+data.url+'" class="search-result"><div class="search-result-title">'+(data.meta?.title||data.url)+'</div>';
+      if(data.excerpt)html+='<div class="search-result-excerpt">'+data.excerpt+'</div>';
+      html+='</a>';
+    }
+    resultsEl.innerHTML=html;
+  }catch(e){
+    resultsEl.innerHTML='<div style="padding:1rem 1.25rem;color:var(--color-text-muted)">Search unavailable - run pagefind build</div>';
+  }
+}
+document.addEventListener('keydown',function(e){
+  if(!searchModal)return;
+  if(e.key==='Escape')searchModal.classList.remove('open');
+  if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();searchModal.classList.add('open');searchInput.focus();}
+});
+if(searchClose)searchClose.addEventListener('click',function(){searchModal.classList.remove('open')});
+if(searchInput)searchInput.addEventListener('input',function(){doSearch(this.value,searchResults)});
+if(searchBarInput)searchBarInput.addEventListener('focus',function(){
+  searchModal.classList.add('open');
+  searchInput.value=this.value;
+  searchInput.focus();
+  doSearch(this.value,searchResults);
 });
 </script>
