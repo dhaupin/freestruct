@@ -1,0 +1,13 @@
+title: freestruct
+description: SEO layer for static doc sites
+theme: minima
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-relative-links
+
+relative_links:
+  enabled: true
+  collections: true
+
+permalink: pretty
