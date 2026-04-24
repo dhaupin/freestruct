@@ -1,6 +1,9 @@
 # freestruct SEO config - all meta, OG, Twitter, and JSON-LD defined here
 # This file powers inject-brand.html - user sets nothing in the template
 
+# Output directory from SSG build
+outputDir: docs/_site  # Jekyll: _site, Hugo: public/, Gatsby: dist/
+
 site:
   url: https://dhaupin.github.io/freestruct
   name: freestruct

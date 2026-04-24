@@ -1,12 +1,13 @@
 // freestruct SEO injection - runs post-build
+// Frame-agnostic: works with any SSG, just configure output dir
 const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
+const args = require('process.argv');
 
-// Config
+const OUTPUT_DIR = process.argv[2] || 'docs/_site'; // override: node inject.js _site
 const SSR_CONFIG = 'docs/ssr-config.yml';
 const TEMPLATE = 'docs/_includes/inject-brand.html';
-const OUTPUT_DIR = 'docs/_site';
 
 function inject() {
   console.log('🔍 freestruct: Loading config...');
@@ -14,29 +15,30 @@ function inject() {
   // Load config
   let config;
   try {
-    const configPath = path.join(process.cwd(), SSR_CONFIG);
-    config = yaml.load(fs.readFileSync(configPath, 'utf8'));
+    config = yaml.load(fs.readFileSync(SSR_CONFIG, 'utf8'));
   } catch (e) {
     console.error(`Error: ${SSR_CONFIG} not found`);
     process.exit(1);
   }
   
+  // Override output dir from config
+  const outputDir = config.outputDir || OUTPUT_DIR;
+  
   // Load template
   let template;
   try {
-    const templatePath = path.join(process.cwd(), TEMPLATE);
-    template = fs.readFileSync(templatePath, 'utf8');
+    template = fs.readFileSync(TEMPLATE, 'utf8');
   } catch (e) {
     console.error(`Error: ${TEMPLATE} not found`);
     process.exit(1);
   }
   
   // Process HTML files
-  const files = getHtmlFiles(OUTPUT_DIR);
+  const files = getHtmlFiles(outputDir);
   console.log(`📄 Found ${files.length} HTML files`);
   
   for (const file of files) {
-    injectFile(file, config, template);
+    injectFile(file, config, template, outputDir);
   }
   
   console.log('✅ freestruct: SEO injected');
@@ -58,13 +60,13 @@ function getHtmlFiles(dir) {
   return files;
 }
 
-function injectFile(filePath, config, template) {
+function injectFile(filePath, config, template, outputDir) {
   let html = fs.readFileSync(filePath, 'utf8');
   
   // Extract page info from HTML
   const pageTitle = extractTitle(html) || config.site.name;
   const pageDescription = extractDescription(html) || config.site.description;
-  const pageUrl = '/' + path.relative(OUTPUT_DIR, filePath).replace(/^docs\/_site\//, '').replace(/\/index\.html$/, '/').replace(/\.html$/, '');
+  const pageUrl = '/' + path.relative(outputDir, filePath).replace(/\/index\.html$/, '/').replace(/\.html$/, '');
   const canonicalUrl = config.site.url + pageUrl;
   
   // Build replacements
