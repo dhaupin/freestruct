@@ -40,17 +40,21 @@ function inject() {
   console.log(`📄 Found ${files.length} HTML files`);
   
   for (const file of files) {
+    // Skip normal injection for 404 page - use special injection instead
+    if (file.endsWith('404.html') || file.endsWith('404/index.html')) {
+      continue;
+    }
     injectFile(file, config, template, outputDir, preserve);
+  }
+
+  // Handle 404 separately - inject noindex + proper 404 SEO
+  if (config.generate404 !== false) {
+    generate404(config, outputDir);
   }
 
   // Generate sitemap if enabled
   if (config.generateSitemap !== false) {
     generateSitemap(files, config, outputDir);
-  }
-
-  // Generate 404 if enabled
-  if (config.generate404 !== false) {
-    generate404(config, outputDir);
   }
 
   console.log('✅ freestruct: SEO injected');
@@ -209,7 +213,9 @@ function generate404(config, outputDir) {
   // Use custom 404 template if it exists in output dir
   const custom404Path = path.join(outputDir, '404.html');
   if (fs.existsSync(custom404Path)) {
-    console.log('📄 freestruct: using custom 404.html');
+    // Inject SEO + noindex into custom 404
+    inject404Seo(custom404Path, config);
+    console.log('📄 freestruct: SEO injected into custom 404.html');
     return;
   }
   
@@ -220,7 +226,10 @@ function generate404(config, outputDir) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>404 - Page Not Found | ${config.site.name}</title>
   <meta name="description" content="Page not found">
-  <meta name="robots" content="noindex, nofollow">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <meta property="og:title" content="404 - Page Not Found">
   <meta property="og:description" content="Page not found">
   <meta property="og:url" content="${pageUrl}/404.html">
@@ -239,6 +248,34 @@ function generate404(config, outputDir) {
 
   fs.writeFileSync(path.join(outputDir, '404.html'), notFound);
   console.log('📄 freestruct: 404.html generated');
+}
+
+// Inject SEO + noindex into custom 404 page
+function inject404Seo(filePath, config) {
+  let html = fs.readFileSync(filePath, 'utf8');
+  const pageUrl = config.site.url + '/404.html';
+  
+  // Remove existing SEO tags first
+  html = html.replace(/<meta[^>]*(name|property)="(description|robots|og:|twitter:|canonical)[^>]*>/gi, '');
+  html = html.replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/gi, '');
+  html = html.replace(/<!-- injected by freestruct[\s\S]*?-->/gi, '');
+  
+  const seoTags = `
+  <meta name="description" content="Page not found">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta property="og:title" content="404 - Page Not Found">
+  <meta property="og:description" content="Page not found">
+  <meta property="og:url" content="${pageUrl}">
+  <meta property="og:type" content="website">
+  <link rel="canonical" href="${pageUrl}">
+  <!-- injected by freestruct: https://github.com/dhaupin/freestruct -->
+`;
+  
+  html = html.replace(/<\/head>/i, seoTags + '\n</head>');
+  fs.writeFileSync(filePath, html);
 }
 
 module.exports = { inject };
