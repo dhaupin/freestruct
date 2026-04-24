@@ -57,22 +57,22 @@ keywords:
 
 ## Template Placeholders
 
-Available `{{placeholder}}` values in `inject-brand.html`:
+Available placeholders in `inject-brand.html`:
 
 | Placeholder | Description |
 |-------------|-------------|
-| `{{pageTitle}}` | Page title |
-| `{{pageDescription}}` | Page description |
-| `{{pageUrl}}` | Full page URL |
-| `{{canonicalUrl}}` | Canonical URL |
-| `{{siteUrl}}` | Site base URL |
-| `{{siteName}}` | Site name |
-| `{{siteDescription}}` | Site description |
-| `{{twitterUsername}}` | Twitter handle |
-| `{{twitterCard}}` | Twitter card type |
-| `{{ogImage}}` | OG image path |
-| `{{ogType}}` | OG content type |
-| `{{ogLocale}}` | OG locale |
+| {{pageTitle}} | Page title |
+| {{pageDescription}} | Page description |
+| {{pageUrl}} | Full page URL |
+| {{canonicalUrl}} | Canonical URL |
+| {{siteUrl}} | Site base URL |
+| {{siteName}} | Site name |
+| {{siteDescription}} | Site description |
+| {{twitterUsername}} | Twitter handle |
+| {{twitterCard}} | Twitter card type |
+| {{ogImage}} | OG image path |
+| {{ogType}} | OG content type |
+| {{ogLocale}} | OG locale |
 
 ## Frame-specific Output Dirs
 

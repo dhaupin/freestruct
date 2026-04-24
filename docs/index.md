@@ -25,28 +25,28 @@ your-ssg build → freestruct inject → deploy
 <div class="features-grid">
 <div class="feature-card">
 
-### 🔌 Frame-agnostic
+**Frame-agnostic**
 
 Works with any SSG. Just configure your output directory.
 
 </div>
 <div class="feature-card">
 
-### ⚙️ Single config
+**Single config**
 
 All SEO in `ssr-config.yml`. No touching templates.
 
 </div>
 <div class="feature-card">
 
-### 🏷️ Full SEO
+**Full SEO**
 
 Open Graph, Twitter Cards, JSON-LD schema auto-generated.
 
 </div>
 <div class="feature-card">
 
-### 🚀 Zero dependencies
+**Zero dependencies**
 
 No plugin required. Pure post-build injection.
 
