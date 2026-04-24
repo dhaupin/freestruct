@@ -7,6 +7,32 @@ title: Voice & Style
 
 Writing guidelines for freestruct content.
 
+## Casing
+
+freestruct uses Title Case for brand references. Use lowercase for CLI commands and code references.
+
+### Rules
+
+- **Title Case**: freestruct (brand name)
+- **lowercase**: `freestruct` (CLI, code references, file paths)
+- **UPPERCASE**: Acronyms like SEO, API, URL acceptable but prefer Title Case unless defining explicitly
+
+### Examples
+
+| Use | Casing | Example |
+|-----|--------|---------|
+| Brand name | Title Case | freestruct |
+| CLI command | lowercase | `freestruct build` |
+| File path | lowercase | `ssr-config.yml` |
+| Config option | lowercase | `outputDir`, `site.url` |
+| CLI flag | lowercase | `--help`, `--verbose` |
+| Acronym | UPPERCASE or Title | SEO or Seo |
+| SSG names | Title Case | Jekyll, Hugo, Docusaurus |
+
+### Why
+
+CLI tools use lowercase by convention. Brand names use Title Case. Mixing them correctly signals engineering awareness.
+
 ## Our Tone
 
 We're engineers who are also helpful. Clear. Direct. Slightly informal when appropriate, serious when it matters.
