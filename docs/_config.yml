@@ -1,7 +1,7 @@
 title: freestruct
 description: SEO layer for static doc sites
-url: https://dhaupin.github.io/freestruct
-baseurl: /freestruct
+url: http://freestruct.creadev.org
+baseurl:
 
 # Theme
 theme: null

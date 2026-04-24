@@ -17,7 +17,7 @@ Engineering decisions and technical details for freestruct docs.
 ```js
 // Module script
 var pagefind = null;
-var pagefindPath = '/freestruct/pagefind/pagefind.js';
+var pagefindPath = '/pagefind/pagefind.js';
 
 async function initPagefind() {
   if (pagefind) return pagefind;
@@ -40,7 +40,7 @@ window.doSearch = async function(q, resultsEl) {
 - Modal is custom HTML in header.html (not automatic PageFindUI)
 
 ### Gotchas
-- Path must include baseurl: `/freestruct/pagefind/pagefind.js`
+- Path must include baseurl: `/pagefind/pagefind.js`
 - Module script can't load from CDN (CORS)
 - Search only works after JS hydrates (client-side only)
 
@@ -62,4 +62,4 @@ GitHub Actions builds with Jekyll:
 - Runs on push to main
 - Outputs to `docs/_site/`
 - PageFind indexes the built HTML
-- Deployed to GitHub Pages at `https://dhaupin.github.io/freestruct/`
+- Deployed to http://freestruct.creadev.org/
