@@ -27,6 +27,11 @@ kramdown:
 
 permalink: pretty
 
+# Sass
+sass:
+  sass_dir: assets/scss
+  style: compressed
+
 # Defaults
 defaults:
   - scope:
