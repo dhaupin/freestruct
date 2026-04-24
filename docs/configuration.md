@@ -87,6 +87,31 @@ Available placeholders:
 | MkDocs | `site` |
 | Gatsby | `public` |
 
+## Preserving Existing Meta Tags
+
+By default, freestruct removes existing SEO meta tags before injecting to avoid conflicts. To preserve existing tags:
+
+```yaml
+preserveExistingMeta: true
+```
+
+When true, freestruct will inject new SEO tags alongside any existing ones.
+
+## Per-Page Config
+
+For page-specific SEO, add a comment to your page content:
+
+```html
+<!-- freestruct: {"title": "My Page", "ogType": "article", "ogImage": "/images/post.jpg"} -->
+```
+
+Available per-page options:
+- `title`, `description`
+- `ogType` (article, book, profile)
+- `ogImage`
+- `twitterCard` (summary_large_image)
+- `publishedTime`, `author`, `section`
+
 ## Environment Overrides
 
 You can override config values via environment variables:

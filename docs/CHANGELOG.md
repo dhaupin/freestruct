@@ -10,6 +10,8 @@ All notable changes to freestruct are documented here.
 - **inject-brand.html** - Template with `{{placeholder}}` syntax for post-build injection
 - **lib/inject.js** - Node.js tool that reads config + template and injects into built HTML
 - **outputDir** - Configurable per SSG (Jekyll: `_site`, Hugo: `public`, etc.)
+- **preserveExistingMeta** - Option to keep existing meta tags instead of removing
+- **Per-page config** - Page-specific SEO via `<!-- freestruct: {} -->` comment
 - **GitHub Actions workflow** - CI/CD with freestruct integrated
 
 ### Changed

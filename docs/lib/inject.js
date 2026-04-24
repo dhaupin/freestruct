@@ -59,6 +59,7 @@ function injectFile(filePath, config, template, outputDir) {
   
   const pageData = extractPageData(html, config);
   
+  const preserve = config.preserveExistingMeta || false;
   const replacements = {
     '{{pageTitle}}': pageData.title,
     '{{pageDescription}}': pageData.description,
@@ -85,7 +86,9 @@ function injectFile(filePath, config, template, outputDir) {
   seo = seo.replace(/<!--[\s\S]*?-->/g, '');
   
   // Remove existing SEO tags to avoid conflicts
-  html = removeExistingSeo(html);
+  if (!preserve) {
+    html = removeExistingSeo(html);
+  }
   
   // Inject before </head>
   html = html.replace(/<\/head>/i, seo.trim() + '\n</head>');
