@@ -2,6 +2,18 @@
 
 All notable changes to freestruct will be documented here.
 
+## [0.2.1] - 2026-04-24
+
+### Fixed
+- `injectMissingSeo` return type - was returning full HTML causing duplication
+- Update URLs for freestruct.creadev.org deployment
+
+### Added
+- `basePath` config option to strip subpath from canonical URLs (e.g., `/freestruct`)
+
+### Changed
+- Site URL updated to http://freestruct.creadev.org
+
 ## [0.2.0] - 2026-04-24
 
 ### Fixed

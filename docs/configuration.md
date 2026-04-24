@@ -85,6 +85,16 @@ Available `{{placeholder}}` values in `inject-brand.html`:
 | MkDocs | `site` |
 | Gatsby | `public` |
 
+## Base Path
+
+If your site is hosted at a subpath (e.g., `/freestruct`), set `basePath` to strip it from canonical URLs:
+
+```yaml
+basePath: /freestruct  # Strip this prefix from URLs
+```
+
+This ensures canonical URLs point to the correct location (e.g., `/docs/foo` instead of `/freestruct/docs/foo`).
+
 ## Preserve Existing Meta Tags
 
 By default (`preserveExistingMeta: true`), freestruct **selectively injects** only what tags are missing. If your page already has `<meta name="description">`, OG tags, Twitter card, etc., freestruct adds everything else to complete the SEO stack without duplicates.
