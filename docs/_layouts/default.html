@@ -80,6 +80,16 @@ li > ul, li > ol { margin: var(--space-2) 0 0; }
 .site-nav a:hover, .site-nav a.active { color: var(--color-text); text-decoration: none; }
 .nav-badge { font-size: var(--font-size-xs); padding: 0.125rem 0.375rem; background: var(--color-accent); color: white; border-radius: var(--radius-sm); font-weight: 600; margin-left: var(--space-2); }
 
+/* Search button */
+.search-button { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); font-size: var(--font-size-sm); font-family: var(--font-sans); color: var(--color-text-muted); background: var(--color-bg-alt); border: 1px solid var(--color-border); border-radius: var(--radius-md); cursor: pointer; transition: all 0.15s; }
+.search-button:hover { border-color: var(--color-primary); color: var(--color-text); }
+.search-button kbd { font-family: var(--font-mono); font-size: 0.7rem; padding: 0.125rem 0.25rem; background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
+
+/* Search modal */
+.search-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: flex; align-items: flex-start; justify-content: center; padding: 10vh 0; overflow-y: auto; }
+.search-modal[hidden] { display: none; }
+.search-modal-content { background: white; width: 100%; max-width: 40rem; margin: var(--space-4); border-radius: var(--radius-lg); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+
 /* Main */
 .site-main { padding: var(--space-8) 0; min-height: calc(100vh - var(--header-height) - 8rem); }
 .home-hero { text-align: center; padding: var(--space-12) 0; }
