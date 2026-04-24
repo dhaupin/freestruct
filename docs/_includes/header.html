@@ -104,6 +104,41 @@ document.querySelectorAll('#siteNav a').forEach(function(link) {
     burger.classList.remove('open');
   });
 });
+
+// Submenu toggle (mobile + UX)
+document.querySelectorAll('.nav-group-toggle').forEach(function(toggle) {
+  toggle.addEventListener('click', function(e) {
+    e.stopPropagation();
+    var items = this.nextElementSibling;
+    var isOpen = items.classList.contains('open');
+    
+    // Close all other submenus first
+    document.querySelectorAll('.nav-group-items.open').forEach(function(openItems) {
+      openItems.classList.remove('open');
+    });
+    document.querySelectorAll('.nav-group-toggle.open').forEach(function(openToggle) {
+      openToggle.classList.remove('open');
+    });
+    
+    // Toggle current
+    if (!isOpen) {
+      items.classList.add('open');
+      this.classList.add('open');
+    }
+  });
+});
+
+// Close submenus on outside click (desktop)
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.nav-group')) {
+    document.querySelectorAll('.nav-group-items.open').forEach(function(items) {
+      items.classList.remove('open');
+    });
+    document.querySelectorAll('.nav-group-toggle.open').forEach(function(toggle) {
+      toggle.classList.remove('open');
+    });
+  }
+});
 </script>
 
 <script>
