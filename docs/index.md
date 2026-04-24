@@ -1,43 +1,46 @@
 ---
 layout: home
 title: freestruct
-description: SEO layer for static doc sites
+description: SEO layer for static doc sites. Build with Jekyll, Hugo, Docusaurus — get search + meta + sitemap out of the box.
 ---
 
-Build your docs with any static site generator. freestruct adds the SEO layer.
+## Why freestruct?
 
-## Features
+<div class="features-grid">
+<div class="feature-card">
 
-- **Search** - Pagefind baked in, works out of the box
-- **SEO** - Open Graph, Twitter cards, JSON-LD schema
-- **Sitemap** - Auto-generated sitemap.xml + robots.txt
-- **Fast** - Minimal dependencies, Pagespeed optimized
+### 🔍 Search
 
-## Quick Start
+Pagefind powered. No external services. Builds into your static site.
 
-```bash
-npm install freestruct
-```
+</div>
+<div class="feature-card">
 
-```yaml
-# _config.yml
-search:
-  provider: pagefind
-```
+### 🏷️ SEO
 
-```json
-// package.json
-{
-  "scripts": {
-    "build": "jekyll build && freestruct build"
-  }
-}
-```
+Open Graph, Twitter Cards, JSON-LD schema. Auto-generated.
+
+</div>
+<div class="feature-card">
+
+### 🗺️ Sitemap
+
+Auto-generated sitemap.xml + robots.txt for crawlers.
+
+</div>
+<div class="feature-card">
+
+### ⚡ Fast
+
+Minimal deps. Pagespeed optimized. No JS bloat.
+
+</div>
+</div>
 
 ## Supported Generators
 
-- Jekyll
-- Hugo
-- Docusaurus
-- MkDocs
-- VitePress
+- **Jekyll** - Native support
+- **Hugo** - Native support  
+- **Docusaurus** - Plugin
+- **MkDocs** - Plugin
+- **VitePress** - Plugin

@@ -1,50 +1,13 @@
 <header class="site-header">
   <div class="container">
     <a href="{{ '/' | relative_url }}" class="site-logo">
-      {{ site.title | default: 'freestruct' }}
+      freestruct<span class="nav-badge">v0.1</span>
     </a>
     
     <nav class="site-nav">
-      {% for item in site.nav %}
-      {% if item.items %}
-      <div class="nav-dropdown">
-        <button class="nav-toggle" aria-expanded="false">
-          {{ item.title }}
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-            <path d="M3 4.5L6 8L9 4.5"/>
-          </svg>
-        </button>
-        <ul class="nav-menu">
-          {% for sub in item.items %}
-          <li><a href="{{ sub.url }}">{{ sub.title }}</a></li>
-          {% endfor %}
-        </ul>
-      </div>
-      {% elsif item.external %}
-      <a href="{{ item.url }}" target="_blank" rel="noopener">{{ item.title }}</a>
-      {% else %}
-      <a href="{{ item.url }}">{{ item.title }}</a>
-      {% endif %}
-      {% endfor %}
+      <a href="{{ '/getting-started' | relative_url }}">Getting Started</a>
+      <a href="{{ '/configuration' | relative_url }}">Configuration</a>
+      <a href="https://github.com/dhaupin/freestruct" target="_blank" rel="noopener">GitHub</a>
     </nav>
-    
-    {% if site.search.provider == 'pagefind' %}
-    <button class="search-button" id="search-toggle">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="8"/>
-        <path d="M21 21l-4.35-4.35"/>
-      </svg>
-      <span>Search</span>
-      <kbd>⌘K</kbd>
-    </button>
-    {% endif %}
   </div>
 </header>
-
-{% if site.search.provider == 'pagefind' %}
-<div id="search-modal" class="search-modal" hidden>
-  <div class="search-modal-content">
-    <div id="search"></div>
-  </div>
-</div>
-{% endif %}
