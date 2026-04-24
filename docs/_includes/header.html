@@ -37,19 +37,24 @@ var searchInput=document.getElementById('searchInput');
 var searchResults=document.getElementById('searchResults');
 var searchBarInput=document.getElementById('searchBarInput');
 var searchClose=document.getElementById('searchClose');
-function doSearch(q,output){
+var pagefind;
+function initPagefind(){
+  if(pagefind)return;
+  pagefind=new Pagefind();
+}
+async function doSearch(q,output){
   if(!q){output.innerHTML='';return;}
-  fetch('/pagefind/pagefind.js').then(function(m){return m.ok?m.text():Promise.reject()}).then(function(code){
-    eval(code);
-    return window.Pagefind.search?q.slice(0,1):Promise.resolve({results:[]});
-  }).then(function(r){
+  initPagefind();
+  try{
+    var res=await pagefind.search(q);
     var html='';
-    r.results.slice(0,5).forEach(function(x){
+    res.results.slice(0,5).forEach(function(x){
       html+='<a href="'+x.url+'" class="search-result"><div class="search-result-title">'+(x.meta?.title||x.url)+'</div>';
-      if(x.excerpt)html+='<div class="search-result-excerpt">'+x.excerpt+'</div>';
     });
     output.innerHTML=html||'<div class="search-result"><div class="search-result-title">No results</div></div>';
-  }).catch(function(){output.innerHTML='<div class="search-result"><div class="search-result-title">Search unavailable</div></div>'});
+  }catch(e){
+    output.innerHTML='<div class="search-result"><div class="search-result-title">Search unavailable</div></div>';
+  }
 }
 if(searchTrigger&&searchModal){
   searchTrigger.addEventListener('click',function(){searchModal.classList.add('open');searchInput.focus()});
