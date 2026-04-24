@@ -6,7 +6,7 @@ description: Frame-agnostic SEO layer for static doc sites. Configure once, inje
 
 ## What is freestruct?
 
-freestruct is a **post-build SEO injection layer** for static site generators. Configure your site meta, OG tags, Twitter cards, and JSON-LD schema once in `ssr-config.yml` — freestruct injects them into every page.
+freestruct is a post-build SEO injection layer for static site generators. Configure your site meta, OG tags, Twitter cards, and JSON-LD schema once in `ssr-config.yml` - freestruct injects them into every page.
 
 No matter which SSG you use (Jekyll, Hugo, Docusaurus, MkDocs, VitePress), freestruct works the same way.
 
@@ -55,11 +55,11 @@ No plugin required. Pure post-build injection.
 
 ## Supported SSGs
 
-- **Jekyll** → output: `_site`
-- **Hugo** → output: `public`
-- **Docusaurus** → output: `build`
-- **VitePress** → output: `.vitepress/dist`
-- **MkDocs** → output: `site`
+- Jekyll → output: `_site`
+- Hugo → output: `public`
+- Docusaurus → output: `build`
+- VitePress → output: `.vitepress/dist`
+- MkDocs → output: `site`
 
 ## Quick start
 
