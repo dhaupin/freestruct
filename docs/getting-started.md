@@ -78,4 +78,4 @@ Or add to `package.json`:
 ## Next steps
 
 - [Configuration](/configuration) - Full config reference
-- [ssr-config.yml](/ssr-config) - All available options
+- [ssr-config.yml Reference](/guides/ssr-config) - All available options

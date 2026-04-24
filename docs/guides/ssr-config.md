@@ -31,9 +31,7 @@ og:
   type: website
 ```
 
-## Options
-
-### outputDir
+## Output Directory
 
 The output directory from your SSG build.
 
@@ -42,6 +40,8 @@ outputDir: _site  # Jekyll
 outputDir: public   # Hugo, Gatsby
 outputDir: build   # Docusaurus
 ```
+
+## Generate Options
 
 ### generateSitemap
 
@@ -61,7 +61,7 @@ generate404: true   # generates 404.html (or uses custom)
 generate404: false  # skip 404 page generation
 ```
 
-Custom 404: Place a `404.html` in your SSG's output directory before running freestruct. It will be used instead of generating a default page.
+## Path Options
 
 ### basePath
 
@@ -79,6 +79,8 @@ Whether to preserve existing meta tags or replace them entirely.
 preserveExistingMeta: true   # default - only add missing tags
 preserveExistingMeta: false  # remove existing SEO first, then inject fresh
 ```
+
+## Site Options
 
 ### site
 
@@ -99,6 +101,8 @@ Author information for schema.org.
 | `name` | No | Author name |
 | `url` | No | Author URL (GitHub, personal site, etc.) |
 
+## Meta Options
+
 ### twitter
 
 Twitter Card meta tags.
@@ -117,6 +121,56 @@ Open Graph meta tags.
 | `image` | No | OG image path (absolute or relative to site url) |
 | `locale` | No | Locale (default: `en_US`) |
 | `type` | No | Content type: `website`, `article`, `book`, `profile` |
+
+## Template Placeholders
+
+Available placeholders in `inject-brand.html`:
+
+| Placeholder | Description |
+|-------------|-------------|
+| `{{pageTitle}}` | Page title |
+| `{{pageDescription}}` | Page description |
+| `{{pageUrl}}` | Full page URL |
+| `{{canonicalUrl}}` | Canonical URL |
+| `{{siteUrl}}` | Site base URL |
+| `{{siteName}}` | Site name |
+| `{{siteDescription}}` | Site description |
+| `{{twitterUsername}}` | Twitter handle |
+| `{{twitterCard}}` | Twitter card type |
+| `{{ogImage}}` | OG image path |
+| `{{ogType}}` | OG content type |
+| `{{ogLocale}}` | OG locale |
+
+## Per-Page Options
+
+For page-specific SEO, add a comment to your page content:
+
+```html
+<!-- freestruct: {"title": "My Page", "ogType": "article", "ogImage": "/images/post.jpg"} -->
+```
+
+Available per-page options:
+- `title`, `description`
+- `ogType` (article, book, profile)
+- `ogImage`
+- `twitterCard` (summary_large_image)
+- `publishedTime`, `author`, `section`
+
+## Source Attribution
+
+Injected HTML includes a source comment:
+
+```html
+<!-- injected by freestruct: https://github.com/dhaupin/freestruct -->
+```
+
+## Environment Overrides
+
+You can override config values via environment variables:
+
+```bash
+FREESTRUCT_URL=https://staging.example.com node docs/lib/inject.js
+```
 
 ## Related
 
