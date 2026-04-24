@@ -176,8 +176,8 @@ function generateSitemap(files, config, outputDir) {
   for (const file of files) {
     const pageUrl = '/' + path.relative(outputDir, file).replace(/\/index\.html$/, '/').replace(/\.html$/, '');
     
-    // Skip 404 page
-    if (pageUrl.includes('404.html')) continue;
+    // Skip 404 page (both generated and any existing)
+    if (pageUrl === '/404' || pageUrl === '/404.html') continue;
     
     // Strip basePath if configured
     let cleanUrl = pageUrl;
@@ -206,6 +206,13 @@ ${urls}</urlset>`;
 function generate404(config, outputDir) {
   const pageUrl = config.site.url;
   
+  // Use custom 404 template if it exists in output dir
+  const custom404Path = path.join(outputDir, '404.html');
+  if (fs.existsSync(custom404Path)) {
+    console.log('📄 freestruct: using custom 404.html');
+    return;
+  }
+  
   const notFound = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -213,6 +220,7 @@ function generate404(config, outputDir) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>404 - Page Not Found | ${config.site.name}</title>
   <meta name="description" content="Page not found">
+  <meta name="robots" content="noindex, nofollow">
   <meta property="og:title" content="404 - Page Not Found">
   <meta property="og:description" content="Page not found">
   <meta property="og:url" content="${pageUrl}/404.html">
