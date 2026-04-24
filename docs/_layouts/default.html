@@ -6,6 +6,38 @@
   
   {% seo %}
   
+  <!-- Organization Schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "freestruct",
+    "url": "{{ site.url }}{{ site.baseurl }}",
+    "description": "{{ site.description }}",
+    "sameAs": [
+      "https://github.com/dhaupin/freestruct"
+    ]
+  }
+  </script>
+  
+  <!-- WebSite Schema with SearchAction -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "freestruct",
+    "url": "{{ site.url }}{{ site.baseurl }}",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "{{ site.url }}{{ site.baseurl }}/?s={search_term_string}"
+      },
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+  
   <style>
 :root {
   --color-primary: #2563eb;
