@@ -86,8 +86,7 @@ li > ul, li > ol { margin: var(--space-2) 0 0; }
 .search-button kbd { font-family: var(--font-mono); font-size: 0.7rem; padding: 0.125rem 0.25rem; background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
 
 /* Search modal */
-.search-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 200; display: flex; align-items: flex-start; justify-content: center; padding: 10vh 0; overflow-y: auto; }
-.search-modal[hidden] { display: none; }
+.search-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 200; display: none; align-items: flex-start; justify-content: center; padding: 10vh 0; overflow-y: auto; }
 .search-modal-content { background: var(--color-bg); width: 100%; max-width: 40rem; margin: var(--space-4); border-radius: var(--radius-lg); box-shadow: 0 20px 40px rgba(0,0,0,0.2); overflow: hidden; max-height: 80vh; }
 .search-modal-content .pagefind-ui { padding: var(--space-4); }
 .search-modal-content .pagefind-ui__search-input { background: var(--color-bg-alt); }
