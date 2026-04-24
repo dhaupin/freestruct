@@ -20,6 +20,8 @@ nav:
     url: /getting-started
   - title: Configuration
     url: /configuration
+  - title: ssr-config.yml
+    url: /ssr-config
 
 # Markdown
 markdown: kramdown

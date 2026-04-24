@@ -3,63 +3,90 @@ title: Getting Started
 description: Install and configure freestruct for your doc site
 ---
 
+## Prerequisites
+
+- Node.js 18+
+- Your SSG (Jekyll, Hugo, Docusaurus, etc.)
+
 ## Installation
 
 ```bash
-npm install freestruct
+npm install
 ```
 
 ## Configuration
 
-Create a `_config.yml` in your docs folder:
+Create `ssr-config.yml` in your docs root:
 
 ```yaml
-title: My Docs
-description: Documentation for My Project
+# Output directory from your SSG build
+outputDir: _site  # Jekyll
+# outputDir: public          # Hugo
+# outputDir: build           # Docusaurus
 
-search:
-  provider: pagefind
+site:
+  url: https://yoursite.com
+  name: Your Site Name
+  description: Your site description
+
+twitter:
+  username: "@yourhandle"
+  card: summary
+
+og:
+  image: /assets/og-image.png
+  locale: en_US
+  type: website
 ```
 
-## Build Script
+## Add injection marker
 
-Add to `package.json`:
+In your layout's `<head>`, add:
+
+```html
+<!-- freestruct SEO -->
+</head>
+```
+
+freestruct will inject SEO meta tags between the marker and `</head>`.
+
+## Build
+
+```bash
+# Jekyll example
+jekyll build && node docs/lib/inject.js
+
+# Hugo example
+hugo && node docs/lib/inject.js public
+```
+
+Or add to `package.json`:
 
 ```json
 {
   "scripts": {
-    "build": "jekyll build && freestruct build"
+    "build": "jekyll build && node docs/lib/inject.js",
+    "build:hugo": "hugo && node docs/lib/inject.js"
   }
 }
 ```
 
-## Running Locally
+## GitHub Actions
 
-```bash
-bundle exec jekyll serve
+```yaml
+- name: Build Jekyll
+  run: bundle exec jekyll build
+
+- name: Setup Node
+  uses: actions/setup-node@v4
+  with:
+    node-version: '20'
+
+- name: Run freestruct
+  run: npm install && node docs/lib/inject.js
 ```
 
-Then build with freestruct separately:
+## Next steps
 
-```bash
-freestruct build
-```
-
-## Project Structure
-
-```
-docs/
-├── _config.yml      # Jekyll config
-├── index.md         # Homepage
-├── getting-started.md
-├── _theme/          # Optional overrides
-│   ├── _layouts/
-│   ├── _includes/
-│   └── assets/
-└── pagefind/        # Generated search index
-```
-
-## Next Steps
-
-- [Configuration](/configuration) - Full config options
-- [Search](/search) - Search setup and customization
+- [Configuration](/configuration) - Full config reference
+- [ssr-config.yml](/ssr-config) - All available options

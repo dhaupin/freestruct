@@ -1,71 +1,96 @@
 ---
 title: Configuration
-description: Full configuration reference for freestruct
+description: Configure freestruct for your doc site
 ---
 
-## Site Config
+## ssr-config.yml
+
+All freestruct configuration lives in `ssr-config.yml`. This is the single source of truth for SEO settings.
+
+## Basic Setup
 
 ```yaml
-title: My Docs
-description: Documentation for My Project
-url: https://example.com
+site:
+  url: https://example.com
+  name: My Documentation
+  description: Documentation for my project
 ```
 
-## Search
+## Full Configuration
 
 ```yaml
-search:
-  provider: pagefind
+# Output directory from SSG build
+outputDir: _site
+
+# Site info
+site:
+  url: https://example.com
+  name: My Documentation
+  description: Comprehensive docs for my project
+
+# Author info
+author:
+  name: Your Name
+  url: https://github.com/yourusername
+
+# Twitter Card settings
+twitter:
+  username: "@yourhandle"
+  card: summary  # summary, summary_large_image, app, player
+
+# Open Graph settings
+og:
+  image: /assets/og-image.png
+  locale: en_US
+  type: website  # website, article, book, profile
+
+# Keywords for search engines
+keywords:
+  - documentation
+  - guides
+  - api
 ```
 
-Options:
-- `pagefind` - Built-in client-side search
-- `algolia` - Algolia DocSearch (requires API keys)
+## Template Customization
 
-## Navigation
+The `inject-brand.html` template controls what gets injected. Edit it to add/remove meta tags:
 
-```yaml
-nav:
-  - title: Home
-    url: /
-  - title: Guide
-    items:
-      - title: Getting Started
-        url: /getting-started
-      - title: Configuration
-        url: /configuration
-  - title: GitHub
-    url: https://github.com/example/repo
-    external: true
+```html
+<!-- inject-brand.html -->
+<meta property="og:title" content="{{pageTitle}}">
+<meta property="og:description" content="{{pageDescription}}">
+<!-- Add your custom tags here -->
 ```
 
-## Theme
+Available placeholders:
+- `{{pageTitle}}` - Page title (from HTML or config)
+- `{{pageDescription}}` - Page description
+- `{{pageUrl}}` - Full page URL
+- `{{canonicalUrl}}` - Canonical URL
+- `{{siteUrl}}` - Site base URL
+- `{{siteName}}` - Site name
+- `{{siteDescription}}` - Site description
+- `{{twitterUsername}}` - Twitter handle
+- `{{twitterCard}}` - Twitter card type
+- `{{ogImage}}` - OG image path
+- `{{ogType}}` - OG content type
+- `{{ogLocale}}` - OG locale
 
-Override theme files by creating them in your docs folder:
+## Frame-specific Output Dirs
 
+| SSG | outputDir |
+|-----|-----------|
+| Jekyll | `_site` |
+| Hugo | `public` |
+| Docusaurus | `build` |
+| VitePress | `.vitepress/dist` |
+| MkDocs | `site` |
+| Gatsby | `public` |
+
+## Environment Overrides
+
+You can override config values via environment variables:
+
+```bash
+FREESTRUCT_URL=https://staging.example.com node docs/lib/inject.js
 ```
-docs/
-├── _layouts/
-│   ├── default.html
-│   └── page.html
-├── _includes/
-│   └── header.html
-└── assets/
-    └── main.scss
-```
-
-## SEO
-
-freestruct automatically adds:
-- Canonical URLs
-- Open Graph tags
-- Twitter cards
-- JSON-LD structured data
-- sitemap.xml
-- robots.txt
-
-## Environment Variables
-
-| Variable | Description |
-|----------|-------------|
-| `FREESTRUCT_BASE_URL` | Set base URL for deployment |

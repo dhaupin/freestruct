@@ -1,21 +1,25 @@
 # Changelog
 
-All notable changes to freestruct docs are documented here.
+All notable changes to freestruct are documented here.
 
 ## [Unreleased]
 
 ### Added
-- PageFind search integration with custom modal UI
-- Search opens via click or Cmd/Ctrl+K
-- Organization + WebSite schema.org JSON-LD on every page
+- **Frame-agnostic SEO injection** - Works with any SSG (Jekyll, Hugo, Docusaurus, etc.)
+- **ssr-config.yml** - Centralized config for all SEO meta, OG, Twitter, JSON-LD
+- **inject-brand.html** - Template with `{{placeholder}}` syntax for post-build injection
+- **lib/inject.js** - Node.js tool that reads config + template and injects into built HTML
+- **outputDir** - Configurable per SSG (Jekyll: `_site`, Hugo: `public`, etc.)
+- **GitHub Actions workflow** - CI/CD with freestruct integrated
+
+### Changed
+- SEO now injected post-build, not at SSG build time
+- Layouts no longer need includes - just `<!-- freestruct SEO -->` marker
+- No Jekyll plugins required for SEO
 
 ### Fixed
-- Search module path: `/freestruct/pagefind/pagefind.js` (not `/pagefind/...`)
-- Use ES module dynamic import + `await pagefind.init()` pattern
-
-### Removed
-- Unused `_theme/` folder (dead code)
-- Stale theme comments in config
+- Links now use `relative_url` for correct baseurl
+- Build errors from missing `seo.html` include resolved
 
 ---
 
@@ -27,3 +31,4 @@ All notable changes to freestruct docs are documented here.
 - Built-in SEO via jekyll-seo-tag
 - Sitemap generation
 - Responsive layout
+- Pagefind search integration
