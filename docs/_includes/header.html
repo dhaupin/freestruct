@@ -44,9 +44,13 @@ async function doSearch(q,resultsEl){
   }
   resultsEl.innerHTML='<div style="padding:1rem 1.25rem;color:var(--color-text-muted)">Loading...</div>';
   try{
+    console.log('Importing pagefind...');
     var pagefind=await import('/pagefind/pagefind.js');
+    console.log('pagefind loaded, initializing...');
     await pagefind.init();
+    console.log('pagefind initialized, searching...');
     var resp=await pagefind.search(q);
+    console.log('search results:', resp);
     if(resp.results.length===0){
       resultsEl.innerHTML='<div style="padding:1rem 1.25rem;color:var(--color-text-muted)">No results found</div>';
       return;
@@ -61,7 +65,8 @@ async function doSearch(q,resultsEl){
     }
     resultsEl.innerHTML=html;
   }catch(e){
-    resultsEl.innerHTML='<div style="padding:1rem 1.25rem;color:var(--color-text-muted)">Search unavailable - run pagefind build</div>';
+    console.error('Search error:', e);
+    resultsEl.innerHTML='<div style="padding:1rem 1.25rem;color:var(--color-text-muted)">Search unavailable</div>';
   }
 }
 document.addEventListener('keydown',function(e){
