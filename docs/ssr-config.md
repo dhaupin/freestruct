@@ -43,6 +43,23 @@ outputDir: public   # Hugo, Gatsby
 outputDir: build   # Docusaurus
 ```
 
+### basePath
+
+Optional base path to strip from canonical URLs (for subpath deployments).
+
+```yaml
+basePath: /myproject  # Strip /myproject from URLs
+```
+
+### preserveExistingMeta
+
+Whether to preserve existing meta tags or replace them entirely.
+
+```yaml
+preserveExistingMeta: true   # default - only add missing tags
+preserveExistingMeta: false  # remove existing SEO first, then inject fresh
+```
+
 ### site
 
 Site-level information.

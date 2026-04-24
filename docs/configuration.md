@@ -104,6 +104,17 @@ preserveExistingMeta: true  # default - adds missing only
 preserveExistingMeta: false # removes existing SEO first
 ```
 
+## Injection Marker
+
+Optionally, add an injection marker in your layout's `<head>` for precise control:
+
+```html
+<!-- freestruct SEO -->
+</head>
+```
+
+freestruct will inject SEO meta tags between the marker and `</head>`. Without the marker, freestruct injects before `</head>` (or selectively if `preserveExistingMeta: true`).
+
 ## Per-Page Config
 
 For page-specific SEO, add a comment to your page content:
