@@ -1,42 +1,34 @@
-{% comment %}SEO meta tags - freestruct template{% endcomment %}
-{% comment %}For Jekyll build: uses site.ssr config. For freestruct: uses {{placeholder}} syntax{% endcomment %}
+<!-- freestruct SEO template - post-build injection -->
+<!-- Placeholders: {{pageTitle}}, {{pageDescription}}, {{pageUrl}}, {{canonicalUrl}} -->
+<!-- Config: {{siteUrl}}, {{siteName}}, {{siteDescription}}, {{twitterUsername}}, {{twitterCard}}, {{ogImage}}, {{ogType}}, {{ogLocale}} -->
 
-{% assign config = site.ssr | default: site %}
-{% if config.site %}
-{% assign page_title = page.title | default: config.site.name %}
-{% assign page_description = page.description | default: config.site.description %}
-
-<title>{{ page_title }}{% if page.title and config.site.name %} | {% endif %}{{ config.site.name }}</title>
-<meta name="description" content="{{ page_description }}">
-<link rel="canonical" href="{{ config.site.url }}{{ page.url }}">
+<title>{{pageTitle}}</title>
+<meta name="description" content="{{pageDescription}}">
+<link rel="canonical" href="{{canonicalUrl}}">
 
 <!-- Open Graph -->
-<meta property="og:title" content="{{ page_title }}">
-<meta property="og:description" content="{{ page_description }}">
-<meta property="og:url" content="{{ config.site.url }}{{ page.url }}">
-<meta property="og:site_name" content="{{ config.site.name }}">
-<meta property="og:type" content="{{ config.og.type | default: 'website' }}">
-<meta property="og:locale" content="{{ config.og.locale | default: 'en_US' }}">
-{% if config.og.image %}
-<meta property="og:image" content="{{ config.site.url }}{{ config.og.image }}">
-{% endif %}
+<meta property="og:title" content="{{pageTitle}}">
+<meta property="og:description" content="{{pageDescription}}">
+<meta property="og:url" content="{{pageUrl}}">
+<meta property="og:site_name" content="{{siteName}}">
+<meta property="og:type" content="{{ogType}}">
+<meta property="og:locale" content="{{ogLocale}}">
+<meta property="og:image" content="{{siteUrl}}{{ogImage}}">
 
 <!-- Twitter -->
-<meta name="twitter:card" content="{{ config.twitter.card | default: 'summary' }}">
-<meta name="twitter:title" content="{{ page_title }}">
-{% if config.twitter.username %}
-<meta name="twitter:site" content="{{ config.twitter.username }}">
-<meta name="twitter:creator" content="{{ config.twitter.username }}">
-{% endif %}
+<meta name="twitter:card" content="{{twitterCard}}">
+<meta name="twitter:title" content="{{pageTitle}}">
+<meta name="twitter:site" content="{{twitterUsername}}">
+<meta name="twitter:creator" content="{{twitterUsername}}">
 
 <!-- JSON-LD -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "Organization",
-  "name": "{{ config.site.name }}",
-  "url": "{{ config.site.url }}",
-  "description": "{{ config.site.description }}"
+  "name": "{{siteName}}",
+  "url": "{{siteUrl}}",
+  "description": "{{siteDescription}}"
 }
 </script>
 
@@ -44,12 +36,11 @@
 {
   "@context": "https://schema.org",
   "@type": "WebSite",
-  "name": "{{ config.site.name }}",
-  "url": "{{ config.site.url }}",
+  "name": "{{siteName}}",
+  "url": "{{siteUrl}}",
   "potentialAction": {
     "@type": "SearchAction",
-    "target": "{{ config.site.url }}/?s={search_term_string}"
+    "target": "{{siteUrl}}/?s={search_term_string}"
   }
 }
 </script>
-{% endif %}

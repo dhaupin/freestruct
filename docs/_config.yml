@@ -3,23 +3,6 @@ description: SEO layer for static doc sites
 url: https://dhaupin.github.io/freestruct
 baseurl: /freestruct
 
-# freestruct SEO config
-ssr:
-  site:
-    url: https://dhaupin.github.io/freestruct
-    name: freestruct
-    description: SEO layer for static doc sites
-  author:
-    name: dhaupin
-    url: https://github.com/dhaupin
-  twitter:
-    username: "@dhaupin"
-    card: summary
-  og:
-    image: /freestruct/assets/og-image.png
-    locale: en_US
-    type: website
-
 # Theme
 theme: null
 plugins:
