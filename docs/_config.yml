@@ -12,18 +12,6 @@ theme: null
 search:
   provider: pagefind
 
-# Navigation
-nav:
-  - title: Home
-    url: /
-  - title: Getting Started
-    url: /getting-started
-  - title: Configuration
-    url: /configuration
-  - title: ssr-config.yml
-    url: /ssr-config
-
-# Markdown
 markdown: kramdown
 kramdown:
   input: GFM
