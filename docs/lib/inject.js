@@ -10,53 +10,37 @@ const SSR_CONFIG = 'docs/ssr-config.yml';
 const TEMPLATE = 'docs/_includes/inject-brand.html';
 
 function inject() {
-  console.log('🔍 freestruct: Loading config...');
-  console.log('   cwd:', process.cwd());
+  console.log('freestruct: Loading config...');
   
   // Load config
   let config;
   try {
     config = yaml.load(fs.readFileSync(SSR_CONFIG, 'utf8'));
-    console.log('   config loaded OK');
   } catch (e) {
-    console.error(`Error: ${SSR_CONFIG} not found`);
-    console.error('   tried:', path.join(process.cwd(), SSR_CONFIG));
+    console.error('Error: ssr-config.yml not found');
     process.exit(1);
   }
   
-  // Override output dir from config
   const outputDir = config.outputDir || OUTPUT_DIR;
-  console.log('   output dir:', outputDir);
   
   // Load template
   let template;
   try {
     template = fs.readFileSync(TEMPLATE, 'utf8');
-    console.log('   template loaded OK');
   } catch (e) {
-    console.error(`Error: ${TEMPLATE} not found`);
+    console.error('Error: inject-brand.html not found');
     process.exit(1);
   }
   
   // Process HTML files
   const files = getHtmlFiles(outputDir);
-  console.log(`📄 Found ${files.length} HTML files`);
-  
-  if (files.length === 0) {
-    console.error('No HTML files found in', outputDir);
-    console.error('Dir exists:', fs.existsSync(outputDir));
-    if (fs.existsSync(outputDir)) {
-      console.error('Contents:', fs.readdirSync(outputDir));
-    }
-    // Don't exit - might just be running before Jekyll builds
-  }
+  console.log(`freestruct: Injecting ${files.length} files...`);
   
   for (const file of files) {
-    console.log('   injecting:', file);
     injectFile(file, config, template, outputDir);
   }
   
-  console.log('✅ freestruct: SEO injected');
+  console.log('freestruct: SEO injected');
 }
 
 function getHtmlFiles(dir) {
@@ -110,14 +94,7 @@ function injectFile(filePath, config, template, outputDir) {
   seo = seo.replace(/<!--[\s\S]*?-->/g, '');
   
   // Inject before </head>
-  const seoBlock = seo.trim();
-  const headMatch = html.match(/<\/head>/i);
-  if (headMatch) {
-    html = html.replace(/<\/head>/i, seoBlock + '\n</head>');
-    console.log('      injected', seoBlock.length, 'chars');
-  } else {
-    console.error('      no </head> found!');
-  }
+  html = html.replace(/<\/head>/i, seo.trim() + '\n</head>');
   
   fs.writeFileSync(filePath, html);
 }
