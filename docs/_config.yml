@@ -3,7 +3,7 @@ description: SEO layer for static doc sites
 url: https://dhaupin.github.io/freestruct
 baseurl: ""
 
-# Theme - use custom layouts in _theme
+# Theme
 theme: null
 plugins:
   - jekyll-seo-tag
