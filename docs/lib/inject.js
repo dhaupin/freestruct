@@ -59,7 +59,7 @@ function injectFile(filePath, config, template, outputDir) {
   
   const pageData = extractPageData(html, config);
   
-  const preserve = config.preserveExistingMeta || false;
+  const preserve = config.preserveExistingMeta ?? true;
   const replacements = {
     '{{pageTitle}}': pageData.title,
     '{{pageDescription}}': pageData.description,

@@ -4,9 +4,10 @@
 # Output directory from SSG build
 outputDir: docs/_site  # Jekyll: _site, Hugo: public/, Gatsby: dist/
 
-# Preserve existing meta tags (default: false)
-# If true, freestruct will NOT remove existing SEO tags before injecting
-preserveExistingMeta: false
+# Preserve existing meta tags (default: true)
+# If true, freestruct only injects missing tags (no duplicates)
+# Set to false to remove existing SEO tags before injecting
+preserveExistingMeta: true
 
 site:
   url: https://dhaupin.github.io/freestruct
