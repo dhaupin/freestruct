@@ -39,6 +39,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: npm
+
+      - name: Install freestruct deps
+        run: npm install
+
+      - name: Run freestruct
+        run: npm run inject
 
       - name: Install Pagefind
         run: npm install -g pagefind
