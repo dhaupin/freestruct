@@ -1,3 +1,8 @@
+---
+layout: home
+title: freestruct
+---
+
 # freestruct
 
 **SEO layer for static doc sites.**
