@@ -3,8 +3,8 @@
 const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
-const args = require('process.argv');
 
+// Config
 const OUTPUT_DIR = process.argv[2] || 'docs/_site'; // override: node inject.js _site
 const SSR_CONFIG = 'docs/ssr-config.yml';
 const TEMPLATE = 'docs/_includes/inject-brand.html';
