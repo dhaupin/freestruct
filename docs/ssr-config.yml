@@ -80,8 +80,8 @@ jsonLd:
 #   # Enable this if your CDN doesn't auto-invalidate on deploy
 #   hashInCanonicalUrl: false
 #
-#   # Optional: add ?v={hash} to asset URLs (css, js, images)
-#   # Default: true - assets get cache-busting query params
+#   # Optional: add ?v={hash} to asset URLs (default: true)
+#   # Assets: css, js, png, jpg, gif, svg, webp, ico, woff, woff2, ttf, otf, wasm, json
 #   assetQueryParam: true
 #
 #   # Optional: run purge commands after injection

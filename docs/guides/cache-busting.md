@@ -25,11 +25,17 @@ Assets in your HTML get cache-busted automatically:
 <!-- Before -->
 <link rel="stylesheet" href="/assets/app.css">
 <script src="/assets/app.js"></script>
+<img src="/images/logo.png">
+<link rel="font" href="/fonts/myfont.woff2">
 
 <!-- After each build -->
 <link rel="stylesheet" href="/assets/app.css?v=a1b2c3d4">
 <script src="/assets/app.js?v=a1b2c3d4"></script>
+<img src="/images/logo.png?v=a1b2c3d4">
+<link rel="font" href="/fonts/myfont.woff2?v=a1b2c3d4">
 ```
+
+Supported assets: CSS, JS, images (png, jpg, gif, svg, webp), icons (ico), fonts (woff, woff2, ttf, otf), wasm, json.
 
 ## Configuration
 
@@ -131,3 +137,52 @@ Check if cache busting is working:
 2. Look for `<meta name="freestruct-build">`
 3. Check assets have `?v=...` query params
 4. Each build should show a different hash
+
+## CDN Cache Headers
+
+HTML meta cache headers don't work - CDNs ignore them. Set cache headers in your CDN config, not in HTML.
+
+### Recommended Headers
+
+Set these in your CDN (CloudFlare, Fastly, CloudFront, etc.):
+
+| Asset Type | Cache-Control | Notes |
+|------------|---------------|-------|
+| HTML | `no-cache, max-age=0` | Always fetch fresh |
+| CSS/JS | `public, max-age=31536000, immutable` | Cache forever, bust via ?v= |
+| Images | `public, max-age=31536000, immutable` | Cache forever, bust via ?v= |
+| Fonts | `public, max-age=31536000, immutable` | Cache forever, bust via ?v= |
+
+### CloudFlare (Page Rules)
+
+```
+# HTML - don't cache
+*.yoursite.com/*.html
+Cache-Control: no-cache, max-age=0
+
+# Static assets - cache long
+*.yoursite.com/assets/*
+Cache-Control: public, max-age=31536000
+```
+
+### CloudFront (Behaviors)
+
+```
+# HTML cache policy
+- Cache-Control policy: Cache no-cache
+
+# Static assets cache policy  
+- Cache-Control policy: Cache immutable
+- Query string forwarding: None (important!)
+```
+
+### Why This Works
+
+With freestruct's asset query params:
+1. Build runs → assets get `?v=abc123`
+2. CDN sees new URL (`app.css?v=abc123`) → fetches from origin
+3. CDN caches `app.css?v=abc123` for 1 year
+4. Next deploy → assets get `?v=xyz789`
+5. CDN sees new URL → fetches fresh, caches new version
+
+The `?v=` makes each build a unique URL, so CDN always fetches once, then serves from cache.

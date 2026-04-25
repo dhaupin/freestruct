@@ -147,10 +147,11 @@ function injectFile(filePath, config, template, outputDir, buildHash) {
   const useHashInCanonical = config.cacheBusting?.hashInCanonicalUrl === true;
   const canonicalUrl = baseUrl + pageUrl + (useHashInCanonical ? '?v=' + buildHash : '');
 
-  // Add cache-busting query param to assets (css, js, images)
+  // Add cache-busting query param to assets (css, js, images, fonts)
   if (config.cacheBusting?.assetQueryParam !== false) {
     // Match href or src with common asset extensions, add ?v={hash}
-    html = html.replace(/(href|src)="([^"]+\.(css|js|png|jpg|jpeg|gif|svg|webp))"/gi, 
+    // Includes: css, js, images, fonts, icons, wasm, json
+    html = html.replace(/(href|src)="([^"]+\.(css|js|png|jpg|jpeg|gif|svg|webp|ico|woff|woff2|ttf|otf|wasm|json))"/gi, 
       (match, attr, url) => {
         if (url.includes('?v=')) return match;
         return attr + '="' + url + '?v=' + buildHash + '"';

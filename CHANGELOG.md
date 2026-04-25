@@ -5,11 +5,15 @@ All notable changes to freestruct will be documented here.
 ## [0.2.3] - 2026-04-25
 
 ### Added
-- **Asset cache busting**: Automatic `?v={hash}` appended to CSS, JS, and image assets on every build. Works with any SSG - just scans output HTML and adds query params. Configurable via `cacheBusting.assetQueryParam` (default: true).
+- **Asset cache busting**: Automatic `?v={hash}` appended to CSS, JS, images, fonts, icons, wasm, json on every build. Works with any SSG - just scans output HTML and adds query params. Configurable via `cacheBusting.assetQueryParam` (default: true).
 - **hashInCanonicalUrl option**: Added `cacheBusting.hashInCanonicalUrl` to optionally add `?v={hash}` to canonical URLs (default: false).
+- **Extended asset support**: Now busts fonts (woff, woff2, ttf, otf), icons (ico), and other assets (wasm, json).
 
 ### Fixed
 - Canonical URLs no longer have `?v=` by default - was causing issues with some setups.
+
+### Docs
+- Added "CDN Cache Headers" section with recommended settings for CloudFlare and CloudFront
 
 ## [0.2.2] - 2026-04-24
 
