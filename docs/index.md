@@ -4,8 +4,8 @@ title: freestruct
 description: Post-build SEO layer for any static site generator.
 ---
 
-<section class="how-it-works" id="how-it-works">
-  <h2>Works with your stack</h2>
+<section class="how-it-works">
+  <h2>How it works</h2>
   
   <div class="steps">
     <div class="step">
@@ -26,34 +26,10 @@ description: Post-build SEO layer for any static site generator.
     <div class="step">
       <div class="step-content">
         <h3>Deploy</h3>
-        <p>Done. Every page has proper meta. CDNs see fresh content. No plugins.</p>
+        <p>Done. Every page has proper meta. CDNs see fresh content. No plugins, no template hacks.</p>
       </div>
     </div>
   </div>
-</section>
-
-<section class="problem-section">
-  <h2>The problem</h2>
-  <p>You deployed. Users see old content. You verified the build. But something is broken. The cache lies.</p>
-  
-  <div class="problem-grid">
-    <div class="problem-card">
-      <h3>CDN caches HTML</h3>
-      <p>CloudFlare, Fastly, CloudFront cache aggressively. Deploy doesn't clear it.</p>
-    </div>
-    
-    <div class="problem-card">
-      <h3>Browser caches stale</h3>
-      <p>Users have local copies. Hard refresh doesn't work. They blame you.</p>
-    </div>
-    
-    <div class="problem-card">
-      <h3>No cache headers</h3>
-      <p>GitHub Pages, Netlify basic tier. Can't set Cache-Control. Stuck.</p>
-    </div>
-  </div>
-  
-  <p><a href="/guides/cache-busting">→ How freestruct fixes this</a></p>
 </section>
 
 <section class="features-grid">
@@ -62,17 +38,17 @@ description: Post-build SEO layer for any static site generator.
   <div class="features">
     <div class="feature">
       <h3>Open Graph + Twitter Cards</h3>
-      <p>Meta tags for social previews. Your docs look great on LinkedIn, Twitter, Slack.</p>
+      <p>Social previews for LinkedIn, Twitter, Slack. Your docs look good everywhere.</p>
     </div>
     
     <div class="feature">
       <h3>Canonical URLs</h3>
-      <p>Every page has proper canonical tags. Search engines index the right URL.</p>
+      <p>Proper canonical tags on every page. Search engines index the right URL.</p>
     </div>
     
     <div class="feature">
       <h3>Cache-busting hash</h3>
-      <p>Unique SHA1 hash per build. CDNs see new content. No manual purge.</p>
+      <p>Unique hash per build. CDNs fetch fresh content on every deploy.</p>
     </div>
     
     <div class="feature">
@@ -82,12 +58,12 @@ description: Post-build SEO layer for any static site generator.
     
     <div class="feature">
       <h3>CDN purge hooks</h3>
-      <p>Run CloudFlare, Fastly, CloudFront purge commands automatically.</p>
+      <p>CloudFlare, Fastly, CloudFront — run purge commands automatically.</p>
     </div>
     
     <div class="feature">
       <h3>PageFind search</h3>
-      <p>⌘K search with PageFind baked in. Auto-indexed post-build.</p>
+      <p>⌘K search baked in. Indexes automatically post-build.</p>
     </div>
   </div>
   
@@ -110,7 +86,7 @@ description: Post-build SEO layer for any static site generator.
     
     <a href="/guides/cache-busting" class="guide">
       <h3>Cache Busting</h3>
-      <p>Why the hash matters</p>
+      <p>How the hash works</p>
     </a>
     
     <a href="/guides/post-render-hooks" class="guide">
@@ -121,7 +97,7 @@ description: Post-build SEO layer for any static site generator.
 </section>
 
 <section class="comparison">
-  <h2>vs. manual SEO</h2>
+  <h2>vs. doing it manually</h2>
   
   <table>
     <thead>

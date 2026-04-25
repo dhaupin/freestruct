@@ -54,45 +54,26 @@ layout: default
 /* Landing page sections */
 .how-it-works,
 .features-grid,
-.comparison {
+.comparison,
+.guides-grid {
   padding: var(--space-12) var(--space-4);
+}
+.how-it-works,
+.features-grid,
+.comparison {
   max-width: 40rem;
   margin: 0 auto;
 }
 .how-it-works h2,
 .features-grid h2,
 .comparison h2,
-.problem-section h2,
 .guides-grid h2 {
   text-align: center;
   font-size: var(--font-size-xl);
   margin-bottom: var(--space-8);
 }
-.problem-section {
-  padding: var(--space-12) var(--space-4);
+.guides-grid {
   background: var(--color-bg-alt);
-}
-.problem-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  gap: var(--space-4);
-  max-width: 44rem;
-  margin: 0 auto var(--space-6);
-}
-.problem-card {
-  padding: var(--space-4);
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-}
-.problem-card h3 {
-  font-size: var(--font-size-base);
-  margin-bottom: var(--space-2);
-}
-.problem-card p {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
-  margin: 0;
 }
 .steps {
   display: flex;
@@ -160,12 +141,6 @@ layout: default
   color: var(--color-text-muted);
   margin: 0;
 }
-.problem-section p,
-.features-grid p,
-.guides-grid p {
-  text-align: center;
-}
-.problem-section p a,
 .features-grid p a,
 .guides-grid p a {
   color: var(--color-primary);
