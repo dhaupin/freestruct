@@ -60,3 +60,12 @@ extractApis: true
 
 # Chunk docs for RAG/LLM (on by default)
 chunkForRag: true
+
+# Extract @example from JSDoc (on by default)
+extractExamples: true
+
+# Generate sidebar nav (on by default)
+generateSidebar: true
+
+# Inject heading IDs (on by default)
+injectHeadingIds: true
