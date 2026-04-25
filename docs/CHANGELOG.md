@@ -28,7 +28,9 @@ All notable changes to freestruct are documented here.
 
 ### Changed
 - inject.js generates SHA1 build hash per build
-- All HTML includes `<meta name="freestruct-build">`
+- All HTML includes `<meta name="freestruct-build">` and canonical with `?v=`
+- Purge hooks now execute (run shell commands from config)
+- outputDir: CLI arg overrides config (for CI/CD flexibility)
 
 ---
 
