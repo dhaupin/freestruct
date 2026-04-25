@@ -22,5 +22,8 @@
   "license": "MIT",
   "engines": {
     "node": ">=14"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0"
   }
 }
