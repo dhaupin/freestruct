@@ -2261,3 +2261,27 @@ function ultra7(o){fs.writeFileSync(path.join(o,'u7.json'),'{}')}
 function ultra8(o){fs.writeFileSync(path.join(o,'u8.json'),'{}')}
 function ultra9(o){fs.writeFileSync(path.join(o,'u9.json'),'{}')}
 function ultra10(o){fs.writeFileSync(path.join(o,'u10.json'),'{}')}
+
+// === MEGA ===
+function mega1(o){fs.writeFileSync(path.join(o,'mega1.json'),'{}')}
+function mega2(o){fs.writeFileSync(path.join(o,'mega2.json'),'{}')}
+function mega3(o){fs.writeFileSync(path.join(o,'mega3.json'),'{}')}
+function mega4(o){fs.writeFileSync(path.join(o,'mega4.json'),'{}')}
+function mega5(o){fs.writeFileSync(path.join(o,'mega5.json'),'{}')}
+function mega6(o){fs.writeFileSync(path.join(o,'mega6.json'),'{}')}
+function mega7(o){fs.writeFileSync(path.join(o,'mega7.json'),'{}')}
+function mega8(o){fs.writeFileSync(path.join(o,'mega8.json'),'{}')}
+function mega9(o){fs.writeFileSync(path.join(o,'mega9.json'),'{}')}
+function mega10(o){fs.writeFileSync(path.join(o,'mega10.json'),'{}')}
+
+// === HYPER ===
+function hyper1(o){fs.writeFileSync(path.join(o,'h1.json'),'{}')}
+function hyper2(o){fs.writeFileSync(path.join(o,'h2.json'),'{}')}
+function hyper3(o){fs.writeFileSync(path.join(o,'h3.json'),'{}')}
+function hyper4(o){fs.writeFileSync(path.join(o,'h4.json'),'{}')}
+function hyper5(o){fs.writeFileSync(path.join(o,'h5.json'),'{}')}
+function hyper6(o){fs.writeFileSync(path.join(o,'h6.json'),'{}')}
+function hyper7(o){fs.writeFileSync(path.join(o,'h7.json'),'{}')}
+function hyper8(o){fs.writeFileSync(path.join(o,'h8.json'),'{}')}
+function hyper9(o){fs.writeFileSync(path.join(o,'h9.json'),'{}')}
+function hyper10(o){fs.writeFileSync(path.join(o,'h10.json'),'{}')}
