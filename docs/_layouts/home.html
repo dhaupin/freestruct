@@ -3,16 +3,88 @@ layout: default
 ---
 
 <div class="home-hero">
-  <h1>{{ page.title }}</h1>
+  <div class="hero-badge">v0.2.0 Released</div>
+  <h1>Your docs deserve to be <em>seen</em></h1>
   {% if page.description %}
-  <p>{{ page.description }}</p>
+  <p class="hero-sub">{{ page.description }}</p>
   {% endif %}
   <div class="hero-actions">
     <a href="{{ '/getting-started' | relative_url }}" class="btn btn-primary">Get Started →</a>
-    <a href="https://github.com/dhaupin/freestruct" class="btn btn-secondary">View on GitHub</a>
+    <a href="#how-it-works" class="btn btn-secondary">See How It Works</a>
   </div>
 </div>
 
 <section class="home-content">
   {{ content }}
 </section>
+
+<style>
+.home-hero {
+  text-align: center;
+  padding: 3rem 1rem 2rem;
+}
+
+.hero-badge {
+  display: inline-block;
+  background: #dbeafe;
+  color: #1d4ed8;
+  padding: 0.375rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.home-hero h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.home-hero h1 em {
+  color: #2563eb;
+  font-style: normal;
+}
+
+.hero-sub {
+  font-size: 1.25rem;
+  color: #6b7280;
+  max-width: 600px;
+  margin: 0 auto 2rem;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #1d4ed8;
+}
+
+.btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.btn-secondary:hover {
+  background: #e5e7eb;
+}
+</style>

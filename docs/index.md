@@ -4,17 +4,6 @@ title: freestruct
 description: Frame-agnostic SEO layer for static doc sites. Configure once, inject everywhere.
 ---
 
-<div class="hero">
-  <div class="hero-badge">v0.2.0 Released</div>
-  <h1>Your docs deserve to be <em>seen</em></h1>
-  <p class="hero-sub">Post-build SEO injection for any static site generator. No plugins. No template editing. Just works.</p>
-  
-  <div class="hero-actions">
-    <a href="/getting-started" class="btn btn-primary">Get Started →</a>
-    <a href="#how-it-works" class="btn btn-secondary">See How It Works</a>
-  </div>
-</div>
-
 <div class="how-it-works" id="how-it-works">
   <h2>Three steps to perfect SEO</h2>
   
