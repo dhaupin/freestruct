@@ -7,39 +7,49 @@ description: Frame-agnostic SEO layer for static doc sites. Configure once, inje
 <div class="hero">
   <div class="hero-badge">v0.2.0 Released</div>
   <h1>Your docs deserve to be <em>seen</em></h1>
-  <p class="hero-sub">SEO injection for any static site generator. No plugins. No template editing. Just works.</p>
+  <p class="hero-sub">Post-build SEO injection for any static site generator. No plugins. No template editing. Just works.</p>
   
   <div class="hero-actions">
     <a href="/getting-started" class="btn btn-primary">Get Started →</a>
     <a href="#how-it-works" class="btn btn-secondary">See How It Works</a>
   </div>
+</div>
+
+<div class="how-it-works" id="how-it-works">
+  <h2>Three steps to perfect SEO</h2>
   
-  <div class="hero-demo">
-    <div class="code-window">
-      <div class="code-header">
-        <span class="dot red"></span>
-        <span class="dot yellow"></span>
-        <span class="dot green"></span>
+  <div class="steps">
+    <div class="step">
+      <div class="step-number">1</div>
+      <div class="step-content">
+        <h3>Build your docs</h3>
+        <p>Use any SSG: Jekyll, Hugo, Docusaurus, MkDocs, VitePress</p>
+        <code class="step-code">jekyll build</code>
       </div>
-      <pre><code><span class="code-comment"># 1. Build your docs (any SSG)</span>
-jekyll build
-
-<span class="code-comment"># 2. Run freestruct</span>
-node docs/lib/inject.js
-
-<span class="code-comment"># Done. Every page now has:</span>
-<span class="code-comment"># → Open Graph tags</span>
-<span class="code-comment"># → Twitter Cards</span>
-<span class="code-comment"># → Canonical URLs</span>
-<span class="code-comment"># → JSON-LD Schema</span>
-<span class="code-comment"># → Cache-busting hash</span></code></pre>
+    </div>
+    
+    <div class="step">
+      <div class="step-number">2</div>
+      <div class="step-content">
+        <h3>Run freestruct</h3>
+        <p>One command injects everything</p>
+        <code class="step-code">node docs/lib/inject.js</code>
+      </div>
+    </div>
+    
+    <div class="step">
+      <div class="step-number">3</div>
+      <div class="step-content">
+        <h3>Deploy with confidence</h3>
+        <p>Every page has OG tags, Twitter cards, sitemap, and cache-busting built in</p>
+      </div>
     </div>
   </div>
 </div>
 
 <div class="pain-section" id="why">
   <h2>The "Why Isn't My Docs Updating" Problem</h2>
-  <p class="pain-lead">You deployed. Users see old content. You verified the build. You checked the deploy. But something is broken. Again.</p>
+  <p class="pain-lead">You deployed. Users see old content. You verified the build. But something is broken. Again.</p>
   
   <div class="pain-grid">
     <div class="pain-card">
@@ -64,65 +74,85 @@ node docs/lib/inject.js
     </div>
   </div>
   
-  <p class="pain-solution">freestruct fixes this. Every build generates a unique hash. CDNs see new content. Users see fresh docs. No manual purge. No stress.</p>
+  <p class="pain-solution">
+    <a href="/guides/cache-busting">→ Learn how freestruct fixes this</a>
+  </p>
 </div>
 
 <div class="features-section" id="features">
-  <h2>Everything You Need, Nothing You Don't</h2>
+  <h2>Everything included</h2>
   
-  <div class="feature-row">
-    <div class="feature-icon">🎯</div>
-    <div class="feature-content">
-      <h3>Frame-Agnostic</h3>
-      <p>Jekyll? Hugo? Docusaurus? MkDocs? VuePress? Astro? It doesn't matter. freestruct works with <strong>any</strong> static site generator. Point it at your output folder, done.</p>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🔍</div>
+      <h3>Search Integration</h3>
+      <p>PageFind baked in with ⌘K shortcut. Auto-indexed post-build.</p>
     </div>
-  </div>
-  
-  <div class="feature-row">
-    <div class="feature-icon">⚡</div>
-    <div class="feature-content">
-      <h3>Zero Config, Maximum Results</h3>
-      <p>One YAML file. Your site name, URL, social handles. That's it. freestruct injects all your SEO meta, OG tags, Twitter cards, and JSON-LD schema into every page automatically.</p>
+    
+    <div class="feature-card">
+      <div class="feature-icon">📱</div>
+      <h3>Open Graph + Twitter</h3>
+      <p>Meta tags that make your docs look great on social and search results.</p>
     </div>
-  </div>
-  
-  <div class="feature-row">
-    <div class="feature-icon">🛡️</div>
-    <div class="feature-content">
-      <h3>Cache Busting Built-In</h3>
-      <p>Every build gets a unique SHA1 hash. Injected into a meta tag and canonical URL. CDNs must fetch fresh content. Browser cache bypassed. Deploy with confidence.</p>
+    
+    <div class="feature-card">
+      <div class="feature-icon">🗺️</div>
+      <h3>Sitemap + Robots</h3>
+      <p>Auto-generated sitemap.xml with all your pages. Search engines find everything.</p>
     </div>
-  </div>
-  
-  <div class="feature-row">
-    <div class="feature-icon">🔌</div>
-    <div class="feature-content">
+    
+    <div class="feature-card">
+      <div class="feature-icon">🛡️</div>
+      <h3>Cache Busting</h3>
+      <p>Every build gets a unique hash. CDNs see fresh content. No manual purge.</p>
+    </div>
+    
+    <div class="feature-card">
+      <div class="feature-icon">🔌</div>
       <h3>CDN Purge Hooks</h3>
-      <p>Configure purging for CloudFlare, Fastly, CloudFront, or anything else. freestruct runs your custom shell commands with env vars after every build. Automate the pain away.</p>
+      <p>Run CloudFlare, Fastly, CloudFront purge commands automatically.</p>
     </div>
-  </div>
-  
-  <div class="feature-row">
-    <div class="feature-icon">🔍</div>
-    <div class="feature-content">
-      <h3>Sitemap Auto-Generated</h3>
-      <p>freestruct creates a proper sitemap.xml with all your pages. Search engines will thank you. No extra plugins needed.</p>
-    </div>
-  </div>
-  
-  <div class="feature-row">
-    <div class="feature-icon">🚀</div>
-    <div class="feature-content">
+    
+    <div class="feature-card">
+      <div class="feature-icon">🚀</div>
       <h3>Post-Render Hooks</h3>
-      <p>Beyond SEO: Fix broken links, inject A/B tests, add lazy loading, environment badges. Any HTML modification at build time.</p>
+      <p>Modify HTML at build time: fix links, add banners, inject A/B tests.</p>
     </div>
+  </div>
   
-  <div class="feature-row">
-    <div class="feature-icon">🚀</div>
-    <div class="feature-content">
-      <h3>GitHub Actions Ready</h3>
-      <p>Works perfectly with CI/CD. Add two lines to your workflow. Every commit deploys with perfect SEO. No maintenance required.</p>
-    </div>
+  <p class="features-link">
+    <a href="/configuration">→ Full configuration reference</a>
+  </p>
+</div>
+
+<div class="guides-section" id="guides">
+  <h2>Quick links</h2>
+  
+  <div class="guides-grid">
+    <a href="/getting-started" class="guide-card">
+      <h3>Getting Started</h3>
+      <p>Up and running in 5 minutes</p>
+    </a>
+    
+    <a href="/guides/ssr-config" class="guide-card">
+      <h3>ssr-config.yml</h3>
+      <p>All available options</p>
+    </a>
+    
+    <a href="/guides/cache-busting" class="guide-card">
+      <h3>Cache Busting</h3>
+      <p>Why the hash matters</p>
+    </a>
+    
+    <a href="/guides/cache-busting-faq" class="guide-card">
+      <h3>Cache Busting FAQ</h3>
+      <p>Every edge case explained</p>
+    </a>
+    
+    <a href="/guides/post-render-hooks" class="guide-card">
+      <h3>Post-Render Hooks</h3>
+      <p>Beyond SEO: HTML processing</p>
+    </a>
   </div>
 </div>
 
@@ -173,7 +203,7 @@ node docs/lib/inject.js
   <h2>Ready to fix your docs?</h2>
   <p>5 minutes to set up. Years of peace of mind.</p>
   <a href="/getting-started" class="btn btn-primary btn-large">Get Started Now →</a>
-  <p class="cta-note">Free. Open source. No dependencies.</p>
+  <p class="cta-note">Free. Open source. Zero runtime dependencies.</p>
 </div>
 
 <style>
@@ -217,7 +247,7 @@ node docs/lib/inject.js
   gap: 1rem;
   justify-content: center;
   flex-wrap: wrap;
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
 }
 
 .btn {
@@ -252,49 +282,66 @@ node docs/lib/inject.js
   font-size: 1.125rem;
 }
 
-.code-window {
-  background: #1f2937;
-  border-radius: 0.75rem;
-  max-width: 500px;
+/* How it works */
+.how-it-works {
+  padding: 4rem 1rem;
+  max-width: 800px;
   margin: 0 auto;
-  overflow: hidden;
 }
 
-.code-header {
-  background: #374151;
-  padding: 0.75rem 1rem;
+.how-it-works h2 {
+  text-align: center;
+  font-size: 1.75rem;
+  margin-bottom: 3rem;
+}
+
+.steps {
   display: flex;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 2rem;
 }
 
-.dot {
-  width: 12px;
-  height: 12px;
+.step {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.step-number {
+  width: 3rem;
+  height: 3rem;
+  background: #2563eb;
+  color: white;
   border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+  flex-shrink: 0;
 }
 
-.dot.red { background: #ef4444; }
-.dot.yellow { background: #f59e0b; }
-.dot.green { background: #10b981; }
-
-.code-window pre {
-  margin: 0;
-  padding: 1.5rem;
-  text-align: left;
-  overflow-x: auto;
+.step-content h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.125rem;
 }
 
-.code-window code {
+.step-content p {
+  color: #6b7280;
+  margin: 0 0 0.75rem;
+}
+
+.step-code {
+  display: inline-block;
+  background: #1f2937;
+  color: #10b981;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
   font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
   font-size: 0.875rem;
-  color: #e5e7eb;
-  line-height: 1.7;
 }
 
-.code-comment {
-  color: #6b7280;
-}
-
+/* Pain section */
 .pain-section {
   padding: 4rem 1rem;
   background: #f9fafb;
@@ -347,50 +394,120 @@ node docs/lib/inject.js
 
 .pain-solution {
   font-size: 1.125rem;
-  color: #059669;
-  font-weight: 600;
-  max-width: 600px;
-  margin: 0 auto;
 }
 
+.pain-solution a {
+  color: #059669;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.pain-solution a:hover {
+  text-decoration: underline;
+}
+
+/* Features */
 .features-section {
   padding: 4rem 1rem;
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
 }
 
 .features-section h2 {
   text-align: center;
   font-size: 1.75rem;
-  margin-bottom: 3rem;
-}
-
-.feature-row {
-  display: flex;
-  gap: 1.5rem;
   margin-bottom: 2rem;
-  align-items: flex-start;
 }
 
-.feature-icon {
-  font-size: 2rem;
-  flex-shrink: 0;
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
 }
 
-.feature-content h3 {
-  font-size: 1.125rem;
+.feature-card {
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+}
+
+.feature-card .feature-icon {
+  font-size: 1.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.feature-card h3 {
+  font-size: 1rem;
   margin: 0 0 0.5rem;
 }
 
-.feature-content p {
+.feature-card p {
+  font-size: 0.875rem;
   color: #6b7280;
   margin: 0;
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
-.compare-section {
+.features-link {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.features-link a {
+  color: #2563eb;
+  font-weight: 500;
+}
+
+/* Guides */
+.guides-section {
   padding: 4rem 1rem;
   background: #f9fafb;
+}
+
+.guides-section h2 {
+  text-align: center;
+  font-size: 1.75rem;
+  margin-bottom: 2rem;
+}
+
+.guides-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.guide-card {
+  background: white;
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s;
+}
+
+.guide-card:hover {
+  border-color: #2563eb;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.guide-card h3 {
+  font-size: 1rem;
+  margin: 0 0 0.25rem;
+  color: #1f2937;
+}
+
+.guide-card p {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Compare */
+.compare-section {
+  padding: 4rem 1rem;
 }
 
 .compare-section h2 {
@@ -450,6 +567,7 @@ node docs/lib/inject.js
   color: #9ca3af;
 }
 
+/* CTA */
 .cta-section {
   padding: 4rem 1rem;
   text-align: center;
@@ -471,9 +589,16 @@ node docs/lib/inject.js
   margin-top: 1rem;
 }
 
+/* Responsive */
 @media (max-width: 640px) {
   .hero h1 {
     font-size: 2rem;
+  }
+  
+  .step {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
   }
   
   .compare-table {
