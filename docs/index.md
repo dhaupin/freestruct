@@ -5,23 +5,22 @@ description: Frame-agnostic SEO layer for static doc sites. Configure once, inje
 ---
 
 <div class="how-it-works" id="how-it-works">
-  <h2>Three steps to perfect SEO</h2>
+  <h2>Works with your stack</h2>
   
   <div class="steps">
     <div class="step">
       <div class="step-number">1</div>
       <div class="step-content">
         <h3>Build your docs</h3>
-        <p>Use any SSG: Jekyll, Hugo, Docusaurus, MkDocs, VitePress</p>
-        <code class="step-code">jekyll build</code>
+        <p>Use whatever SSG you already use. Jekyll, Hugo, Docusaurus, MkDocs, VitePress — we don't care.</p>
       </div>
     </div>
     
     <div class="step">
       <div class="step-number">2</div>
       <div class="step-content">
-        <h3>Run freestruct</h3>
-        <p>One command injects everything</p>
+        <h3>Add freestruct</h3>
+        <p>One command runs post-build. Configures once, injects everywhere.</p>
         <code class="step-code">node docs/lib/inject.js</code>
       </div>
     </div>
@@ -29,8 +28,8 @@ description: Frame-agnostic SEO layer for static doc sites. Configure once, inje
     <div class="step">
       <div class="step-number">3</div>
       <div class="step-content">
-        <h3>Deploy with confidence</h3>
-        <p>Every page has OG tags, Twitter cards, sitemap, and cache-busting built in</p>
+        <h3>Deploy</h3>
+        <p>Every page has OG tags, Twitter cards, sitemap, and cache-busting. No plugins. No template hacks.</p>
       </div>
     </div>
   </div>
@@ -196,49 +195,7 @@ description: Frame-agnostic SEO layer for static doc sites. Configure once, inje
 </div>
 
 <style>
-.hero {
-  text-align: center;
-  padding: 3rem 1rem;
-}
-
-.hero-badge {
-  display: inline-block;
-  background: #dbeafe;
-  color: #1d4ed8;
-  padding: 0.375rem 1rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  margin-bottom: 1.5rem;
-}
-
-.hero h1 {
-  font-size: 2.5rem;
-  font-weight: 800;
-  margin-bottom: 1rem;
-  line-height: 1.2;
-}
-
-.hero h1 em {
-  color: #2563eb;
-  font-style: normal;
-}
-
-.hero-sub {
-  font-size: 1.25rem;
-  color: #6b7280;
-  max-width: 600px;
-  margin: 0 auto 2rem;
-}
-
-.hero-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-bottom: 2rem;
-}
-
+/* Buttons */
 .btn {
   display: inline-block;
   padding: 0.75rem 1.5rem;
@@ -318,6 +275,7 @@ description: Frame-agnostic SEO layer for static doc sites. Configure once, inje
 .step-content p {
   color: #6b7280;
   margin: 0 0 0.75rem;
+  line-height: 1.6;
 }
 
 .step-code {
@@ -580,10 +538,6 @@ description: Frame-agnostic SEO layer for static doc sites. Configure once, inje
 
 /* Responsive */
 @media (max-width: 640px) {
-  .hero h1 {
-    font-size: 2rem;
-  }
-  
   .step {
     flex-direction: column;
     align-items: center;
