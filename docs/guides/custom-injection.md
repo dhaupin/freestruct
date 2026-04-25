@@ -49,9 +49,14 @@ All hooks support these placeholders:
 
 ## How it works
 
-1. Create or edit the template file in `docs/_includes/`
+1. Create or edit the template file in `docs/_freestruct/`
 2. Run your SSG build
 3. Run `node docs/lib/inject.js [output]`
 4. Check the output HTML
 
 The files are loaded only if they exist - no config needed.
+
+## See also
+
+- [Cache Busting](/guides/cache-busting) - Understanding the hash
+- [Post-Render Hooks](/guides/post-render-hooks) - Beyond SEO

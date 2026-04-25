@@ -65,6 +65,12 @@ description: Post-build SEO and search layer for static doc sites.
     </div>
     
     <div class="feature">
+      <h3>Custom Code Hooks</h3>
+      <p>Add custom code to every page via hooks. Header, body-start, and footer templates let you inject fonts, analytics, skip links - no template changes needed.</p>
+      <p><a href="/guides/custom-injection">- Custom Hooks Guide</a></p>
+    </div>
+
+    <div class="feature">
       <h3>CDN Purge Hooks</h3>
       <p>Configure CloudFlare, Fastly, or CloudFront to purge automatically after each build. Add a purge command to your config, and Freestruct runs it. Your docs stay fresh.</p>
     </div>
@@ -166,7 +172,12 @@ node docs/lib/inject.js</code></pre>
       <h3>Cache Busting</h3>
       <p>How the hash works</p>
     </a>
-    
+
+    <a href="/guides/custom-injection" class="guide">
+      <h3>Custom Hooks</h3>
+      <p>Inject any code</p>
+    </a>
+
     <a href="/guides/post-render-hooks" class="guide">
       <h3>Post-Render Hooks</h3>
       <p>Beyond SEO</p>
