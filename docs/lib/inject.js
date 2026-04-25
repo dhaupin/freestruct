@@ -56,7 +56,7 @@ function inject() {
   // Generate build hash for cache busting
   // Uses config + timestamp for uniqueness
   const buildHash = crypto.createHash('sha1')
-    .update(JSON.stringify(config) + Date.now())
+    .update(JSON.stringify(config || {}) + String(Date.now()))
     .digest('hex').slice(0, 8);
   console.log('Build: ' + buildHash);
 
@@ -142,7 +142,7 @@ function injectFile(filePath, config, template, outputDir, buildHash) {
   if (config.basePath) pageUrl = pageUrl.replace(new RegExp('^' + config.basePath), '') || '/';
 
   // Canonical URL with cache-busting query param
-  const canonicalUrl = config.site.url + pageUrl + '?v=' + buildHash;
+  const canonicalUrl = config.site.url.replace(//$/, "") + pageUrl + '?v=' + buildHash;
 
   const replacements = {
     '{{pageTitle}}': pageTitle + ' | ' + config.site.name,
