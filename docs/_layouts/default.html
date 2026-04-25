@@ -294,6 +294,12 @@ html.dark code { background: #1f2937; }
 html.dark pre { background: #1f2937; }
 html.dark .copy-btn { background: #1f2937; border-color: #374151; }
 
+/* Force mobile nav visibility */
+@media (max-width: 768px) {
+  #siteNav { display: none; }
+  #siteNav.open { display: flex !important; }
+}
+
   </style>
   
 </head>
