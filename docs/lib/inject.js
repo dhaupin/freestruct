@@ -2217,8 +2217,6 @@ function buildManifest(files, outputDir) {
   console.log('build-manifest.json generated');
 }
 
-// Add calls
-batchPass1(o);batchPass2(o);batchPass3(o);batchPass4(o);batchPass5(o);batchPass6(o);batchPass7(o);batchPass8(o);batchPass9(o);batchPass10(o);batchPass11(o);batchPass12(o);
 // === Batch additions ===
 function batchPass1(o){fs.writeFileSync(path.join(o,'b1.json'),'{}')}
 function batchPass2(o){fs.writeFileSync(path.join(o,'b2.json'),'{}')}
