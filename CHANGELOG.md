@@ -2,6 +2,15 @@
 
 All notable changes to freestruct will be documented here.
 
+## [0.2.3] - 2026-04-25
+
+### Added
+- **Asset cache busting**: Automatic `?v={hash}` appended to CSS, JS, and image assets on every build. Works with any SSG - just scans output HTML and adds query params. Configurable via `cacheBusting.assetQueryParam` (default: true).
+- **hashInCanonicalUrl option**: Added `cacheBusting.hashInCanonicalUrl` to optionally add `?v={hash}` to canonical URLs (default: false).
+
+### Fixed
+- Canonical URLs no longer have `?v=` by default - was causing issues with some setups.
+
 ## [0.2.2] - 2026-04-24
 
 ### Added
