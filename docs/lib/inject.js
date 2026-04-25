@@ -161,6 +161,18 @@ function inject() {
   // Priority sitemap
   if (config.generateSitemapPriority !== false) {
     generateSitemapPriority(files, config, outputDir);
+
+  // TOC
+  if (config.generateToc !== false) generateToc(files, outputDir);
+
+  // SEO score
+  if (config.seoScore !== false) seoScore(files, outputDir);
+
+  // Frontmatter
+  if (config.extractFrontmatter !== false) extractFrontmatter(files, outputDir);
+
+  // Languages
+  if (config.detectLanguages !== false) detectLanguages(files, outputDir);
   }
   }
 
@@ -922,4 +934,93 @@ function generateSitemapPriority(files, config, outputDir) {
 
   fs.writeFileSync(path.join(outputDir, 'sitemap-priorities.xml'), xml);
   console.log('sitemap-priorities.xml generated');
+}
+
+/**
+ * Generate TOC from markdown headings
+ * Parses docs/*.md → toc.json
+ */
+function generateToc(files, outputDir) {
+  const toc = [];
+
+  for (const file of files) {
+    if (!file.endsWith('.md')) continue;
+    const content = fs.readFileSync(file, 'utf8');
+    const rel = path.relative(outputDir, file).replace(/^\//, '');
+    const headings = [];
+
+    content.replace(/^(#{1,6})\s+(.+)$/gm, (m, hash, title) => {
+      headings.push({ level: hash.length, title });
+    });
+
+    if (headings.length) toc.push({ file: rel, headings });
+  }
+
+  fs.writeFileSync(path.join(outputDir, 'toc.json'), JSON.stringify(toc, null, 2));
+  console.log('toc.json generated (' + toc.length + ' files)');
+}
+
+/**
+ * Calculate SEO score per page
+ * Checks: title, desc, og, canonical → seo-score.json
+ */
+function seoScore(files, outputDir) {
+  const scores = [];
+
+  for (const file of files) {
+    const html = fs.readFileSync(file, 'utf8');
+    let score = 0, issues = [];
+
+    if (html.includes('<title>')) score += 20; else issues.push('no title');
+    if (html.includes('name="description"')) score += 20; else issues.push('no description');
+    if (html.includes('property="og:title"')) score += 20; else issues.push('no og:title');
+    if (html.includes('property="og:image"')) score += 20; else issues.push('no og:image');
+    if (html.includes('rel="canonical"')) score += 20; else issues.push('no canonical');
+
+    scores.push({ file: path.basename(file), score, issues });
+  }
+
+  fs.writeFileSync(path.join(outputDir, 'seo-score.json'), JSON.stringify(scores, null, 2));
+  console.log('seo-score.json generated');
+}
+
+/**
+ * Extract frontmatter from markdown
+ * Parses ---yaml--- → frontmatter.json
+ */
+function extractFrontmatter(files, outputDir) {
+  const front = [];
+
+  for (const file of files) {
+    if (!file.endsWith('.md')) continue;
+    const content = fs.readFileSync(file, 'utf8');
+    const fm = content.match(/^---\n([\s\S]+?)\n---/);
+    if (fm) front.push({ file: path.basename(file), data: fm[1] });
+  }
+
+  if (front.length) {
+    fs.writeFileSync(path.join(outputDir, 'frontmatter.json'), JSON.stringify(front, null, 2));
+    console.log('frontmatter.json generated');
+  }
+}
+
+/**
+ * Generate code block language hints
+ * Detects ```js, ```python → languages.json
+ */
+function detectLanguages(files, outputDir) {
+  const langs = {};
+
+  for (const file of files) {
+    if (!file.endsWith('.md')) continue;
+    const content = fs.readFileSync(file, 'utf8');
+    const detected = content.match(/```(\w+)/g) || [];
+    for (const l of detected) {
+      const lang = l.replace('```', '');
+      langs[lang] = (langs[lang] || 0) + 1;
+    }
+  }
+
+  fs.writeFileSync(path.join(outputDir, 'languages.json'), JSON.stringify(langs, null, 2));
+  console.log('languages.json generated');
 }
