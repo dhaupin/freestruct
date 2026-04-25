@@ -70,6 +70,7 @@ function inject() {
 
   if (config.generate404 !== false && files.length > 0) generate404(config, outputDir, buildHash);
   if (config.generateSitemap !== false && files.length > 0) generateSitemap(files, config, outputDir);
+  if (config.generateRobots !== false && files.length > 0) generateRobots(config, outputDir);
 
   // Run purge hooks if configured
   if (config.cacheBusting?.purge) {
@@ -219,6 +220,13 @@ function generateSitemap(files, config, outputDir) {
   console.log('sitemap.xml generated');
 }
 
+function generateRobots(config, outputDir) {
+  const siteUrl = config.site.url || 'https://example.com';
+  const robots = '# Robots.txt\nUser-agent: *\nAllow: /\n\nSitemap: ' + siteUrl + '/sitemap.xml\n';
+  fs.writeFileSync(path.join(outputDir, 'robots.txt'), robots);
+  console.log('robots.txt generated');
+}
+
 function generate404(config, outputDir, buildHash) {
   const customPath = path.join(outputDir, '404.html');
   if (fs.existsSync(customPath)) {
@@ -232,7 +240,43 @@ function generate404(config, outputDir, buildHash) {
     console.log('SEO into 404.html');
     return;
   }
-  const notFound = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><title>404 | ' + config.site.name + '</title><meta name="freestruct-build" content="' + buildHash + '"></head><body><h1>404</h1></body></html>';
+  // Auto-generate helpful 404 with search suggestion
+  const siteUrl = config.site.url || 'https://example.com';
+  const siteName = config.site.name || 'Site';
+  const notFound = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>404 - Page Not Found | ${siteName}</title>
+  <meta name="description" content="Page not found on ${siteName}">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 100px auto; padding: 20px; text-align: center; }
+    h1 { font-size: 4rem; margin: 0; color: #333; }
+    p { font-size: 1.2rem; color: #666; margin: 20px 0; }
+    .search { margin: 30px 0; }
+    .search input { width: 70%; padding: 12px; font-size: 1rem; border: 1px solid #ddd; border-radius: 4px; }
+    .search button { padding: 12px 20px; font-size: 1rem; background: #333; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    .links { margin-top: 40px; }
+    .links a { color: #0066cc; margin: 0 15px; }
+  </style>
+</head>
+<body>
+  <h1>404</h1>
+  <p>Page not found</p>
+  <p>The page you're looking for doesn't exist or was moved.</p>
+  <div class="search">
+    <form action="${siteUrl}/" method="get">
+      <input type="text" name="s" placeholder="Search docs...">
+      <button type="submit">Search</button>
+    </form>
+  </div>
+  <div class="links">
+    <a href="${siteUrl}/">Home</a>
+    <a href="${siteUrl}/docs/">Docs</a>
+  </div>
+</body>
+</html>`;
   fs.writeFileSync(path.join(outputDir, '404.html'), notFound);
   console.log('404.html generated');
 }

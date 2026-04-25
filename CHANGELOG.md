@@ -4,6 +4,10 @@ All notable changes to freestruct will be documented here.
 
 ## [0.2.4] - 2026-04-25
 
+### Added
+- **Auto 404 page**: Generates helpful 404.html with search form, links to home/docs, and styled message when no custom 404 exists.
+- **Robots.txt**: Auto-generates robots.txt with sitemap reference. Configure via `generateRobots: true` in config.
+
 ### Fixed
 - **Asset cache busting consistency**: Fixed bug where assets got stale hash from previous builds. Now properly strips existing `?v=` query params before adding fresh hash. Meta tag and assets always use the same current build hash.
 - **Canonical URL injection**: Fixed duplicate canonical tags by removing existing canonical before injecting new one. Each build now has exactly one correct canonical URL.
@@ -15,7 +19,7 @@ All notable changes to freestruct will be documented here.
 - ✅ Old `?v=` params properly stripped (even `?v=old` gets replaced)
 - ✅ Canonical URL replaced correctly (no duplicates)
 - ✅ sitemap.xml generates correctly
-- ✅ 404.html gets fresh hash
+- ✅ 404.html gets fresh hash with search form
 
 ## [0.2.3] - 2026-04-25
 

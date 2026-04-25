@@ -13,6 +13,9 @@ generateSitemap: true
 # Generate 404.html
 generate404: true
 
+# Generate robots.txt
+generateRobots: true
+
 # Preserve existing meta tags (default: true)
 # If true, freestruct only injects missing tags (no duplicates)
 # Set to false to remove existing SEO tags before injecting
