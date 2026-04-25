@@ -7,6 +7,7 @@ All notable changes to freestruct are documented here.
 ## [0.2.0] - 2026-04-25
 
 ### Added
+- **Post-Render Hooks documentation** - New guide covering HTML processing beyond SEO: fix broken links, A/B testing, environment badges, image optimization, and best practice for commenting build modifications
 - **Complete marketing landing page** - Pain-focused messaging, comparison tables, clear CTAs
 - **Getting Started rewrite** - TL;DR first, step-by-step instructions, SSG-specific examples
 - **Full cache busting system** - SHA1 hash injected into every page + canonical URL
@@ -43,6 +44,7 @@ All notable changes to freestruct are documented here.
 ## [0.1.0] - 2026-04-24
 
 ### Added
+- **Post-Render Hooks documentation** - New guide covering HTML processing beyond SEO: fix broken links, A/B testing, environment badges, image optimization, and best practice for commenting build modifications
 - Initial freestruct release
 - Basic SEO meta injection
 - jekyll-seo-tag integration

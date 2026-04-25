@@ -113,6 +113,13 @@ node docs/lib/inject.js
   <div class="feature-row">
     <div class="feature-icon">🚀</div>
     <div class="feature-content">
+      <h3>Post-Render Hooks</h3>
+      <p>Beyond SEO: Fix broken links, inject A/B tests, add lazy loading, environment badges. Any HTML modification at build time.</p>
+    </div>
+  
+  <div class="feature-row">
+    <div class="feature-icon">🚀</div>
+    <div class="feature-content">
       <h3>GitHub Actions Ready</h3>
       <p>Works perfectly with CI/CD. Add two lines to your workflow. Every commit deploys with perfect SEO. No maintenance required.</p>
     </div>
