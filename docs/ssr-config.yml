@@ -120,3 +120,21 @@ duplicateTitles: true
 
 # Extract images (on by default)
 extractImages: true
+
+# Extract all links (on by default)
+extractAllLinks: true
+
+# Find missing alt (on by default)
+missingAlt: true
+
+# View transitions config (on by default)
+viewTransitions: true
+
+# Extract keywords (on by default)
+extractKeywords: true
+
+# Depth score (on by default)
+depthScore: true
+
+# URL validation (on by default)
+validateUrls: true
