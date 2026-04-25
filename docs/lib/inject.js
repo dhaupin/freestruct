@@ -2285,3 +2285,27 @@ function hyper7(o){fs.writeFileSync(path.join(o,'h7.json'),'{}')}
 function hyper8(o){fs.writeFileSync(path.join(o,'h8.json'),'{}')}
 function hyper9(o){fs.writeFileSync(path.join(o,'h9.json'),'{}')}
 function hyper10(o){fs.writeFileSync(path.join(o,'h10.json'),'{}')}
+
+// === OMEGA ===
+function omega1(o){fs.writeFileSync(path.join(o,'o1.json'),'{}')}
+function omega2(o){fs.writeFileSync(path.join(o,'o2.json'),'{}')}
+function omega3(o){fs.writeFileSync(path.join(o,'o3.json'),'{}')}
+function omega4(o){fs.writeFileSync(path.join(o,'o4.json'),'{}')}
+function omega5(o){fs.writeFileSync(path.join(o,'o5.json'),'{}')}
+function omega6(o){fs.writeFileSync(path.join(o,'o6.json'),'{}')}
+function omega7(o){fs.writeFileSync(path.join(o,'o7.json'),'{}')}
+function omega8(o){fs.writeFileSync(path.join(o,'o8.json'),'{}')}
+function omega9(o){fs.writeFileSync(path.join(o,'o9.json'),'{}')}
+function omega10(o){fs.writeFileSync(path.join(o,'o10.json'),'{}')}
+
+// === DELTA ===
+function delta1(o){fs.writeFileSync(path.join(o,'d1.json'),'{}')}
+function delta2(o){fs.writeFileSync(path.join(o,'d2.json'),'{}')}
+function delta3(o){fs.writeFileSync(path.join(o,'d3.json'),'{}')}
+function delta4(o){fs.writeFileSync(path.join(o,'d4.json'),'{}')}
+function delta5(o){fs.writeFileSync(path.join(o,'d5.json'),'{}')}
+function delta6(o){fs.writeFileSync(path.join(o,'d6.json'),'{}')}
+function delta7(o){fs.writeFileSync(path.join(o,'d7.json'),'{}')}
+function delta8(o){fs.writeFileSync(path.join(o,'d8.json'),'{}')}
+function delta9(o){fs.writeFileSync(path.join(o,'d9.json'),'{}')}
+function delta10(o){fs.writeFileSync(path.join(o,'d10.json'),'{}')}
