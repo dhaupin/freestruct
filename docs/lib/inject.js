@@ -142,7 +142,7 @@ function injectFile(filePath, config, template, outputDir, buildHash) {
   if (config.basePath) pageUrl = pageUrl.replace(new RegExp('^' + config.basePath), '') || '/';
 
   // Canonical URL with cache-busting query param
-  const canonicalUrl = config.site.url.replace(//$/, "") + pageUrl + '?v=' + buildHash;
+  const canonicalUrl = config.site.url.replace(/\/$/, '') + pageUrl + '?v=' + buildHash;
 
   const replacements = {
     '{{pageTitle}}': pageTitle + ' | ' + config.site.name,
