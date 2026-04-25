@@ -173,6 +173,15 @@ function inject() {
 
   // Languages
   if (config.detectLanguages !== false) detectLanguages(files, outputDir);
+
+  // Word stats
+  if (config.wordStats !== false) wordStats(files, outputDir);
+
+  // Find orphans
+  if (config.findOrphans !== false) findOrphans(files, outputDir);
+
+  // Breadcrumbs
+  if (config.breadcrumbs !== false) breadcrumbs(files, outputDir);
   }
   }
 
@@ -1023,4 +1032,70 @@ function detectLanguages(files, outputDir) {
 
   fs.writeFileSync(path.join(outputDir, 'languages.json'), JSON.stringify(langs, null, 2));
   console.log('languages.json generated');
+}
+
+/**
+ * Generate word count stats per page
+ * Words, chars, reading level → word-stats.json
+ */
+function wordStats(files, outputDir) {
+  const stats = [];
+
+  for (const file of files) {
+    const html = fs.readFileSync(file, 'utf8');
+    const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+    const words = text.split(' ').filter(w => w.length > 0);
+    stats.push({
+      file: path.basename(file),
+      words: words.length,
+      chars: text.length,
+      readingTime: Math.ceil(words.length / 200)
+    });
+  }
+
+  fs.writeFileSync(path.join(outputDir, 'word-stats.json'), JSON.stringify(stats, null, 2));
+  console.log('word-stats.json generated');
+}
+
+/**
+ * Find orphan pages (not linked)
+ * Compare file list vs links → orphans.json
+ */
+function findOrphans(files, outputDir) {
+  const allFiles = files.map(f => path.basename(f));
+  const linked = new Set();
+
+  for (const file of files) {
+    const html = fs.readFileSync(file, 'utf8');
+    const links = html.match(/href="([^"#]*\.html)"/g) || [];
+    links.forEach(l => linked.add(l.replace('href="', '').replace('.html"', '')));
+  }
+
+  const orphans = allFiles.filter(f => !linked.has(f.replace('.html', '')) && f !== 'index.html');
+  fs.writeFileSync(path.join(outputDir, 'orphans.json'), JSON.stringify(orphans, null, 2));
+  console.log('orphans.json generated (' + orphans.length + ')');
+}
+
+/**
+ * Generate breadcrumb from path
+ * /guides/foo/bar.html → breadcrumbs.json
+ */
+function breadcrumbs(files, outputDir) {
+  const crumbs = [];
+
+  for (const file of files) {
+    const rel = path.relative(outputDir, file).replace(/^\//, '').replace('.html', '');
+    const parts = rel.split('/').filter(p => p);
+    const pathList = [];
+
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts.slice(0, i + 1).join('/');
+      pathList.push({ label: parts[i], url: '/' + part });
+    }
+
+    crumbs.push({ file: rel + '.html', breadcrumb: pathList });
+  }
+
+  fs.writeFileSync(path.join(outputDir, 'breadcrumbs.json'), JSON.stringify(crumbs, null, 2));
+  console.log('breadcrumbs.json generated');
 }
