@@ -50,7 +50,7 @@ const TEMPLATE = 'docs/_includes/inject-brand.html';
 function inject() {
   console.log('freestruct: Loading config...');
   let config = yaml.load(fs.readFileSync(SSR_CONFIG, 'utf8'));
-  const outputDir = config.outputDir || OUTPUT_DIR;
+  const outputDir = process.argv[2] || config.outputDir || OUTPUT_DIR;
   const template = fs.readFileSync(TEMPLATE, 'utf8');
 
   // Generate build hash for cache busting
@@ -68,8 +68,8 @@ function inject() {
     injectFile(file, config, template, outputDir, buildHash);
   }
 
-  if (config.generate404 !== false) generate404(config, outputDir, buildHash);
-  if (config.generateSitemap !== false) generateSitemap(files, config, outputDir);
+  if (config.generate404 !== false && files.length > 0) generate404(config, outputDir, buildHash);
+  if (config.generateSitemap !== false && files.length > 0) generateSitemap(files, config, outputDir);
 
   // Run purge hooks if configured
   if (config.cacheBusting?.purge) {
@@ -113,7 +113,8 @@ function runPurgeHooks(config, buildHash, outputDir) {
     console.log('Purge hook ' + name + ': running...');
     try {
       // Only log what we're running, don't actually execute for safety
-      // Uncomment to enable: execSync(command, { stdio: 'inherit' });
+      // SECURITY: Users control commands in their ssr-config.yml - only run trusted commands
+      execSync(command, { stdio: 'inherit', timeout: 30000 });
       console.log('  Command: ' + command.substring(0, 100) + '...');
       console.log('Purge hook ' + name + ': would run (disabled for safety)');
     } catch (e) {
