@@ -243,7 +243,7 @@ tr:hover td { background: var(--color-bg-alt); }
     left: 0;
     right: 0;
     bottom: 0;
-    background: var(--color-bg);
+    background: var(--color-bg) !important;
     flex-direction: column;
     padding: var(--space-4);
     overflow-y: auto;
@@ -252,10 +252,21 @@ tr:hover td { background: var(--color-bg-alt); }
   }
   .site-nav.open { display: flex; }
   .site-nav > a, .site-nav > .nav-group { 
+    display: block;
     padding: var(--space-3) 0; 
     border-bottom: 1px solid var(--color-border); 
+    color: var(--color-text) !important;
+    text-decoration: none;
+    visibility: visible;
   }
+  .site-nav > a:hover, .site-nav > .nav-group:hover { color: var(--color-primary) !important; }
   .nav-group-items { padding-left: var(--space-4); }
+  .nav-group-items a {
+    display: block;
+    padding: var(--space-2) 0;
+    color: var(--color-text) !important;
+    visibility: visible;
+  }
   .header-actions { gap: var(--space-1); }
   .header-actions .burger-menu { margin-left: var(--space-2); }
 }
