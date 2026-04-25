@@ -69,3 +69,15 @@ generateSidebar: true
 
 # Inject heading IDs (on by default)
 injectHeadingIds: true
+
+# Extract types from JSDoc (on by default)
+extractTypes: true
+
+# Get modified dates from git (on by default)
+getGitModified: true
+
+# Index internal links (on by default)
+indexLinks: true
+
+# Priority sitemap (on by default)
+generateSitemapPriority: true
