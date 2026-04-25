@@ -1,7 +1,10 @@
 ---
 title: Getting Started
-description: Get freestruct running in 5 minutes
+description: Get freestruct running in 5 minutes with all features
+ogImage: /og-default.png
 ---
+
+# Getting Started
 
 This guide walks you through setting up freestruct. If you hit any snags, the [FAQ](/guides/cache-busting-faq) might help.
 
