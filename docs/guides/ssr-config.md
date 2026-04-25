@@ -105,6 +105,15 @@ linkCheck: true   # check and warn (on by default)
 linkCheck: false  # skip link checking
 ```
 
+### searchIndex
+
+Generate search.json for client-side search.
+
+```yaml
+searchIndex: true   # generates search.json (on by default)
+searchIndex: false  # skip search index
+```
+
 ## Path Options
 
 ### basePath

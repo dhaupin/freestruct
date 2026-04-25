@@ -109,6 +109,11 @@ function inject() {
     checkLinks(files, outputDir);
   }
 
+  // Generate search index
+  if (config.searchIndex !== false) {
+    generateSearchIndex(files, config, outputDir);
+  }
+
   // Run purge hooks if configured
   if (config.cacheBusting?.purge) {
     runPurgeHooks(config, buildHash, outputDir);
@@ -522,4 +527,44 @@ function checkLinks(files, outputDir) {
   } else {
     console.log('Link check: All links OK');
   }
+}
+
+/**
+ * Generate search index (JSON) for client-side search
+ * No deps - pure JS, works with any search UI
+ */
+function generateSearchIndex(files, config, outputDir) {
+  const siteUrl = config.site.url || 'https://example.com';
+  const index = [];
+  
+  for (const file of files) {
+    if (file.endsWith('404.html') || file.endsWith('404/index.html')) continue;
+    const html = fs.readFileSync(file, 'utf8');
+    
+    const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+    const descMatch = html.match(/<meta[^>]*name="description"[^>]*content="([^"]+)"/i);
+    const h1Match = html.match(/<h1[^>]*>([^<]+)<\/h1>/i);
+    
+    // Strip HTML for content
+    const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+    const content = bodyMatch 
+      ? bodyMatch[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 500)
+      : '';
+    
+    const title = titleMatch ? titleMatch[1].split(' | ')[0] : path.basename(file, '.html');
+    const description = descMatch ? descMatch[1] : '';
+    const heading = h1Match ? h1Match[1] : title;
+    const url = siteUrl + '/' + path.relative(outputDir, file).replace(/index\.html$/, '').replace(/\.html$/, '');
+    
+    index.push({
+      title,
+      heading,
+      description,
+      content,
+      url
+    });
+  }
+  
+  fs.writeFileSync(path.join(outputDir, 'search.json'), JSON.stringify(index, null, 2));
+  console.log('search.json generated (' + index.length + ' pages)');
 }
