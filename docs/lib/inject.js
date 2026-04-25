@@ -182,6 +182,24 @@ function inject() {
 
   // Breadcrumbs
   if (config.breadcrumbs !== false) breadcrumbs(files, outputDir);
+
+  // Structured data
+  if (config.structuredData !== false) structuredData(config, outputDir);
+
+  // Hreflang
+  if (config.hreflangs !== false) hreflangs(config, outputDir);
+
+  // FAQ extraction
+  if (config.extractFaq !== false) extractFaq(files, outputDir);
+
+  // Meta summary
+  if (config.metaSummary !== false) metaSummary(files, outputDir);
+
+  // Duplicate titles
+  if (config.duplicateTitles !== false) duplicateTitles(files, outputDir);
+
+  // Extract images
+  if (config.extractImages !== false) extractImages(files, outputDir);
   }
   }
 
@@ -1098,4 +1116,122 @@ function breadcrumbs(files, outputDir) {
 
   fs.writeFileSync(path.join(outputDir, 'breadcrumbs.json'), JSON.stringify(crumbs, null, 2));
   console.log('breadcrumbs.json generated');
+}
+
+/**
+ * Generate JSON-LD structured data
+ * Schema: Organization, Article, FAQ → structured-data.json
+ */
+function structuredData(config, outputDir) {
+  const data = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": config.site?.name || "Docs",
+      "url": config.site?.url || "",
+      "description": config.site?.description || ""
+    }
+  ];
+
+  fs.writeFileSync(path.join(outputDir, 'structured-data.json'), JSON.stringify(data, null, 2));
+  console.log('structured-data.json generated');
+}
+
+/**
+ * Generate hreflang for i18n
+ * Simple en/en-US → hreflangs.json
+ */
+function hreflangs(config, outputDir) {
+  const langs = [
+    { lang: 'en', href: config.site?.url || '' },
+    { lang: 'en-US', href: config.site?.url || '' }
+  ];
+
+  fs.writeFileSync(path.join(outputDir, 'hreflangs.json'), JSON.stringify(langs, null, 2));
+  console.log('hreflangs.json generated');
+}
+
+/**
+ * Extract FAQ from markdown
+ * Looks for ## Q: and ## A: → faq.json
+ */
+function extractFaq(files, outputDir) {
+  const faqs = [];
+
+  for (const file of files) {
+    if (!file.endsWith('.md')) continue;
+    const content = fs.readFileSync(file, 'utf8');
+    const qa = content.match(/^##\s+Q:\s+(.+)$[\s\S]+?^##\s+A:\s+([\s\S]+?)(?=^##|\z)/gm);
+    if (qa) {
+      const items = [];
+      content.replace(/^##\s+Q:\s+(.+)$[\s\S]+?^##\s+A:\s+([\s\S]+?)(?=^##|\z)/g, (m, q, a) => {
+        items.push({ question: q.trim(), answer: a.trim().slice(0, 200) });
+      });
+      if (items.length) faqs.push({ file: path.basename(file), faqs: items });
+    }
+  }
+
+  if (faqs.length) {
+    fs.writeFileSync(path.join(outputDir, 'faq.json'), JSON.stringify(faqs, null, 2));
+    console.log('faq.json generated');
+  }
+}
+
+/**
+ * Generate meta tags summary
+ * All <meta> → meta-summary.json
+ */
+function metaSummary(files, outputDir) {
+  const summary = {};
+
+  for (const file of files) {
+    const html = fs.readFileSync(file, 'utf8');
+    const title = html.match(/<title>([^<]+)/);
+    const desc = html.match(/name="description" content="([^"]+)"/);
+    if (title || desc) {
+      summary[path.basename(file)] = { title: title?.[1], description: desc?.[1] };
+    }
+  }
+
+  fs.writeFileSync(path.join(outputDir, 'meta-summary.json'), JSON.stringify(summary, null, 2));
+  console.log('meta-summary.json generated');
+}
+
+/**
+ * Find duplicate titles
+ * Same <title> → duplicates.json
+ */
+function duplicateTitles(files, outputDir) {
+  const titles = {};
+
+  for (const file of files) {
+    const html = fs.readFileSync(file, 'utf8');
+    const m = html.match(/<title>([^<]+)/);
+    if (m) titles[m[1]] = (titles[m[1]] || []).concat(path.basename(file));
+  }
+
+  const dups = Object.entries(titles).filter(([t, files]) => files.length > 1);
+  fs.writeFileSync(path.join(outputDir, 'duplicates.json'), JSON.stringify(dups, null, 2));
+  if (dups.length) console.log('duplicates.json generated (' + dups.length + ')');
+}
+
+/**
+ * Extract images for OG
+ * <img src> → images.json
+ */
+function extractImages(files, outputDir) {
+  const images = [];
+
+  for (const file of files) {
+    const html = fs.readFileSync(file, 'utf8');
+    const imgs = html.match(/<img\s+[^>]*src="([^"]+)"[^>]*>/g) || [];
+    for (const img of imgs) {
+      const src = img.match(/src="([^"]+)"/);
+      const alt = img.match(/alt="([^"]+)"/);
+      if (src) images.push({ file: path.basename(file), src: src[1], alt: alt?.[1] });
+    }
+  }
+
+  fs.writeFileSync(path.join(outputDir, 'images.json'), JSON.stringify(images, null, 2));
+  console.log('images.json generated (' + images.length + ')');
 }
