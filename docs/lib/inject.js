@@ -193,7 +193,54 @@ function injectFile(filePath, config, template, outputDir, buildHash) {
   // Version tag for cache busting - injected into every page
   const versionTag = '<meta name="freestruct-build" content="' + buildHash + '">';
   html = html.replace(/<\/head>/i, seo + '\n' + versionTag + '\n<!-- freestruct -->\n</head>');
+
+  // Add custom footer injection if file exists (after </body>)
+  const footerPath = 'docs/_includes/inject-footer.html';
+  if (fs.existsSync(footerPath)) {
+    const footer = fs.readFileSync(footerPath, 'utf8').replace(/<!--[\s\S]*?-->/g, '');
+    html = html.replace(/<\/body>/i, footer + '\n</body>');
+  }
+
+  // Minify HTML if enabled (careful - can break some pages)
+  if (config.minify) html = minifyHtml(html);
+
   fs.writeFileSync(filePath, html);
+}
+
+function minifyHtml(html) {
+  // Conservative HTML minifier - removes unnecessary whitespace
+  // Preserves content inside <pre>, <textarea>, <script>, <style> tags
+  let inBlock = false;
+  let result = '';
+  let i = 0;
+  
+  while (i < html.length) {
+    // Detect block start tags
+    if (html.slice(i, i+5) === '<pre>') { inBlock = true; }
+    else if (html.slice(i, i+10) === '<textarea') { inBlock = true; }
+    else if (html.slice(i, i+8) === '<script>') { inBlock = true; }
+    else if (html.slice(i, i+7) === '<style>') { inBlock = true; }
+    // Detect block end tags
+    else if (html.slice(i, i+6) === '</pre>') { inBlock = false; }
+    else if (html.slice(i, i+11) === '</textarea>') { inBlock = false; }
+    else if (html.slice(i, i+9) === '</script>') { inBlock = false; }
+    else if (html.slice(i, i+8) === '</style>') { inBlock = false; }
+    
+    if (inBlock) {
+      result += html[i];
+    } else if (html[i] === '\n' || html[i] === '\r' || html[i] === '\t') {
+      // Skip whitespace outside blocks
+    } else {
+      result += html[i];
+    }
+    i++;
+  }
+  
+  // Clean up multiple spaces and space around tags
+  return result
+    .replace(/>\s+</g, '><')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function extractTitle(html) {

@@ -1,10 +1,21 @@
-# freestruct SEO config - all meta, OG, Twitter, and JSON-LD defined here
-# This file powers inject-brand.html - user sets nothing in the template
+# Site configuration
+site:
+  name: freestruct
+  url: https://freestruct.creadev.org
+  description: Post-build SEO layer for static docs
 
-# Output directory from SSG build
-outputDir: docs/_site  # Jekyll: _site, Hugo: public/, Gatsby: dist/
+# Twitter Cards
+twitter:
+  username: "@yourhandle"
+  card: summary
 
-# Base path to strip from URLs (e.g., /freestruct from /freestruct/docs/foo)
+# Open Graph
+og:
+  image: /og-image.png
+  type: website
+  locale: en_US
+
+# Base path to strip from URLs
 basePath: 
 
 # Generate sitemap.xml
@@ -16,88 +27,19 @@ generate404: true
 # Generate robots.txt
 generateRobots: true
 
+# Minify HTML (experimental, off by default)
+# minify: true
+
 # Preserve existing meta tags (default: true)
-# If true, freestruct only injects missing tags (no duplicates)
-# Set to false to remove existing SEO tags before injecting
 preserveExistingMeta: true
 
-site:
-  url: http://freestruct.creadev.org
-  name: freestruct
-  description: SEO layer for static doc sites
+# Cache busting
+cacheBusting:
+  hash: true
+  # hashInCanonicalUrl: false
+  # assetQueryParam: true
 
-author:
-  name: dhaupin
-  url: https://github.com/dhaupin
-
-# Twitter Card meta
-twitter:
-  username: "@dhaupin"
-  card: summary
-
-# Open Graph
-og:
-  image: /assets/og-image.png
-  locale: en_US
-  type: website
-
-# Keywords for search engines
-keywords:
-  - SEO
-  - prerender
-  - static site generator
-  - jekyll
-  - hugo
-  - docusaurus
-  - documentation
-
-# JSON-LD Structured Data
-jsonLd:
-  - "@context": "https://schema.org"
-    "@type": "Organization"
-    name: freestruct
-    url: http://freestruct.creadev.org
-    description: SEO layer for static doc sites
-    sameAs:
-      - https://github.com/dhaupin/freestruct
-
-  - "@context": "https://schema.org"
-    "@type": "WebSite"
-    name: freestruct
-    url: http://freestruct.creadev.org
-    potentialAction:
-      "@type": "SearchAction"
-      target:
-        "@type": "EntryPoint"
-        urlTemplate: http://freestruct.creadev.org/?s={search_term_string}
-      query-input: required name=search_term_string
-# Cache busting configuration
-# Every build generates a unique hash injected into HTML as a meta tag
-# This helps with CDN cache invalidation
-#
+# Purge hooks (optional)
 # cacheBusting:
-#   # Hash is always generated and injected as <meta name="freestruct-build">
-#   hash: true
-#
-#   # Optional: add ?v={hash} to canonical URLs (default: false)
-#   # Enable this if your CDN doesn't auto-invalidate on deploy
-#   hashInCanonicalUrl: false
-#
-#   # Optional: add ?v={hash} to asset URLs (default: true)
-#   # Assets: css, js, png, jpg, gif, svg, webp, ico, woff, woff2, ttf, otf, wasm, json
-#   assetQueryParam: true
-#
-#   # Optional: run purge commands after injection
-#   # Supports ANY CDN or cache system via shell commands
-#   # Available vars: $SITE_URL, $BUILD_HASH, $OUTPUT_DIR
 #   purge:
-#     - name: cloudflare
-#       command: >
-#         curl -X DELETE "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/purge_cache"
-#         -H "Authorization: Bearer $CLOUDFLARE_TOKEN"
-#         -H "Content-Type: application/json"
-#         -d '{"files":["$SITE_URL/*"]}'
-#     - name: fastly
-#       command: fastly-purge $FASTLY_SERVICE_ID $FASTLY_KEY $SITE_URL
-#     - name: custom
-#       command: ./scripts/purge-cache.sh $BUILD_HASH
+#     - cloudflare
