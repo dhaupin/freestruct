@@ -2,6 +2,15 @@
 
 All notable changes to freestruct will be documented here.
 
+## [0.3.0] - 2026-04-25
+
+### Added
+- **RSS Feed**: Generates feed.xml with all pages. Configure via `generateFeed: true` (on by default).
+- **Reading Time**: Injects estimated read time into each page (`<meta name="reading-time">`). Configure via `readingTime: true`.
+- **Last Modified**: Injects build timestamp (`<meta name="last-modified">`). Configure via `lastModified: true`.
+- **Lazy Loading**: Auto-adds `loading="lazy"` to images. Configure via `lazyLoad: true`.
+- **Link Check**: Validates internal links, warns on broken ones. Configure via `linkCheck: true`.
+
 ## [0.2.4] - 2026-04-25
 
 ### Added

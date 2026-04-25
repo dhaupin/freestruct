@@ -72,6 +72,43 @@ function inject() {
   if (config.generateSitemap !== false && files.length > 0) generateSitemap(files, config, outputDir);
   if (config.generateRobots !== false && files.length > 0) generateRobots(config, outputDir);
 
+  // Generate RSS feed
+  if (config.generateFeed !== false && files.length > 0) {
+    generateFeed(files, config, outputDir, buildHash);
+  }
+
+  // Add reading time to pages
+  if (config.readingTime !== false) {
+    for (const file of files) {
+      if (!file.endsWith('404.html') && !file.endsWith('404/index.html')) {
+        addReadingTime(file, config);
+      }
+    }
+  }
+
+  // Add last-modified timestamp
+  if (config.lastModified !== false) {
+    for (const file of files) {
+      if (!file.endsWith('404.html') && !file.endsWith('404/index.html')) {
+        addLastModified(file, buildHash);
+      }
+    }
+  }
+
+  // Add lazy loading to images
+  if (config.lazyLoad !== false) {
+    for (const file of files) {
+      if (!file.endsWith('404.html') && !file.endsWith('404/index.html')) {
+        addLazyLoading(file);
+      }
+    }
+  }
+
+  // Check internal links
+  if (config.linkCheck !== false) {
+    checkLinks(files, outputDir);
+  }
+
   // Run purge hooks if configured
   if (config.cacheBusting?.purge) {
     runPurgeHooks(config, buildHash, outputDir);
@@ -344,3 +381,145 @@ function generate404(config, outputDir, buildHash) {
 
 module.exports = { inject };
 if (require.main === module) inject();
+/**
+ * Generate RSS feed
+ */
+function generateFeed(files, config, outputDir, buildHash) {
+  const siteUrl = config.site.url || 'https://example.com';
+  const siteName = config.site.name || 'Site';
+  const description = config.site.description || 'RSS Feed';
+  const now = new Date().toUTCString();
+  
+  // Build items from HTML files
+  let items = '';
+  for (const file of files) {
+    if (file.endsWith('404.html') || file.endsWith('404/index.html')) continue;
+    const html = fs.readFileSync(file, 'utf8');
+    const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+    const descMatch = html.match(/<meta[^>]*name="description"[^>]*content="([^"]+)"/i);
+    const title = titleMatch ? titleMatch[1].split(' | ')[0] : path.basename(file, '.html');
+    const desc = descMatch ? descMatch[1] : '';
+    const url = siteUrl + '/' + path.relative(outputDir, file).replace(/index\.html$/, '').replace(/\.html$/, '');
+    const date = config.cacheBusting?.hash ? buildHash : String(Date.now()).slice(0, 8);
+    items += `
+<item>
+  <title>${title}</title>
+  <link>${url}</link>
+  <description>${desc}</description>
+  <pubDate>${now}</pubDate>
+  <guid>${url}</guid>
+</item>`;
+  }
+  
+  const feed = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>${siteName}</title>
+  <link>${siteUrl}</link>
+  <description>${description}</description>
+  <language>en-us</language>
+  <lastBuildDate>${now}</lastBuildDate>
+  <atom:link href="${siteUrl}/feed.xml" rel="self" type="application/rss+xml"/>
+${items}
+</channel>
+</rss>`;
+  
+  fs.writeFileSync(path.join(outputDir, 'feed.xml'), feed);
+  console.log('feed.xml generated');
+}
+
+/**
+ * Add reading time to each page
+ * Based on word count (~200 words/minute)
+ */
+function addReadingTime(filePath, config) {
+  let html = fs.readFileSync(filePath, 'utf8');
+  // Remove old reading time
+  html = html.replace(/<meta[^>]*name="reading-time"[^>]*>/gi, '');
+  
+  // Extract body content (strip tags for word count)
+  const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+  if (!bodyMatch) return;
+  
+  // Simple word count: strip HTML, count words
+  const text = bodyMatch[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  const words = text.split(/\s+/).filter(w => w.length > 0);
+  const minutes = Math.max(1, Math.ceil(words.length / 200));
+  
+  // Inject reading time meta
+  html = html.replace(/<\/head>/i, `<meta name="reading-time" content="${minutes} min read">\n</head>`);
+  fs.writeFileSync(filePath, html);
+}
+
+/**
+ * Add last-modified timestamp
+ */
+function addLastModified(filePath, buildHash) {
+  let html = fs.readFileSync(filePath, 'utf8');
+  // Remove old timestamp
+  html = html.replace(/<meta[^>]*name="last-modified"[^>]*>/gi, '');
+  
+  const now = new Date().toISOString();
+  html = html.replace(/<\/head>/i, `<meta name="last-modified" content="${now}">\n</head>`);
+  fs.writeFileSync(filePath, html);
+}
+
+/**
+ * Add loading="lazy" to images without it
+ */
+function addLazyLoading(filePath) {
+  let html = fs.readFileSync(filePath, 'utf8');
+  // Add lazy to img tags that don't already have loading
+  html = html.replace(/(<img[^>]*(?<!loading)=)[^>]*>/gi, (match) => {
+    if (match.includes('loading=')) return match;
+    return match.replace(/>$/, ' loading="lazy">');
+  });
+  fs.writeFileSync(filePath, html);
+}
+
+/**
+ * Check internal links and report broken ones
+ */
+function checkLinks(files, outputDir) {
+  const broken = [];
+  const warnings = [];
+  
+  for (const file of files) {
+    const html = fs.readFileSync(file, 'utf8');
+    const baseDir = path.dirname(file);
+    
+    // Match internal links
+    const linkRegex = /href="([^"#]+)(?:#[^"]*)?"/g;
+    let match;
+    while ((match = linkRegex.exec(html)) !== null) {
+      const link = match[1];
+      
+      // Skip external, mailto, tel
+      if (link.startsWith('http') || link.startsWith('mailto:') || link.startsWith('tel:') || link.startsWith('//')) continue;
+      
+      // Resolve relative to absolute
+      const absPath = path.join(baseDir, link);
+      const normalized = path.normalize(absPath);
+      
+      // Check if file exists (add index.html for directories)
+      let checkPath = normalized;
+      if (fs.existsSync(path.join(normalized, 'index.html'))) {
+        checkPath = path.join(normalized, 'index.html');
+      }
+      
+      // HTML files should exist
+      if (normalized.endsWith('.html') && !fs.existsSync(normalized)) {
+        broken.push({ file: path.relative(outputDir, file), link });
+      }
+    }
+  }
+  
+  if (broken.length > 0) {
+    console.log('Link check: ' + broken.length + ' broken links found');
+    for (const b of broken.slice(0, 10)) {
+      console.log('  BROKEN: ' + b.file + ' -> ' + b.link);
+    }
+  } else {
+    console.log('Link check: All links OK');
+  }
+}

@@ -59,6 +59,50 @@ Generate `404.html` automatically (default: true). If a custom `404.html` alread
 ```yaml
 generate404: true   # generates 404.html (or uses custom)
 generate404: false  # skip 404 page generation
+
+### generateFeed
+
+Generate RSS feed (feed.xml).
+
+```yaml
+generateFeed: true   # generates feed.xml (on by default)
+generateFeed: false  # skip feed generation
+```
+
+### readingTime
+
+Inject estimated reading time into each page.
+
+```yaml
+readingTime: true   # injects reading time meta (on by default)
+readingTime: false  # skip reading time
+```
+
+### lastModified
+
+Inject last-modified timestamp.
+
+```yaml
+lastModified: true   # injects current timestamp (on by default)
+lastModified: false  # skip
+```
+
+### lazyLoad
+
+Add loading="lazy" to images.
+
+```yaml
+lazyLoad: true   # adds lazy loading (on by default)
+lazyLoad: false  # skip
+```
+
+### linkCheck
+
+Check internal links for broken references.
+
+```yaml
+linkCheck: true   # check and warn (on by default)
+linkCheck: false  # skip link checking
 ```
 
 ## Path Options
