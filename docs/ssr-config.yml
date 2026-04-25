@@ -174,3 +174,147 @@ extractDates: true
 
 # Copy year (on by default)
 copyYear: true
+
+# Doc version (on by default)
+docVersion: true
+
+# Extract emails (on by default)
+extractEmails: true
+
+# Locale config (on by default)
+localeConfig: true
+
+# Extract CSS classes (on by default)
+extractCssClasses: true
+
+# Dark mode config (on by default)
+darkModeConfig: true
+
+# Analytics config (on by default)
+analyticsConfig: true
+
+# PWA config (on by default)
+pwaConfig: true
+
+# OG config (on by default)
+ogConfig: true
+
+# Footer links (on by default)
+footerLinks: true
+
+# Social links (on by default)
+socialLinks: true
+
+# Navbar config (on by default)
+navbarConfig: true
+
+# Extract videos (on by default)
+extractVideos: true
+
+# Mermaid config (on by default)
+mermaidConfig: true
+
+# Diagram config (on by default)
+diagramConfig: true
+
+# Extract math (on by default)
+extractMath: true
+
+# Chart config (on by default)
+chartConfig: true
+
+# Highlight config (on by default)
+highlightConfig: true
+
+# Extract endpoints (on by default)
+extractEndpoints: true
+
+# Sidebar config (on by default)
+sidebarConfig: true
+
+# TOC config (on by default)
+tocConfig: true
+
+# Extract scripts (on by default)
+extractScripts: true
+
+# Extract styles (on by default)
+extractStyles: true
+
+# Pagination config (on by default)
+paginationConfig: true
+
+# Search UX (on by default)
+searchUx: true
+
+# Docset config (on by default)
+docsetConfig: true
+
+# Algolia config (on by default)
+algoliaConfig: true
+
+# Pagefind config (on by default)
+pagefindConfig: true
+
+# Mermaid themes (on by default)
+mermaidThemes: true
+
+# Codegroup config (on by default)
+codegroupConfig: true
+
+# Tabs config (on by default)
+tabsConfig: true
+
+# Ads config (on by default)
+adsConfig: true
+
+# Comment config (on by default)
+commentConfig: true
+
+# Feedback config (on by default)
+feedbackConfig: true
+
+# Donate config (on by default)
+donateConfig: true
+
+# Announcement config (on by default)
+announcementConfig: true
+
+# Callouts config (on by default)
+calloutsConfig: true
+
+# Badge config (on by default)
+badgeConfig: true
+
+# Card config (on by default)
+cardConfig: true
+
+# Menu config (on by default)
+menuConfig: true
+
+# Modal config (on by default)
+modalConfig: true
+
+# Tooltip config (on by default)
+tooltipConfig: true
+
+# Copy button config (on by default)
+copyButtonConfig: true
+
+# Version dropdown (on by default)
+versionDropdown: true
+
+# Language picker (on by default)
+languagePicker: true
+
+# Theme picker (on by default)
+themePicker: true
+
+# Manifest refs (on by default)
+manifestRefs: true
+
+# Sitemap index (on by default)
+sitemapIndex: true
+
+# Build manifest (on by default)
+buildManifest: true
