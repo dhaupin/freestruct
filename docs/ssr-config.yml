@@ -36,3 +36,21 @@ preserveExistingMeta: true
 # Cache busting
 cacheBusting:
   hash: true
+
+# Generate RSS feed (on by default)
+generateFeed: true
+
+# Inject reading time (on by default)
+readingTime: true
+
+# Inject last modified (on by default)
+lastModified: true
+
+# Add lazy loading to images (on by default)
+lazyLoad: true
+
+# Check internal links (on by default)
+linkCheck: true
+
+# Generate search.json (on by default)
+searchIndex: true
