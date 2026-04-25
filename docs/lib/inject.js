@@ -185,8 +185,9 @@ function injectFile(filePath, config, template, outputDir, buildHash) {
   for (const [k, v] of Object.entries(replacements)) seo = seo.split(k).join(v);
   seo = seo.replace(/<!--[\s\S]*?-->/g, '');
 
-  // Remove existing freestruct-build tag before adding new one
+  // Remove existing freestruct-build and canonical tags before adding new ones
   html = html.replace(/<meta[^>]*name="freestruct-build"[^>]*>/gi, '');
+  html = html.replace(/<link[^>]*rel="canonical"[^>]*>/gi, '');
 
   // Version tag for cache busting - injected into every page
   const versionTag = '<meta name="freestruct-build" content="' + buildHash + '">';

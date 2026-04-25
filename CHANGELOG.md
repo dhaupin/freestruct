@@ -2,6 +2,21 @@
 
 All notable changes to freestruct will be documented here.
 
+## [0.2.4] - 2026-04-25
+
+### Fixed
+- **Asset cache busting consistency**: Fixed bug where assets got stale hash from previous builds. Now properly strips existing `?v=` query params before adding fresh hash. Meta tag and assets always use the same current build hash.
+- **Canonical URL injection**: Fixed duplicate canonical tags by removing existing canonical before injecting new one. Each build now has exactly one correct canonical URL.
+- **404.html regeneration**: Now properly removes old freestruct-build meta tags when regenerating 404.html.
+
+### Testing Verified
+- ✅ Build hash updates correctly on each run (different hash each build)
+- ✅ Assets get same hash as meta tag (consistent across page)
+- ✅ Old `?v=` params properly stripped (even `?v=old` gets replaced)
+- ✅ Canonical URL replaced correctly (no duplicates)
+- ✅ sitemap.xml generates correctly
+- ✅ 404.html gets fresh hash
+
 ## [0.2.3] - 2026-04-25
 
 ### Added

@@ -56,7 +56,7 @@ description: Post-build SEO and search layer for static doc sites.
     
     <div class="feature">
       <h3>Cache-busting Hash</h3>
-      <p>Each build gets a unique hash injected into the HTML. The hash appears in a meta tag and in canonical URLs. When CDNs see a new hash, they fetch fresh content. No manual purge needed.</p>
+      <p>Each build gets a unique hash injected into the HTML. The hash appears in a meta tag and in asset URLs (CSS, JS, images, fonts). When CDNs see a new URL with a fresh hash, they fetch fresh content. No manual purge needed.</p>
     </div>
     
     <div class="feature">
