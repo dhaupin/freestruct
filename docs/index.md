@@ -76,8 +76,8 @@ description: Post-build SEO and search layer for static doc sites.
     </div>
     
     <div class="feature">
-      <h3>PageFind Search</h3>
-      <p>Freestruct includes PageFind for static search. Press ⌘K to search your docs. PageFind indexes your content after build - no server needed, no external service.</p>
+      <h3>CDN Purge Hooks</h3>
+      <p>Configure CloudFlare, Fastly, or CloudFront to purge automatically after each build. Add a purge command to your config, and Freestruct runs it. Your docs stay fresh.</p>
     </div>
   </div>
   
