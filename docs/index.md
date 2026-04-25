@@ -92,7 +92,7 @@ node docs/lib/inject.js</code></pre>
   <p>That's it. See <a href="/getting-started">Getting Started</a> for the full guide.</p>
 </section>
 
-<section class="why-freestruct">
+<section class="why-Freestruct">
   <h2>Why Freestruct?</h2>
   
   <p class="section-intro">Every static doc site needs the same SEO work. Freestruct does it for you automatically - so you can focus on writing docs.</p>
