@@ -93,6 +93,17 @@ The purge system runs **any shell command**, so it supports:
 - **Custom scripts** - Run your own purge logic
 - **CI hooks** - Trigger GitHub Actions, etc.
 
+## ⚠️ Security Warning
+
+The purge hooks feature runs commands from your `ssr-config.yml` via `execSync`.
+
+**Only run trusted commands.** If your config file is compromised, attackers can execute arbitrary code on your build server.
+
+Best practices:
+- Use environment variables for secrets (not hardcoded in config)
+- Review all purge commands before running
+- Consider disabling in CI: set `enablePurge: false`
+
 ### Examples
 
 **CloudFlare:**

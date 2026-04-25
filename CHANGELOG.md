@@ -10,6 +10,10 @@ All notable changes to freestruct will be documented here.
 - **Last Modified**: Injects build timestamp (`<meta name="last-modified">`). Configure via `lastModified: true`.
 - **Lazy Loading**: Auto-adds `loading="lazy"` to images. Configure via `lazyLoad: true`.
 - **Link Check**: Validates internal links, warns on broken ones. Configure via `linkCheck: true`.
+- **Search Index**: Generates search.json for client-side search. Configure via `searchIndex: true`.
+
+### Security
+- **Purge Hooks**: Added warning in docs. Commands in `ssr-config.yml` execute via `execSync`. Only run trusted commands.
 
 ## [0.2.4] - 2026-04-25
 
