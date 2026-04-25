@@ -95,27 +95,55 @@ node docs/lib/inject.js</code></pre>
 <section class="why-freestruct">
   <h2>Why Freestruct?</h2>
   
-  <p class="section-intro">Every static doc site needs the same SEO work. Freestruct does it for you automatically.</p>
+  <p class="section-intro">Every static doc site needs the same SEO work. Freestruct does it for you automatically - so you can focus on writing docs.</p>
   
   <div class="features">
     <div class="feature">
       <h3>SSG Agnostic</h3>
-      <p>Works with whatever SSG you already use. Jekyll, Hugo, Docusaurus, MkDocs, VitePress - Freestruct just needs a folder of HTML files.</p>
+      <p>Works with whatever SSG you already use. Jekyll, Hugo, Docusaurus, MkDocs, VitePress - Freestruct just needs a folder of HTML files. It doesn't care how the HTML was generated.</p>
     </div>
     
     <div class="feature">
       <h3>Zero Template Changes</h3>
-      <p>Don't edit your templates. Don't add plugins. Freestruct works on the output files. Your SSG stays untouched.</p>
+      <p>Don't edit your templates. Don't add plugins to your SSG. Freestruct works on the output files after your SSG is done. Your SSG configuration stays untouched - no lock-in.</p>
     </div>
     
     <div class="feature">
       <h3>Configure Once</h3>
-      <p>One config file has your site name, URL, social handles, and image. Apply it to every page automatically. No repeating yourself.</p>
+      <p>One config file has your site name, URL, social handles, and image. Apply it to every page automatically. No repeating yourself across every page template.</p>
     </div>
     
     <div class="feature">
       <h3>CI/CD Ready</h3>
-      <p>Add Freestruct to your GitHub Actions workflow. It runs after your SSG builds. Every deploy gets SEO automatically.</p>
+      <p>Add Freestruct to your GitHub Actions workflow. It runs after your SSG builds. Every deploy gets SEO automatically - no forgetting to update meta tags, no broken social previews.</p>
+    </div>
+  </div>
+</section>
+
+<section class="concepts">
+  <h2>The concept: post-build SEO</h2>
+  
+  <p class="section-intro">Most SEO tools require template changes or SSG plugins. Freestruct takes a different approach - it runs after your site is built.</p>
+  
+  <div class="features">
+    <div class="feature">
+      <h3>Post-build injection</h3>
+      <p>Your SSG builds your site as usual. Then Freestruct reads the HTML files and adds meta tags. This means your SSG doesn't need to know about SEO at all - Freestruct handles it separately.</p>
+    </div>
+    
+    <div class="feature">
+      <h3>SSG independence</h3>
+      <p>Because Freestruct works on the output, it works with any SSG. Switch from Jekyll to Hugo? Just keep running Freestruct - your config stays the same.</p>
+    </div>
+    
+    <div class="feature">
+      <h3>Single source of truth</h3>
+      <p>Your SEO config lives in one place - ssr-config.yml. Change your site name once, and Freestruct updates every page. No hunting through templates.</p>
+    </div>
+    
+    <div class="feature">
+      <h3>Works with CI/CD</h3>
+      <p>Since Freestruct runs after your build, it fits naturally into any CI/CD pipeline. GitHub Actions, GitLab CI, Netlify, Vercel - just add one command to your build script.</p>
     </div>
   </div>
 </section>
