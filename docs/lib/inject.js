@@ -1,97 +1,95 @@
 // freestruct SEO injection - runs post-build
-// Frame-agnostic: works with any SSG, just configure output dir
+// Adds build hash for CDN cache busting
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const yaml = require('js-yaml');
+const https = require('https');
 
-const OUTPUT_DIR = process.argv[2] || 'docs/_site'; // override: node inject.js _site
+const OUTPUT_DIR = process.argv[2] || 'docs/_site';
 const SSR_CONFIG = 'docs/ssr-config.yml';
 const TEMPLATE = 'docs/_includes/inject-brand.html';
 
+// CloudFlare API cache purge
+async function purgeCloudFlare(config) {
+  if (config.cacheBusting?.provider !== 'cloudflare') return;
+  if (!config.cacheBusting?.apiToken || !config.cacheBusting?.zoneId) {
+    console.log('CloudFlare: missing apiToken or zoneId');
+    return;
+  }
+  const data = JSON.stringify({ files: [config.site.url + '/*'] });
+  const opts = {
+    hostname: 'api.cloudflare.com',
+    path: '/client/v4/zones/' + config.cacheBusting.zoneId + '/purge_cache',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + config.cacheBusting.apiToken,
+      'Content-Length': data.length,
+    },
+  };
+  return new Promise((resolve) => {
+    const req = https.request(opts, (res) => {
+      let body = '';
+      res.on('data', c => body += c);
+      res.on('end', () => {
+        console.log(res.statusCode === 200 ? 'CloudFlare purged' : 'CF failed: ' + body);
+        resolve();
+      });
+    });
+    req.on('error', e => { console.log('CF error:', e.message); resolve(); });
+    req.write(data);
+    req.end();
+  });
+}
+
 function inject() {
-  console.log('🔍 freestruct: Loading config...');
-  
-  // Load config
-  let config;
-  try {
-    config = yaml.load(fs.readFileSync(SSR_CONFIG, 'utf8'));
-  } catch (e) {
-    console.error(`Error: ${SSR_CONFIG} not found`);
-    process.exit(1);
-  }
-  
-  // Override output dir from config
+  console.log('freestruct: Loading config...');
+  let config = yaml.load(fs.readFileSync(SSR_CONFIG, 'utf8'));
   const outputDir = config.outputDir || OUTPUT_DIR;
-  
-  // Preserve existing meta (default: true)
-  const preserve = config.preserveExistingMeta ?? true;
-  
-  // Load template
-  let template;
-  try {
-    template = fs.readFileSync(TEMPLATE, 'utf8');
-  } catch (e) {
-    console.error(`Error: ${TEMPLATE} not found`);
-    process.exit(1);
-  }
-  
-  // Process HTML files
+  const template = fs.readFileSync(TEMPLATE, 'utf8');
+
+  // Build hash for cache busting
+  const buildHash = crypto.createHash('sha1')
+    .update(JSON.stringify(config) + Date.now())
+    .digest('hex').slice(0, 8);
+  console.log('Build: ' + buildHash);
+
   const files = getHtmlFiles(outputDir);
-  console.log(`📄 Found ${files.length} HTML files`);
-  
+  console.log('Found ' + files.length + ' HTML files');
+
   for (const file of files) {
-    // Skip normal injection for 404 page - use special injection instead
-    if (file.endsWith('404.html') || file.endsWith('404/index.html')) {
-      continue;
-    }
-    injectFile(file, config, template, outputDir, preserve);
+    if (file.endsWith('404.html') || file.endsWith('404/index.html')) continue;
+    injectFile(file, config, template, outputDir, buildHash);
   }
 
-  // Handle 404 separately - inject noindex + proper 404 SEO
-  if (config.generate404 !== false) {
-    generate404(config, outputDir);
-  }
+  if (config.generate404 !== false) generate404(config, outputDir, buildHash);
+  if (config.generateSitemap !== false) generateSitemap(files, config, outputDir);
+  if (config.cacheBusting?.provider === 'cloudflare') purgeCloudFlare(config);
 
-  // Generate sitemap if enabled
-  if (config.generateSitemap !== false) {
-    generateSitemap(files, config, outputDir);
-  }
-
-  console.log('✅ freestruct: SEO injected');
+  console.log('freestruct: Done (' + buildHash + ')');
 }
 
 function getHtmlFiles(dir) {
   const files = [];
   if (!fs.existsSync(dir)) return files;
-  
-  const items = fs.readdirSync(dir, { withFileTypes: true });
-  for (const item of items) {
-    const fullPath = path.join(dir, item.name);
-    if (item.isDirectory()) {
-      files.push(...getHtmlFiles(fullPath));
-    } else if (item.name.endsWith('.html')) {
-      files.push(fullPath);
-    }
+  for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fp = path.join(dir, item.name);
+    if (item.isDirectory()) files.push(...getHtmlFiles(fp));
+    else if (item.name.endsWith('.html')) files.push(fp);
   }
   return files;
 }
 
-function injectFile(filePath, config, template, outputDir, preserve) {
+function injectFile(filePath, config, template, outputDir, buildHash) {
   let html = fs.readFileSync(filePath, 'utf8');
-  
-  // Extract page info from HTML
   const pageTitle = extractTitle(html) || config.site.name;
   const pageDescription = extractDescription(html) || config.site.description;
-  let pageUrl = '/' + path.relative(outputDir, filePath).replace(/\/index\.html$/, '/').replace(/\.html$/, '');
-  
-  // Strip basePath if configured
-  if (config.basePath) {
-    pageUrl = pageUrl.replace(new RegExp('^' + config.basePath), '') || '/';
-  }
-  
+  let pageUrl = '/' + path.relative(outputDir, filePath)
+    .replace(/\/index\.html$/, '/').replace(/\.html$/, '');
+  if (config.basePath) pageUrl = pageUrl.replace(new RegExp('^' + config.basePath), '') || '/';
   const canonicalUrl = config.site.url + pageUrl;
-  
-  // Build replacements
+
   const replacements = {
     '{{pageTitle}}': pageTitle + ' | ' + config.site.name,
     '{{pageDescription}}': pageDescription,
@@ -106,180 +104,56 @@ function injectFile(filePath, config, template, outputDir, preserve) {
     '{{ogType}}': config.og?.type || 'website',
     '{{ogLocale}}': config.og?.locale || 'en_US',
   };
-  
-  // Apply replacements to template
+
   let seo = template;
-  for (const [placeholder, value] of Object.entries(replacements)) {
-    seo = seo.split(placeholder).join(value);
-  }
-  
-  // Remove comments
+  for (const [k, v] of Object.entries(replacements)) seo = seo.split(k).join(v);
   seo = seo.replace(/<!--[\s\S]*?-->/g, '');
-  
-  // Inject into <head>
-  let injection;
-  if (preserve) {
-    injection = injectMissingSeo(html, seo);
-  } else {
-    removeExistingSeo(html);
-    injection = seo;
-  }
-  
-  // Add source comment and inject
-  html = html.replace(/<\/head>/i, injection + '\n<!-- injected by freestruct: https://github.com/dhaupin/freestruct -->\n</head>');
-  
+
+  // Version tag for cache invalidation
+  const versionTag = '<meta name="freestruct-build" content="' + buildHash + '">';
+  html = html.replace(/<\/head>/i, seo + '\n' + versionTag + '\n<!-- freestruct -->\n</head>');
   fs.writeFileSync(filePath, html);
-}
-
-// Selective injection - only add missing tags
-function injectMissingSeo(html, seo) {
-  const existing = getExistingTags(html);
-  let tags = '';
-  for (const line of seo.split('\n')) {
-    if (!line.trim()) continue;
-    if (line.includes('name="description"') && existing.has('description')) continue;
-    if (line.includes('property="og:') && existing.has(line.match(/property="([^"]+)/)?.[1])) continue;
-    if (line.includes('name="twitter:') && existing.has(line.match(/name="([^"]+)/)?.[1])) continue;
-    if (line.includes('rel="canonical"') && existing.has('canonical')) continue;
-    tags += line + '\n';
-  }
-  return tags;  // Return just the tags, not html.replace()
-}
-
-function getExistingTags(html) {
-  const tags = new Set();
-  for (const m of html.matchAll(/<meta[^>]*name="([^"]+)"[^>]*>/gi)) tags.add(m[1]);
-  for (const m of html.matchAll(/<meta[^>]*property="([^"]+)"[^>]*>/gi)) tags.add(m[1]);
-  if (html.includes('rel="canonical"')) tags.add('canonical');
-  return tags;
-}
-
-// Remove existing SEO tags
-function removeExistingSeo(html) {
-  html = html.replace(/<meta[^>]*name="description"[^>]*>/gi, '');
-  html = html.replace(/<link[^>]*rel="canonical"[^>]*>/gi, '');
-  html = html.replace(/<meta[^>]*property="og:[^"]+"[^>]*>/gi, '');
-  html = html.replace(/<meta[^>]*name="twitter:[^"]+"[^>]*>/gi, '');
-  return html;
 }
 
 function extractTitle(html) {
-  const match = html.match(/<title>([^<]+)<\/title>/i);
-  return match ? match[1].split(' | ')[0] : null;
+  const m = html.match(/<title>([^<]+)<\/title>/i);
+  return m ? m[1].split(' | ')[0] : null;
 }
 
 function extractDescription(html) {
-  const match = html.match(/<meta name="description" content="([^"]+)"/i);
-  return match ? match[1] : null;
+  const m = html.match(/<meta name="description" content="([^"]+)"/i);
+  return m ? m[1] : null;
 }
 
-// Generate sitemap.xml
 function generateSitemap(files, config, outputDir) {
   let urls = '';
-  
   for (const file of files) {
-    const pageUrl = '/' + path.relative(outputDir, file).replace(/\/index\.html$/, '/').replace(/\.html$/, '');
-    
-    // Skip 404 page (both generated and any existing)
+    let pageUrl = '/' + path.relative(outputDir, file)
+      .replace(/\/index\.html$/, '/').replace(/\.html$/, '');
     if (pageUrl === '/404' || pageUrl === '/404.html') continue;
-    
-    // Strip basePath if configured
-    let cleanUrl = pageUrl;
-    if (config.basePath) {
-      cleanUrl = pageUrl.replace(new RegExp('^' + config.basePath), '') || '/';
-    }
-    
-    const fullUrl = config.site.url + cleanUrl;
-    urls += `  <url>
-    <loc>${fullUrl}</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-`;
+    if (config.basePath) pageUrl = pageUrl.replace(new RegExp('^' + config.basePath), '') || '/';
+    urls += '  <url>\n    <loc>' + config.site.url + pageUrl + '</loc>\n    <changefreq>weekly</changefreq>\n  </url>\n';
   }
-
-  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls}</urlset>`;
-
+  const sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + urls + '</urlset>';
   fs.writeFileSync(path.join(outputDir, 'sitemap.xml'), sitemap);
-  console.log('📄 freestruct: sitemap.xml generated');
+  console.log('sitemap.xml generated');
 }
 
-// Generate 404.html
-function generate404(config, outputDir) {
-  const pageUrl = config.site.url;
-  
-  // Use custom 404 template if it exists in output dir
-  const custom404Path = path.join(outputDir, '404.html');
-  if (fs.existsSync(custom404Path)) {
-    // Inject SEO + noindex into custom 404
-    inject404Seo(custom404Path, config);
-    console.log('📄 freestruct: SEO injected into custom 404.html');
+function generate404(config, outputDir, buildHash) {
+  const customPath = path.join(outputDir, '404.html');
+  if (fs.existsSync(customPath)) {
+    let html = fs.readFileSync(customPath, 'utf8');
+    html = html.replace(/<meta[^>]*(name|property)="(description|robots|og:|twitter:|canonical)[^>]*>/gi, '');
+    html = html.replace(/<!-- freestruct[^\s\S]*?-->/gi, '');
+    html = html.replace(/<\/head>/i, '<meta name="freestruct-build" content="' + buildHash + '">\n<!-- freestruct -->\n</head>');
+    fs.writeFileSync(customPath, html);
+    console.log('SEO into 404.html');
     return;
   }
-  
-  const notFound = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>404 - Page Not Found | ${config.site.name}</title>
-  <meta name="description" content="Page not found">
-  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-  <meta property="og:title" content="404 - Page Not Found">
-  <meta property="og:description" content="Page not found">
-  <meta property="og:url" content="${pageUrl}/404.html">
-  <meta property="og:type" content="website">
-  <link rel="canonical" href="${pageUrl}/404.html">
-  <!-- injected by freestruct: https://github.com/dhaupin/freestruct -->
-</head>
-<body>
-  <div style="text-align:center;padding:4rem;font-family:system-ui,sans-serif;">
-    <h1 style="font-size:4rem;margin:0;">404</h1>
-    <p style="font-size:1.5rem;">Page not found</p>
-    <p><a href="/" style="color:#2563eb;">← Go home</a></p>
-  </div>
-</body>
-</html>`;
-
+  const notFound = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><title>404 | ' + config.site.name + '</title><meta name="freestruct-build" content="' + buildHash + '"></head><body><h1>404</h1></body></html>';
   fs.writeFileSync(path.join(outputDir, '404.html'), notFound);
-  console.log('📄 freestruct: 404.html generated');
-}
-
-// Inject SEO + noindex into custom 404 page
-function inject404Seo(filePath, config) {
-  let html = fs.readFileSync(filePath, 'utf8');
-  const pageUrl = config.site.url + '/404.html';
-  
-  // Remove existing SEO tags first
-  html = html.replace(/<meta[^>]*(name|property)="(description|robots|og:|twitter:|canonical)[^>]*>/gi, '');
-  html = html.replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/gi, '');
-  html = html.replace(/<!-- injected by freestruct[\s\S]*?-->/gi, '');
-  
-  const seoTags = `
-  <meta name="description" content="Page not found">
-  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-  <meta property="og:title" content="404 - Page Not Found">
-  <meta property="og:description" content="Page not found">
-  <meta property="og:url" content="${pageUrl}">
-  <meta property="og:type" content="website">
-  <link rel="canonical" href="${pageUrl}">
-  <!-- injected by freestruct: https://github.com/dhaupin/freestruct -->
-`;
-  
-  html = html.replace(/<\/head>/i, seoTags + '\n</head>');
-  fs.writeFileSync(filePath, html);
+  console.log('404.html generated');
 }
 
 module.exports = { inject };
-
-if (require.main === module) {
-  inject();
-}
+if (require.main === module) inject();

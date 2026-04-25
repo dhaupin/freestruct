@@ -5,6 +5,31 @@ All notable changes to freestruct are documented here.
 ## [Unreleased]
 
 ### Added
+- **Cache Busting** - Built-in CDN cache invalidation:
+  - Automatic build hash via `<meta name="freestruct-build">` tag
+  - CloudFlare API integration for automatic cache purge
+  - Config in `ssr-config.yml`:
+    ```yaml
+    cacheBusting:
+      provider: cloudflare
+      apiToken: $CLOUDFLARE_API_TOKEN
+      zoneId: $CLOUDFLARE_ZONE_ID
+    ```
+  - GitHub Secrets for API credentials
+
+### Fixed
+- Mobile nav CSS inside `<style>` block (was outside `</html>`)
+- Mobile hamburger menu toggle works
+
+### Changed
+- inject.js generates SHA1 build hash per build
+- All HTML includes `<meta name="freestruct-build">`
+
+---
+
+## [0.1.1] - 2026-04-24
+
+### Added
 - **Frame-agnostic SEO injection** - Works with any SSG (Jekyll, Hugo, Docusaurus, etc.)
 - **ssr-config.yml** - Centralized config for all SEO meta, OG, Twitter, JSON-LD
 - **inject-brand.html** - Template with `{{placeholder}}` syntax for post-build injection

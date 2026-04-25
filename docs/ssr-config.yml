@@ -68,3 +68,9 @@ jsonLd:
         "@type": "EntryPoint"
         urlTemplate: http://freestruct.creadev.org/?s={search_term_string}
       query-input: required name=search_term_string
+# Cache busting configuration
+# Uncomment and configure to auto-purge CDN cache after build
+# cacheBusting:
+#   provider: cloudflare  # currently only cloudflare supported
+#   apiToken: $CLOUDFLARE_API_TOKEN  # set in GitHub Secrets
+#   zoneId: $CLOUDFLARE_ZONE_ID  # get from CloudFlare dashboard

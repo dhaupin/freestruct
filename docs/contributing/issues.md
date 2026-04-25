@@ -1,7 +1,7 @@
 
 ## Cache Busting Feature
 
-freestruct should support cache busting beyond the SSG's built-in mechanisms.
+**Status: IMPLEMENTED in v0.1.1**
 
 ### Problem
 - CDNs (CloudFlare, Fastly, CloudFront) cache aggressively
@@ -9,29 +9,27 @@ freestruct should support cache busting beyond the SSG's built-in mechanisms.
 - SSG asset hashing only covers their own assets, not freestruct-injected content
 - Downstream CDNs don't know freestruct updated the build
 
-### Proposed Solution
-Add cache busting to `inject.js`:
-
-1. **Content hash generation** - Generate hash of all injected SEO and inject into:
-   - `<link rel="canonical">` as query string: `?v={hash}`
-   - JSON-LD `@id` fields
-   - Open Graph URLs
-
-2. **CloudFlare API integration** - Optional config in `ssr-config.yml`:
+### Solution (Implemented)
+1. **Content hash generation** - inject.js now generates SHA1 build hash per build
+2. **Version meta tag** - `<meta name="freestruct-build" content="{hash}">` injected into every page
+3. **CloudFlare API integration** - Optional config in `ssr-config.yml`:
    ```yaml
    cacheBusting:
      provider: cloudflare
-     apiToken: $CLOUDFLARE_TOKEN  # env var
-     zoneId: xxx
+     apiToken: $CLOUDFLARE_API_TOKEN  # set in GitHub Secrets
+     zoneId: $CLOUDFLARE_ZONE_ID      # get from CloudFlare dashboard
    ```
+4. **Auto-purge on build** - Calls CloudFlare API post-inject to purge all site caches
 
-3. **Purge on build** - Call provider API post-inject
+### Usage
+1. Add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ZONE_ID` to GitHub repo Secrets
+2. Uncomment cacheBusting config in `ssr-config.yml`
+3. On next build, freestruct will:
+   - Generate unique build hash
+   - Inject into all HTML pages
+   - Call CloudFlare API to purge cache
 
-4. **SSG bridge** - Support existing SSG cache plugins:
-   - Gatsby `gatsby-plugin-cache-busting`
-   - Next.js ` Cache-Control` headers
-   - Vite plugin hooks
-
-### Related
-- See [CloudFlare Cache Purge API](https://developers.cloudflare.com/api/operations/zone-purge)
-- See [Fastly Surrogate Keys](https://docs.fastly.com/en/guides/about-surrogate-keys)
+### Future Enhancements
+- Support more CDN providers (Fastly, CloudFront, Akamai)
+- Add version query param to canonical URLs
+- GitHub Actions cache busting for GitHub Pages specifically
