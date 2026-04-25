@@ -151,10 +151,18 @@ function injectFile(filePath, config, template, outputDir, buildHash) {
   if (config.cacheBusting?.assetQueryParam !== false) {
     // Match href or src with common asset extensions, add ?v={hash}
     // Includes: css, js, images, fonts, icons, wasm, json
-    html = html.replace(/(href|src)="([^"]+\.(css|js|png|jpg|jpeg|gif|svg|webp|ico|woff|woff2|ttf|otf|wasm|json))"/gi, 
+    // Always use current build hash (removes old ?v= if present)
+    const assetExts = '.css.js.png.jpg.jpeg.gif.svg.webp.ico.woff.woff2.ttf.otf.wasm.json';
+    html = html.replace(/(href|src)="([^"]+)"/gi, 
       (match, attr, url) => {
-        if (url.includes('?v=')) return match;
-        return attr + '="' + url + '?v=' + buildHash + '"';
+        // Strip any existing ?v= query param first
+        const cleanUrl = url.replace(/\?v=[^"]*/, '');
+        // Check if it ends with an asset extension
+        const ext = cleanUrl.substring(cleanUrl.lastIndexOf('.'));
+        if (assetExts.includes(ext)) {
+          return attr + '="' + cleanUrl + '?v=' + buildHash + '"';
+        }
+        return match;
       });
   }
 
@@ -176,6 +184,9 @@ function injectFile(filePath, config, template, outputDir, buildHash) {
   let seo = template;
   for (const [k, v] of Object.entries(replacements)) seo = seo.split(k).join(v);
   seo = seo.replace(/<!--[\s\S]*?-->/g, '');
+
+  // Remove existing freestruct-build tag before adding new one
+  html = html.replace(/<meta[^>]*name="freestruct-build"[^>]*>/gi, '');
 
   // Version tag for cache busting - injected into every page
   const versionTag = '<meta name="freestruct-build" content="' + buildHash + '">';
@@ -211,6 +222,8 @@ function generate404(config, outputDir, buildHash) {
   const customPath = path.join(outputDir, '404.html');
   if (fs.existsSync(customPath)) {
     let html = fs.readFileSync(customPath, 'utf8');
+    // Remove existing freestruct tags before re-injecting
+    html = html.replace(/<meta[^>]*name="freestruct-build"[^>]*>/gi, '');
     html = html.replace(/<meta[^>]*(name|property)="(description|robots|og:|twitter:|canonical)[^>]*>/gi, '');
     html = html.replace(/<!-- freestruct[^\s\S]*?-->/gi, '');
     html = html.replace(/<\/head>/i, '<meta name="freestruct-build" content="' + buildHash + '">\n<!-- freestruct -->\n</head>');
