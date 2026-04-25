@@ -54,3 +54,9 @@ linkCheck: true
 
 # Generate search.json (on by default)
 searchIndex: true
+
+# Extract APIs from source for docs (on by default)
+extractApis: true
+
+# Chunk docs for RAG/LLM (on by default)
+chunkForRag: true

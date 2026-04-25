@@ -114,6 +114,21 @@ function inject() {
     generateSearchIndex(files, config, outputDir);
   }
 
+  // Agent tools: Extract APIs from code
+  if (config.extractApis !== false) {
+    extractApis(outputDir);
+  }
+
+  // Agent tools: Chunk docs for RAG
+  if (config.chunkForRag !== false) {
+    chunkForRag(files, outputDir);
+  }
+
+  // Agent tools: Link docs to source
+  if (config.linkSourceToDocs) {
+    linkSourceToDocs(config, outputDir);
+  }
+
   // Run purge hooks if configured
   if (config.cacheBusting?.purge) {
     runPurgeHooks(config, buildHash, outputDir);
@@ -567,4 +582,117 @@ function generateSearchIndex(files, config, outputDir) {
   
   fs.writeFileSync(path.join(outputDir, 'search.json'), JSON.stringify(index, null, 2));
   console.log('search.json generated (' + index.length + ' pages)');
+}
+
+/**
+ * Extract APIs from source code for documentation
+ * Works with JS/Python - extracts functions, classes, params, returns
+ */
+function extractApis(outputDir) {
+  const libDir = path.join(outputDir, '..', 'docs', 'lib');
+  const apis = [];
+  
+  if (!fs.existsSync(libDir)) {
+    console.log('extractApis: docs/lib not found, skipping');
+    return;
+  }
+  
+  const files = fs.readdirSync(libDir).filter(f => f.endsWith('.js') || f.endsWith('.py'));
+  
+  for (const file of files) {
+    const content = fs.readFileSync(path.join(libDir, file), 'utf8');
+    const fileApis = [];
+    
+    // JS: function name(params) {
+    const jsFuncs = content.match(/function\s+(\w+)\s*\(([^)]*)\)/g) || [];
+    for (const match of jsFuncs) {
+      const m = match.match(/function\s+(\w+)\s*\(([^)]*)\)/);
+      if (m) fileApis.push({ type: 'function', name: m[1], params: m[2] });
+    }
+    
+    // JS: const name = () => {
+    const arrowFuncs = content.match(/const\s+(\w+)\s*=\s*\(([^)]*)\)\s*=>/g) || [];
+    for (const match of arrowFuncs) {
+      const m = match.match(/const\s+(\w+)\s*=\s*\(([^)]*)\)\s*=>/);
+      if (m) fileApis.push({ type: 'arrow', name: m[1], params: m[2] });
+    }
+    
+    // JS: class Name {
+    const classes = content.match(/class\s+(\w+)/g) || [];
+    for (const match of classes) {
+      const m = match.match(/class\s+(\w+)/);
+      if (m) fileApis.push({ type: 'class', name: m[1] });
+    }
+    
+    // Python: def name(params):
+    const pyFuncs = content.match(/def\s+(\w+)\s*\(([^)]*)\):/g) || [];
+    for (const match of pyFuncs) {
+      const m = match.match(/def\s+(\w+)\s*\(([^)]*)\):/);
+      if (m) fileApis.push({ type: 'function', name: m[1], params: m[2] });
+    }
+    
+    apis.push({ file, exports: fileApis });
+  }
+  
+  fs.writeFileSync(path.join(outputDir, 'apis.json'), JSON.stringify(apis, null, 2));
+  console.log('apis.json generated (' + files.length + ' files)');
+}
+
+/**
+ * Chunk docs for RAG/LLM ingestion
+ * Splits by headings, code blocks, paragraphs
+ */
+function chunkForRag(files, outputDir) {
+  const chunks = [];
+  
+  for (const file of files) {
+    if (!file.endsWith('.md') && !file.endsWith('.html')) continue;
+    const content = fs.readFileSync(file, 'utf8');
+    const relPath = path.relative(outputDir, file);
+    
+    // Split by headings
+    const headings = content.split(/^#{1,6}\s+/m);
+    for (const h of headings) {
+      const lines = h.split('\n');
+      const title = lines[0] || '';
+      const body = lines.slice(1).join('\n').trim().slice(0, 1000);
+      if (body.length > 20) {
+        chunks.push({
+          source: relPath,
+          title,
+          content: body,
+          token_count: Math.ceil(body.length / 4)
+        });
+      }
+    }
+  }
+  
+  fs.writeFileSync(path.join(outputDir, 'rag-chunks.json'), JSON.stringify(chunks, null, 2));
+  console.log('rag-chunks.json generated (' + chunks.length + ' chunks)');
+}
+
+/**
+ * Link source files to their documentation
+ * Creates bidirectional mapping for navigation
+ */
+function linkSourceToDocs(config, outputDir) {
+  const libDir = path.join(outputDir, '..', 'docs', 'lib');
+  const links = [];
+  
+  if (!fs.existsSync(libDir)) return;
+  
+  const files = fs.readdirSync(libDir).filter(f => f.endsWith('.js'));
+  for (const file of files) {
+    const content = fs.readFileSync(path.join(libDir, file), 'utf8');
+    const funcs = content.match(/function\s+(\w+)/g) || [];
+    
+    links.push({
+      source: 'docs/lib/' + file,
+      functions: funcs.map(f => f.replace('function ', '')),
+      docPath: '/' + file.replace('.js', '')
+    });
+  }
+  
+  fs.writeFileSync(path.join(outputDir, 'source-links.json'), JSON.stringify(links, null, 2));
+  console.log('source-links.json generated');
 }
