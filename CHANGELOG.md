@@ -7,6 +7,12 @@ All notable changes to freestruct will be documented here.
 ### Added
 - **Auto 404 page**: Generates helpful 404.html with search form, links to home/docs, and styled message when no custom 404 exists.
 - **Robots.txt**: Auto-generates robots.txt with sitemap reference. Configure via `generateRobots: true` in config.
+- **Minify HTML**: Optional HTML minifier (experimental, off by default). Conservative - preserves pre/script/style/textarea content.
+- **Custom injection hooks**: Auto-load include files if they exist:
+  - `docs/_includes/inject-header.html` - before `</head>`
+  - `docs/_includes/inject-body-start.html` - after `<body>`
+  - `docs/_includes/inject-footer.html` - before `</body>`
+  - Supports placeholders: `{{siteName}}`, `{{siteUrl}}`, `{{buildHash}}`
 
 ### Fixed
 - **Asset cache busting consistency**: Fixed bug where assets got stale hash from previous builds. Now properly strips existing `?v=` query params before adding fresh hash. Meta tag and assets always use the same current build hash.

@@ -194,7 +194,21 @@ function injectFile(filePath, config, template, outputDir, buildHash) {
   const versionTag = '<meta name="freestruct-build" content="' + buildHash + '">';
   html = html.replace(/<\/head>/i, seo + '\n' + versionTag + '\n<!-- freestruct -->\n</head>');
 
-  // Add custom footer injection if file exists (after </body>)
+  // Add custom header injection before </head>
+  const headerPath = 'docs/_includes/inject-header.html';
+  if (fs.existsSync(headerPath)) {
+    const header = fs.readFileSync(headerPath, 'utf8').replace(/<!--[\s\S]*?-->/g, '');
+    html = html.replace(/<\/head>/i, header + '\n</head>');
+  }
+
+  // Add custom body-start injection after <body>
+  const bodyStartPath = 'docs/_includes/inject-body-start.html';
+  if (fs.existsSync(bodyStartPath)) {
+    const bodyStart = fs.readFileSync(bodyStartPath, 'utf8').replace(/<!--[\s\S]*?-->/g, '');
+    html = html.replace(/<body[^>]*>/i, '$&' + bodyStart);
+  }
+
+  // Add custom footer injection before </body>
   const footerPath = 'docs/_includes/inject-footer.html';
   if (fs.existsSync(footerPath)) {
     const footer = fs.readFileSync(footerPath, 'utf8').replace(/<!--[\s\S]*?-->/g, '');

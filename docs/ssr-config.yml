@@ -30,16 +30,9 @@ generateRobots: true
 # Minify HTML (experimental, off by default)
 # minify: true
 
-# Preserve existing meta tags (default: true)
+# Preserve existing meta tags
 preserveExistingMeta: true
 
 # Cache busting
 cacheBusting:
   hash: true
-  # hashInCanonicalUrl: false
-  # assetQueryParam: true
-
-# Purge hooks (optional)
-# cacheBusting:
-#   purge:
-#     - cloudflare
