@@ -9,9 +9,10 @@ All notable changes to freestruct will be documented here.
 - **Robots.txt**: Auto-generates robots.txt with sitemap reference. Configure via `generateRobots: true` in config.
 - **Minify HTML**: Optional HTML minifier (experimental, off by default). Conservative - preserves pre/script/style/textarea content.
 - **Custom injection hooks**: Auto-load include files if they exist:
-  - `docs/_includes/inject-header.html` - before `</head>`
-  - `docs/_includes/inject-body-start.html` - after `<body>`
-  - `docs/_includes/inject-footer.html` - before `</body>`
+  - `docs/_freestruct/inject-header.html` - before `</head>`
+  - `docs/_freestruct/inject-body-start.html` - after `<body>`
+  - `docs/_freestruct/inject-footer.html` - before `</body>`
+  - Location changed from `_includes` to `_freestruct` to avoid SSG collisions
   - Supports placeholders: `{{siteName}}`, `{{siteUrl}}`, `{{buildHash}}`
 
 ### Fixed

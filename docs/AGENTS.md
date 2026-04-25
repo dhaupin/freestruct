@@ -250,6 +250,21 @@ node docs/lib/inject.js
 
 ---
 
+## Template Files
+
+freestruct templates live in `docs/_freestruct/` (not `_includes/` which collides with Jekyll):
+
+| File | Purpose |
+|------|---------|
+| `inject-brand.html` | SEO meta tags (auto-loaded) |
+| `inject-header.html` | Before `</head>` (optional) |
+| `inject-body-start.html` | After `<body>` (optional) |
+| `inject-footer.html` | Before `</body>` (optional) |
+
+Create or edit these files to add custom code. Files auto-load if they exist.
+
+---
+
 ## Development Notes
 
 ### Adding a new SEO feature

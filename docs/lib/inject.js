@@ -8,7 +8,7 @@ const { execSync } = require('child_process');
 
 const OUTPUT_DIR = process.argv[2] || 'docs/_site';
 const SSR_CONFIG = 'docs/ssr-config.yml';
-const TEMPLATE = 'docs/_includes/inject-brand.html';
+const TEMPLATE = 'docs/_freestruct/inject-brand.html';
 
 /**
  * Cache Busting System
@@ -195,21 +195,21 @@ function injectFile(filePath, config, template, outputDir, buildHash) {
   html = html.replace(/<\/head>/i, seo + '\n' + versionTag + '\n<!-- freestruct -->\n</head>');
 
   // Add custom header injection before </head>
-  const headerPath = 'docs/_includes/inject-header.html';
+  const headerPath = 'docs/_freestruct/inject-header.html';
   if (fs.existsSync(headerPath)) {
     const header = fs.readFileSync(headerPath, 'utf8').replace(/<!--[\s\S]*?-->/g, '');
     html = html.replace(/<\/head>/i, header + '\n</head>');
   }
 
   // Add custom body-start injection after <body>
-  const bodyStartPath = 'docs/_includes/inject-body-start.html';
+  const bodyStartPath = 'docs/_freestruct/inject-body-start.html';
   if (fs.existsSync(bodyStartPath)) {
     const bodyStart = fs.readFileSync(bodyStartPath, 'utf8').replace(/<!--[\s\S]*?-->/g, '');
     html = html.replace(/<body[^>]*>/i, '$&' + bodyStart);
   }
 
   // Add custom footer injection before </body>
-  const footerPath = 'docs/_includes/inject-footer.html';
+  const footerPath = 'docs/_freestruct/inject-footer.html';
   if (fs.existsSync(footerPath)) {
     const footer = fs.readFileSync(footerPath, 'utf8').replace(/<!--[\s\S]*?-->/g, '');
     html = html.replace(/<\/body>/i, footer + '\n</body>');

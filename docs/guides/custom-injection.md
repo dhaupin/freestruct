@@ -6,7 +6,9 @@ description: Add custom code via injection hooks
 
 # Custom Injection
 
-freestruct supports custom injection hooks - create template files in `docs/_includes/` and they'll be auto-loaded if they exist.
+freestruct supports custom injection hooks - create template files in `docs/_freestruct/` and they'll be auto-loaded if they exist.
+
+> **Note:** Location is `_freestruct/` (not `_includes/`) to avoid collisions with Jekyll and other SSGs.
 
 ## Hooks
 
