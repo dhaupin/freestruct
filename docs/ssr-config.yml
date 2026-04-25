@@ -69,12 +69,16 @@ jsonLd:
         urlTemplate: http://freestruct.creadev.org/?s={search_term_string}
       query-input: required name=search_term_string
 # Cache busting configuration
-# Every build generates a unique hash injected into HTML
-# This ensures CDN/browser cache invalidation on every deploy
+# Every build generates a unique hash injected into HTML as a meta tag
+# This helps with CDN cache invalidation
 #
 # cacheBusting:
-#   # Hash is always generated (can disable if needed)
+#   # Hash is always generated and injected as <meta name="freestruct-build">
 #   hash: true
+#
+#   # Optional: add ?v={hash} to canonical URLs (default: false)
+#   # Enable this if your CDN doesn't auto-invalidate on deploy
+#   hashInCanonicalUrl: false
 #
 #   # Optional: run purge commands after injection
 #   # Supports ANY CDN or cache system via shell commands

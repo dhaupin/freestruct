@@ -142,8 +142,10 @@ function injectFile(filePath, config, template, outputDir, buildHash) {
     .replace(/\/index\.html$/, '/').replace(/\.html$/, '');
   if (config.basePath) pageUrl = pageUrl.replace(new RegExp('^' + config.basePath), '') || '/';
 
-  // Canonical URL with cache-busting query param
-  const canonicalUrl = config.site.url.replace(/\/$/, '') + pageUrl + '?v=' + buildHash;
+  // Build canonical URL - hashInCanonicalUrl defaults to false
+  const baseUrl = config.site.url.replace(/\/$/, '');
+  const useHashInCanonical = config.cacheBusting?.hashInCanonicalUrl === true;
+  const canonicalUrl = baseUrl + pageUrl + (useHashInCanonical ? '?v=' + buildHash : '');
 
   const replacements = {
     '{{pageTitle}}': pageTitle + ' | ' + config.site.name,
