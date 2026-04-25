@@ -4,6 +4,10 @@ title: freestruct
 description: Post-build SEO layer for any static site generator.
 ---
 
+<section class="intro">
+  <p>freestruct is a post-build SEO and search layer for static doc sites. It works with any SSG - Jekyll, Hugo, Docusaurus, MkDocs, VitePress. Point it at your output folder, and it injects everything you need.</p>
+</section>
+
 <section class="how-it-works">
   <h2>How it works</h2>
   
@@ -11,14 +15,14 @@ description: Post-build SEO layer for any static site generator.
     <div class="step">
       <div class="step-content">
         <h3>Build your docs</h3>
-        <p>Jekyll, Hugo, Docusaurus, MkDocs, VitePress — doesn't matter. Point freestruct at your output.</p>
+        <p>Run your SSG like you always do. Jekyll, Hugo, whatever - freestruct doesn't care.</p>
       </div>
     </div>
     
     <div class="step">
       <div class="step-content">
         <h3>Run freestruct</h3>
-        <p>One command injects SEO tags, OG cards, Twitter meta, sitemap, and cache-busting.</p>
+        <p>One command runs post-build and injects SEO meta tags into every HTML file.</p>
         <pre><code>node docs/lib/inject.js</code></pre>
       </div>
     </div>
@@ -26,7 +30,7 @@ description: Post-build SEO layer for any static site generator.
     <div class="step">
       <div class="step-content">
         <h3>Deploy</h3>
-        <p>Done. Every page has proper meta. CDNs see fresh content. No plugins, no template hacks.</p>
+        <p>Done. Every page has proper meta tags, a cache-busting hash, and a sitemap. No plugins needed.</p>
       </div>
     </div>
   </div>
@@ -58,7 +62,7 @@ description: Post-build SEO layer for any static site generator.
     
     <div class="feature">
       <h3>CDN purge hooks</h3>
-      <p>CloudFlare, Fastly, CloudFront — run purge commands automatically.</p>
+      <p>CloudFlare, Fastly, CloudFront - run purge commands automatically.</p>
     </div>
     
     <div class="feature">
@@ -67,7 +71,7 @@ description: Post-build SEO layer for any static site generator.
     </div>
   </div>
   
-  <p><a href="/configuration">→ Full config reference</a></p>
+  <p><a href="/configuration">- Full config reference</a></p>
 </section>
 
 <section class="guides-grid">
@@ -110,23 +114,23 @@ description: Post-build SEO layer for any static site generator.
     <tbody>
       <tr>
         <td>Works with any SSG</td>
-        <td class="check">✓</td>
-        <td class="check">✓</td>
+        <td class="check">Yes</td>
+        <td class="check">Yes</td>
       </tr>
       <tr>
         <td>One-time config</td>
-        <td class="check">✓</td>
-        <td class="x">✗</td>
+        <td class="check">Yes</td>
+        <td class="x">No</td>
       </tr>
       <tr>
         <td>Cache busting</td>
-        <td class="check">✓</td>
-        <td class="x">✗</td>
+        <td class="check">Yes</td>
+        <td class="x">No</td>
       </tr>
       <tr>
         <td>No template changes</td>
-        <td class="check">✓</td>
-        <td class="x">✗</td>
+        <td class="check">Yes</td>
+        <td class="x">No</td>
       </tr>
     </tbody>
   </table>

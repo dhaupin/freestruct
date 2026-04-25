@@ -21,7 +21,7 @@ layout: default
 <style>
 .home-hero {
   text-align: center;
-  padding: var(--space-8) 0 var(--space-12);
+  padding: var(--space-8) 0 var(--space-6);
 }
 .hero-badge {
   display: inline-block;
@@ -40,15 +40,29 @@ layout: default
   margin-bottom: var(--space-4);
 }
 .home-hero p {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-lg);
   color: var(--color-text-muted);
   max-width: 32rem;
-  margin: 0 auto var(--space-8);
+  margin: 0 auto;
 }
 .hero-actions {
   display: flex;
   gap: var(--space-4);
   justify-content: center;
+  margin-top: var(--space-6);
+}
+
+/* Landing page intro */
+.intro {
+  max-width: 32rem;
+  margin: 0 auto var(--space-8);
+  padding: 0 var(--space-4);
+  text-align: center;
+}
+.intro p {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-muted);
+  margin: 0;
 }
 
 /* Landing page sections */
