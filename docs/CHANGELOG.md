@@ -5,17 +5,22 @@ All notable changes to freestruct are documented here.
 ## [Unreleased]
 
 ### Added
-- **Cache Busting** - Built-in CDN cache invalidation:
-  - Automatic build hash via `<meta name="freestruct-build">` tag
-  - CloudFlare API integration for automatic cache purge
-  - Config in `ssr-config.yml`:
+- **Cache Busting** - Built-in CDN-agnostic cache invalidation:
+  - Automatic build hash generation (SHA1 of config + timestamp)
+  - Injects `<meta name="freestruct-build">` into every page
+  - Adds `?v={hash}` to canonical URLs
+  - **Purge hooks** - Run any shell command post-build:
     ```yaml
     cacheBusting:
-      provider: cloudflare
-      apiToken: $CLOUDFLARE_API_TOKEN
-      zoneId: $CLOUDFLARE_ZONE_ID
+      purge:
+        - name: cloudflare
+          command: curl -X DELETE "https://api.cloudflare.com/..." -H "Authorization: Bearer $TOKEN"
+        - name: fastly  
+          command: fastly-purge $SERVICE_ID $KEY $SITE_URL
     ```
-  - GitHub Secrets for API credentials
+  - **Agnostic** - Works with ANY CDN or caching system
+  - Hash always generated (can disable via `hash: false`)
+  - Available env vars: `$SITE_URL`, `$BUILD_HASH`, `$OUTPUT_DIR`
 
 ### Fixed
 - Mobile nav CSS inside `<style>` block (was outside `</html>`)

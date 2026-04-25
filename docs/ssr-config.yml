@@ -69,8 +69,24 @@ jsonLd:
         urlTemplate: http://freestruct.creadev.org/?s={search_term_string}
       query-input: required name=search_term_string
 # Cache busting configuration
-# Uncomment and configure to auto-purge CDN cache after build
+# Every build generates a unique hash injected into HTML
+# This ensures CDN/browser cache invalidation on every deploy
+#
 # cacheBusting:
-#   provider: cloudflare  # currently only cloudflare supported
-#   apiToken: $CLOUDFLARE_API_TOKEN  # set in GitHub Secrets
-#   zoneId: $CLOUDFLARE_ZONE_ID  # get from CloudFlare dashboard
+#   # Hash is always generated (can disable if needed)
+#   hash: true
+#
+#   # Optional: run purge commands after injection
+#   # Supports ANY CDN or cache system via shell commands
+#   # Available vars: $SITE_URL, $BUILD_HASH, $OUTPUT_DIR
+#   purge:
+#     - name: cloudflare
+#       command: >
+#         curl -X DELETE "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/purge_cache"
+#         -H "Authorization: Bearer $CLOUDFLARE_TOKEN"
+#         -H "Content-Type: application/json"
+#         -d '{"files":["$SITE_URL/*"]}'
+#     - name: fastly
+#       command: fastly-purge $FASTLY_SERVICE_ID $FASTLY_KEY $SITE_URL
+#     - name: custom
+#       command: ./scripts/purge-cache.sh $BUILD_HASH

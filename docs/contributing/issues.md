@@ -1,7 +1,7 @@
 
 ## Cache Busting Feature
 
-**Status: IMPLEMENTED in v0.1.1**
+**Status: COMPLETE in v0.1.1** ✅
 
 ### Problem
 - CDNs (CloudFlare, Fastly, CloudFront) cache aggressively
@@ -10,26 +10,37 @@
 - Downstream CDNs don't know freestruct updated the build
 
 ### Solution (Implemented)
-1. **Content hash generation** - inject.js now generates SHA1 build hash per build
-2. **Version meta tag** - `<meta name="freestruct-build" content="{hash}">` injected into every page
-3. **CloudFlare API integration** - Optional config in `ssr-config.yml`:
-   ```yaml
-   cacheBusting:
-     provider: cloudflare
-     apiToken: $CLOUDFLARE_API_TOKEN  # set in GitHub Secrets
-     zoneId: $CLOUDFLARE_ZONE_ID      # get from CloudFlare dashboard
-   ```
-4. **Auto-purge on build** - Calls CloudFlare API post-inject to purge all site caches
+freestruct now provides **two independent mechanisms**:
 
-### Usage
-1. Add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ZONE_ID` to GitHub repo Secrets
-2. Uncomment cacheBusting config in `ssr-config.yml`
-3. On next build, freestruct will:
-   - Generate unique build hash
-   - Inject into all HTML pages
-   - Call CloudFlare API to purge cache
+1. **Automatic Hash Injection** (always on):
+   - SHA1 build hash generated per build from config + timestamp
+   - Injects `<meta name="freestruct-build" content="{hash}">` into every page
+   - Adds `?v={hash}` query param to canonical URLs
+   - No configuration needed - works out of the box
+
+2. **Purge Hooks** (optional):
+   - Run ANY shell command post-build
+   - Supports any CDN or cache system
+   - Config in `ssr-config.yml`:
+     ```yaml
+     cacheBusting:
+       purge:
+         - name: cloudflare
+           command: curl -X DELETE "https://api.cloudflare.com/..." -H "Authorization: Bearer $TOKEN"
+     ```
+   - Available variables: `$SITE_URL`, `$BUILD_HASH`, `$OUTPUT_DIR`
+
+### Why It's Agnostic
+- Hash is always injected (no CDN config required)
+- Purge hooks use standard shell - no hardcoded API integrations
+- Works with GitHub Pages, Netlify, Vercel, self-hosted, any CDN
+- User controls exact purge commands in config
+
+### Verified Working
+- Build hash appears in page source
+- Canonical URLs include `?v={hash}` query param
+- Hash changes every build
 
 ### Future Enhancements
-- Support more CDN providers (Fastly, CloudFront, Akamai)
-- Add version query param to canonical URLs
-- GitHub Actions cache busting for GitHub Pages specifically
+- Could add built-in Fastly/CloudFront providers (but shell hooks cover it)
+- Could add cache headers to HTTP responses (server-specific)

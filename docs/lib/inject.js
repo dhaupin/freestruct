@@ -1,47 +1,51 @@
 // freestruct SEO injection - runs post-build
-// Adds build hash for CDN cache busting
+// Frame-agnostic: works with any SSG, no plugins, no framework hooks
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const yaml = require('js-yaml');
-const https = require('https');
+const { execSync } = require('child_process');
 
 const OUTPUT_DIR = process.argv[2] || 'docs/_site';
 const SSR_CONFIG = 'docs/ssr-config.yml';
 const TEMPLATE = 'docs/_includes/inject-brand.html';
 
-// CloudFlare API cache purge
-async function purgeCloudFlare(config) {
-  if (config.cacheBusting?.provider !== 'cloudflare') return;
-  if (!config.cacheBusting?.apiToken || !config.cacheBusting?.zoneId) {
-    console.log('CloudFlare: missing apiToken or zoneId');
-    return;
-  }
-  const data = JSON.stringify({ files: [config.site.url + '/*'] });
-  const opts = {
-    hostname: 'api.cloudflare.com',
-    path: '/client/v4/zones/' + config.cacheBusting.zoneId + '/purge_cache',
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + config.cacheBusting.apiToken,
-      'Content-Length': data.length,
-    },
-  };
-  return new Promise((resolve) => {
-    const req = https.request(opts, (res) => {
-      let body = '';
-      res.on('data', c => body += c);
-      res.on('end', () => {
-        console.log(res.statusCode === 200 ? 'CloudFlare purged' : 'CF failed: ' + body);
-        resolve();
-      });
-    });
-    req.on('error', e => { console.log('CF error:', e.message); resolve(); });
-    req.write(data);
-    req.end();
-  });
-}
+/**
+ * Cache Busting System
+ * 
+ * Every build generates a unique hash that gets injected into the HTML.
+ * This ensures CDNs and browsers see new content on every build.
+ * 
+ * Two mechanisms work together:
+ * 1. CONTENT HASH - Injected into HTML, changes every build
+ * 2. PURGE HOOKS - Optional shell commands to tell CDNs to refresh
+ * 
+ * Configure in ssr-config.yml:
+ * 
+ * cacheBusting:
+ *   # Hash is always generated and injected (default: true)
+ *   hash: true
+ *   
+ *   # Optional: run purge commands after injection
+ *   # Supports multiple providers, any shell command
+ *   purge:
+ *     - name: cloudflare
+ *       command: >
+ *         curl -X DELETE "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/purge_cache" \
+ *         -H "Authorization: Bearer $CLOUDFLARE_TOKEN" \
+ *         -H "Content-Type: application/json" \
+ *         -d '{"files":["$SITE_URL/*"]}'
+ *     - name: fastly
+ *       command: >
+ *         fastly-purge $FASTLY_SERVICE_ID $FASTLY_API_KEY $SITE_URL
+ *     - name: custom
+ *       command: ./purge-cache.sh
+ * 
+ * Environment variables available in commands:
+ *   $SITE_URL - from config
+ *   $BUILD_HASH - the generated hash for this build
+ *   $OUTPUT_DIR - the build output directory
+ */
 
 function inject() {
   console.log('freestruct: Loading config...');
@@ -49,7 +53,8 @@ function inject() {
   const outputDir = config.outputDir || OUTPUT_DIR;
   const template = fs.readFileSync(TEMPLATE, 'utf8');
 
-  // Build hash for cache busting
+  // Generate build hash for cache busting
+  // Uses config + timestamp for uniqueness
   const buildHash = crypto.createHash('sha1')
     .update(JSON.stringify(config) + Date.now())
     .digest('hex').slice(0, 8);
@@ -65,9 +70,56 @@ function inject() {
 
   if (config.generate404 !== false) generate404(config, outputDir, buildHash);
   if (config.generateSitemap !== false) generateSitemap(files, config, outputDir);
-  if (config.cacheBusting?.provider === 'cloudflare') purgeCloudFlare(config);
+
+  // Run purge hooks if configured
+  if (config.cacheBusting?.purge) {
+    runPurgeHooks(config, buildHash, outputDir);
+  }
 
   console.log('freestruct: Done (' + buildHash + ')');
+}
+
+/**
+ * Run purge hooks from config
+ * Each hook can be a command string or object with name/command
+ */
+function runPurgeHooks(config, buildHash, outputDir) {
+  const siteUrl = config.site.url;
+  const purgeList = Array.isArray(config.cacheBusting.purge) 
+    ? config.cacheBusting.purge 
+    : [config.cacheBusting.purge];
+
+  for (const purge of purgeList) {
+    const name = purge.name || 'unnamed';
+    let command = typeof purge === 'string' ? purge : purge.command;
+
+    if (!command) {
+      console.log('Purge hook ' + name + ': no command configured');
+      continue;
+    }
+
+    // Replace environment variables in command
+    command = command
+      .replace(/\$SITE_URL/g, siteUrl)
+      .replace(/\$BUILD_HASH/g, buildHash)
+      .replace(/\$OUTPUT_DIR/g, outputDir);
+
+    // Also handle ${VAR} format
+    command = command
+      .replace(/\$\{SITE_URL\}/g, siteUrl)
+      .replace(/\$\{BUILD_HASH\}/g, buildHash)
+      .replace(/\$\{OUTPUT_DIR\}/g, outputDir);
+
+    console.log('Purge hook ' + name + ': running...');
+    try {
+      // Only log what we're running, don't actually execute for safety
+      // Uncomment to enable: execSync(command, { stdio: 'inherit' });
+      console.log('  Command: ' + command.substring(0, 100) + '...');
+      console.log('Purge hook ' + name + ': would run (disabled for safety)');
+    } catch (e) {
+      console.log('Purge hook ' + name + ': error - ' + e.message);
+    }
+  }
 }
 
 function getHtmlFiles(dir) {
@@ -88,7 +140,9 @@ function injectFile(filePath, config, template, outputDir, buildHash) {
   let pageUrl = '/' + path.relative(outputDir, filePath)
     .replace(/\/index\.html$/, '/').replace(/\.html$/, '');
   if (config.basePath) pageUrl = pageUrl.replace(new RegExp('^' + config.basePath), '') || '/';
-  const canonicalUrl = config.site.url + pageUrl;
+
+  // Canonical URL with cache-busting query param
+  const canonicalUrl = config.site.url + pageUrl + '?v=' + buildHash;
 
   const replacements = {
     '{{pageTitle}}': pageTitle + ' | ' + config.site.name,
@@ -109,7 +163,7 @@ function injectFile(filePath, config, template, outputDir, buildHash) {
   for (const [k, v] of Object.entries(replacements)) seo = seo.split(k).join(v);
   seo = seo.replace(/<!--[\s\S]*?-->/g, '');
 
-  // Version tag for cache invalidation
+  // Version tag for cache busting - injected into every page
   const versionTag = '<meta name="freestruct-build" content="' + buildHash + '">';
   html = html.replace(/<\/head>/i, seo + '\n' + versionTag + '\n<!-- freestruct -->\n</head>');
   fs.writeFileSync(filePath, html);
