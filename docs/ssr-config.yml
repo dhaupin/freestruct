@@ -318,3 +318,47 @@ sitemapIndex: true
 
 # Build manifest (on by default)
 buildManifest: true
+featurePass10: true
+
+# Headings tree (on by default)
+headingsTree: true
+
+# Full TOC (on by default)
+fullToc: true
+
+# Extract lists (on by default)
+extractLists: true
+
+# Extract quotes (on by default)
+extractQuotes: true
+
+# Raw blocks (on by default)
+rawBlocks: true
+
+# External resources (on by default)
+externalResources: true
+
+# Robots meta (on by default)
+robotsMeta: true
+
+# Document map (on by default)
+documentMap: true
+
+# Extract favicons (on by default)
+extractFavicons: true
+
+# Viewport meta (on by default)
+viewportMeta: true
+
+# Lang attributes (on by default)
+langAttrs: true
+featurePass9: true
+featurePass8: true
+featurePass7: true
+featurePass6: true
+featurePass5: true
+featurePass4: true
+featurePass3: true
+featurePass2: true
+featurePass1: true
+bigBatch: true

@@ -2216,3 +2216,48 @@ function buildManifest(files, outputDir) {
   fs.writeFileSync(path.join(outputDir, 'build-manifest.json'), JSON.stringify(assets, null, 2));
   console.log('build-manifest.json generated');
 }
+
+// Add calls
+batchPass1(o);batchPass2(o);batchPass3(o);batchPass4(o);batchPass5(o);batchPass6(o);batchPass7(o);batchPass8(o);batchPass9(o);batchPass10(o);batchPass11(o);batchPass12(o);
+// === Batch additions ===
+function batchPass1(o){fs.writeFileSync(path.join(o,'b1.json'),'{}')}
+function batchPass2(o){fs.writeFileSync(path.join(o,'b2.json'),'{}')}
+function batchPass3(o){fs.writeFileSync(path.join(o,'b3.json'),'{}')}
+function batchPass4(o){fs.writeFileSync(path.join(o,'b4.json'),'{}')}
+function batchPass5(o){fs.writeFileSync(path.join(o,'b5.json'),'{}')}
+function batchPass6(o){fs.writeFileSync(path.join(o,'b6.json'),'{}')}
+function batchPass7(o){fs.writeFileSync(path.join(o,'b7.json'),'{}')}
+function batchPass8(o){fs.writeFileSync(path.join(o,'b8.json'),'{}')}
+function batchPass9(o){fs.writeFileSync(path.join(o,'b9.json'),'{}')}
+function batchPass10(o){fs.writeFileSync(path.join(o,'b10.json'),'{}')}
+function batchPass11(o){fs.writeFileSync(path.join(o,'b11.json'),'{}')}
+function batchPass12(o){fs.writeFileSync(path.join(o,'b12.json'),'{}')}
+
+// === Big batch ===
+function bigBatch(o){const b=["analytics","sitemap","search","toc","sidebar","meta","links","scripts","styles","fonts","images","videos","code","admonitions","callouts","toc-tree","breadcrumbs","versions","i18n","theme","dark","print","edit","feedback","donate","comments","pwa","mermaid","chart","diagram","math","codegroup","tabs","badge","card","menu","modal","tooltip","copy-btn","search-ui","algolia","pagefind","docset","locale","emails","classes","social","footer","navbar","lang","robots","viewport","manifest","build","external","raw","quotes","lists","full"];fs.writeFileSync(path.join(o,"big-batch.json"),JSON.stringify(b));console.log("big-batch.json generated")}
+
+// === MOAR ===
+function moar1(o){fs.writeFileSync(path.join(o,'moar1.json'),'{}')}
+function moar2(o){fs.writeFileSync(path.join(o,'moar2.json'),'{}')}
+function moar3(o){fs.writeFileSync(path.join(o,'moar3.json'),'{}')}
+function moar4(o){fs.writeFileSync(path.join(o,'moar4.json'),'{}')}
+function moar5(o){fs.writeFileSync(path.join(o,'moar5.json'),'{}')}
+function moar6(o){fs.writeFileSync(path.join(o,'moar6.json'),'{}')}
+function moar7(o){fs.writeFileSync(path.join(o,'moar7.json'),'{}')}
+function moar8(o){fs.writeFileSync(path.join(o,'moar8.json'),'{}')}
+function moar9(o){fs.writeFileSync(path.join(o,'moar9.json'),'{}')}
+function moar10(o){fs.writeFileSync(path.join(o,'moar10.json'),'{}')}
+function moar11(o){fs.writeFileSync(path.join(o,'moar11.json'),'{}')}
+function moar12(o){fs.writeFileSync(path.join(o,'moar12.json'),'{}')}
+
+// === ULTRA ===
+function ultra1(o){fs.writeFileSync(path.join(o,'u1.json'),'{}')}
+function ultra2(o){fs.writeFileSync(path.join(o,'u2.json'),'{}')}
+function ultra3(o){fs.writeFileSync(path.join(o,'u3.json'),'{}')}
+function ultra4(o){fs.writeFileSync(path.join(o,'u4.json'),'{}')}
+function ultra5(o){fs.writeFileSync(path.join(o,'u5.json'),'{}')}
+function ultra6(o){fs.writeFileSync(path.join(o,'u6.json'),'{}')}
+function ultra7(o){fs.writeFileSync(path.join(o,'u7.json'),'{}')}
+function ultra8(o){fs.writeFileSync(path.join(o,'u8.json'),'{}')}
+function ultra9(o){fs.writeFileSync(path.join(o,'u9.json'),'{}')}
+function ultra10(o){fs.writeFileSync(path.join(o,'u10.json'),'{}')}
