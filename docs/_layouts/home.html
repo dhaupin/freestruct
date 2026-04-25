@@ -68,26 +68,48 @@ layout: default
 /* Landing page sections */
 .how-it-works,
 .features-grid,
+.quickstart,
 .comparison,
 .guides-grid {
   padding: var(--space-12) var(--space-4);
 }
 .how-it-works,
 .features-grid,
+.quickstart,
 .comparison {
   max-width: 40rem;
   margin: 0 auto;
 }
 .how-it-works h2,
 .features-grid h2,
+.quickstart h2,
 .comparison h2,
 .guides-grid h2 {
   text-align: center;
   font-size: var(--font-size-xl);
   margin-bottom: var(--space-8);
 }
-.guides-grid {
+.quickstart {
   background: var(--color-bg-alt);
+}
+.quickstart h2 {
+  margin-bottom: var(--space-4);
+}
+.quickstart > p {
+  text-align: center;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-6);
+}
+.quickstart pre {
+  margin-bottom: var(--space-4);
+}
+.quickstart > p:last-child {
+  text-align: center;
+  color: var(--color-text-muted);
+  margin-bottom: 0;
+}
+.quickstart + .guides-grid {
+  background: var(--color-bg);
 }
 .steps {
   display: flex;
