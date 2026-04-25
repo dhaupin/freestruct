@@ -80,6 +80,10 @@ jsonLd:
 #   # Enable this if your CDN doesn't auto-invalidate on deploy
 #   hashInCanonicalUrl: false
 #
+#   # Optional: add ?v={hash} to asset URLs (css, js, images)
+#   # Default: true - assets get cache-busting query params
+#   assetQueryParam: true
+#
 #   # Optional: run purge commands after injection
 #   # Supports ANY CDN or cache system via shell commands
 #   # Available vars: $SITE_URL, $BUILD_HASH, $OUTPUT_DIR

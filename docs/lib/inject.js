@@ -147,6 +147,16 @@ function injectFile(filePath, config, template, outputDir, buildHash) {
   const useHashInCanonical = config.cacheBusting?.hashInCanonicalUrl === true;
   const canonicalUrl = baseUrl + pageUrl + (useHashInCanonical ? '?v=' + buildHash : '');
 
+  // Add cache-busting query param to assets (css, js, images)
+  if (config.cacheBusting?.assetQueryParam !== false) {
+    // Match href or src with common asset extensions, add ?v={hash}
+    html = html.replace(/(href|src)="([^"]+\.(css|js|png|jpg|jpeg|gif|svg|webp))"/gi, 
+      (match, attr, url) => {
+        if (url.includes('?v=')) return match;
+        return attr + '="' + url + '?v=' + buildHash + '"';
+      });
+  }
+
   const replacements = {
     '{{pageTitle}}': pageTitle + ' | ' + config.site.name,
     '{{pageDescription}}': pageDescription,
