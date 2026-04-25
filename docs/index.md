@@ -178,6 +178,16 @@ node docs/lib/inject.js</code></pre>
       <p>Inject any code</p>
     </a>
 
+    <a href="/guides/troubleshooting" class="guide">
+      <h3>Troubleshooting</h3>
+      <p>Common issues</p>
+    </a>
+
+    <a href="/guides/cicd" class="guide">
+      <h3>CI/CD</h3>
+      <p>GitHub Actions</p>
+    </a>
+
     <a href="/guides/post-render-hooks" class="guide">
       <h3>Post-Render Hooks</h3>
       <p>Beyond SEO</p>
