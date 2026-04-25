@@ -156,3 +156,21 @@ searchConfig: true
 
 # Find empty sections (on by default)
 emptySections: true
+
+# Last updated (on by default)
+lastUpdated: true
+
+# Twitter handles (on by default)
+twitterHandles: true
+
+# Print config (on by default)
+printConfig: true
+
+# Edit links (on by default)
+editLinks: true
+
+# Extract dates (on by default)
+extractDates: true
+
+# Copy year (on by default)
+copyYear: true
