@@ -50,7 +50,7 @@
         </svg>
       </a>
 
-      <button class="burger-menu" id="burgerMenu" aria-label="Toggle menu" onclick="var b=document.getElementById('burgerMenu'),n=document.getElementById('siteNav');b.classList.toggle('open');n.classList.toggle('open');if(n.classList.contains('open')){n.style.display='flex';n.style.position='fixed';n.style.top='4rem';n.style.left='0';n.style.right='0';n.style.bottom='0';n.style.zIndex='500';n.style.background='var(--color-bg)';n.style.flexDirection='column';n.style.padding='1rem';n.style.overflowY='auto'}else{n.style.display='';n.style.position=''}">
+      <button class="burger-menu" id="burgerMenu" aria-label="Toggle menu" onclick="document.getElementById('burgerMenu').classList.toggle('open');document.getElementById('siteNav').classList.toggle('open')">
         <span></span>
         <span></span>
         <span></span>
