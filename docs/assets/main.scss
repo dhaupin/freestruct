@@ -300,3 +300,20 @@
     }
   }
 }
+
+@media (max-width: 640px) {
+  .site-nav {
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 250;
+    overflow-y: auto;
+  }
+  
+  // Nav group items z-index above search modal (100) and pagefind (200)
+  .nav-group-items {
+    z-index: 251;
+  }
+}
