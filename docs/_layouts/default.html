@@ -252,9 +252,9 @@ tr:hover td { background: var(--color-bg-alt); }
   .burger-menu.open span:nth-child(2) { opacity: 0; }
   .burger-menu.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
   
-  /* Site nav - full screen overlay */
+  /* Site nav - full screen overlay - always visible for debug */
   .site-nav {
-    display: none;
+    display: flex !important;
     position: fixed;
     top: 4rem;
     left: 0;
@@ -264,10 +264,9 @@ tr:hover td { background: var(--color-bg-alt); }
     flex-direction: column;
     padding: var(--space-4);
     overflow-y: auto;
-    z-index: 500;
+    z-index: 5000;
     gap: var(--space-2);
   }
-  .site-nav.open { display: flex; }
   .site-nav > a, .site-nav > .nav-group { 
     display: block;
     padding: var(--space-3) 0; 
