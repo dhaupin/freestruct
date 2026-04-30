@@ -4,28 +4,6 @@
       {{ site.title }}<span class="nav-badge">beta</span>
     </a>
 
-    <nav class="site-nav" id="siteNav">
-      {% if site.nav %}
-        {% for item in site.nav %}
-          {% if item.items %}
-          <div class="nav-group">
-            <button class="nav-group-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">
-              {{ item.title }}
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-            </button>
-            <div class="nav-group-items">
-              {% for sub in item.items %}
-              <a href="{{ sub.url | relative_url }}">{{ sub.title }}</a>
-              {% endfor %}
-            </div>
-          </div>
-          {% else %}
-          <a href="{{ item.url | relative_url }}">{{ item.title }}</a>
-          {% endif %}
-        {% endfor %}
-      {% endif %}
-    </nav>
-
     <div class="header-actions">
       <button class="search-trigger" id="searchTrigger" aria-label="Search" onclick="document.getElementById('searchModal').classList.add('open')">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -58,6 +36,28 @@
     </div>
   </div>
 </header>
+
+<nav class="site-nav" id="siteNav">
+  {% if site.nav %}
+    {% for item in site.nav %}
+      {% if item.items %}
+      <div class="nav-group">
+        <button class="nav-group-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">
+          {{ item.title }}
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="nav-group-items">
+          {% for sub in item.items %}
+          <a href="{{ sub.url | relative_url }}">{{ sub.title }}</a>
+          {% endfor %}
+        </div>
+      </div>
+      {% else %}
+      <a href="{{ item.url | relative_url }}">{{ item.title }}</a>
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+</nav>
 
 <div class="search-modal" id="searchModal">
   <div class="search-modal-content">
@@ -97,7 +97,7 @@ if (burger && nav) {
   });
 }
 
-// Close nav on link click (mobile)
+// Close nav on link click
 document.querySelectorAll('#siteNav a').forEach(function(link) {
   link.addEventListener('click', function() {
     nav.classList.remove('open');
@@ -105,14 +105,13 @@ document.querySelectorAll('#siteNav a').forEach(function(link) {
   });
 });
 
-// Submenu toggle (mobile + UX)
+// Submenu toggle
 document.querySelectorAll('.nav-group-toggle').forEach(function(toggle) {
   toggle.addEventListener('click', function(e) {
     e.stopPropagation();
     var items = this.nextElementSibling;
     var isOpen = items.classList.contains('open');
     
-    // Close all other submenus first
     document.querySelectorAll('.nav-group-items.open').forEach(function(openItems) {
       openItems.classList.remove('open');
     });
@@ -120,7 +119,6 @@ document.querySelectorAll('.nav-group-toggle').forEach(function(toggle) {
       openToggle.classList.remove('open');
     });
     
-    // Toggle current
     if (!isOpen) {
       items.classList.add('open');
       this.classList.add('open');
@@ -128,7 +126,6 @@ document.querySelectorAll('.nav-group-toggle').forEach(function(toggle) {
   });
 });
 
-// Close submenus on outside click (desktop)
 document.addEventListener('click', function(e) {
   if (!e.target.closest('.nav-group')) {
     document.querySelectorAll('.nav-group-items.open').forEach(function(items) {
