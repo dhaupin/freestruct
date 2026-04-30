@@ -232,7 +232,7 @@ tr:hover td { background: var(--color-bg-alt); }
 
 /* Mobile: full-height menu, burger shows nav */
 @media (max-width: 768px) {
-  .nav-group-items { display: none; flex-direction: column; padding-left: var(--space-4); }
+  .nav-group-items { display: none; flex-direction: column; padding-left: var(--space-4); z-index: 500; }
   .nav-group-items.open { display: flex; }
   .nav-group-toggle.open { color: var(--color-text); }
   
@@ -247,7 +247,7 @@ tr:hover td { background: var(--color-bg-alt); }
     flex-direction: column;
     padding: var(--space-4);
     overflow-y: auto;
-    z-index: 200;
+    z-index: 500;
     gap: var(--space-2);
   }
   .site-nav.open { display: flex; }
