@@ -217,18 +217,20 @@ tr:hover td { background: var(--color-bg-alt); }
 
 /* Site nav - overlay when open */
 .site-nav.open {
-  display: flex;
-  position: fixed;
-  top: 4rem;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--color-bg);
-  flex-direction: column;
-  padding: var(--space-4);
-  overflow-y: auto;
-  z-index: 9999;
-  gap: var(--space-2);
+  display: flex !important;
+  position: fixed !important;
+  top: 4rem !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: calc(100vh - 4rem) !important;
+  background: var(--color-bg) !important;
+  flex-direction: column !important;
+  padding: var(--space-4) !important;
+  overflow-y: auto !important;
+  z-index: 99999 !important;
+  gap: var(--space-2) !important;
 }
 .site-nav.open > a, .site-nav.open > .nav-group { 
   display: block;
