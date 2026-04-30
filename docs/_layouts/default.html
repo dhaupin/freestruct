@@ -215,7 +215,7 @@ tr:hover td { background: var(--color-bg-alt); }
 /* Site nav - hidden by default */
 .site-nav { display: none; }
 
-/* Site nav - full screen overlay when open */
+/* Site nav - overlay when open */
 .site-nav.open {
   display: flex;
   position: fixed;
@@ -239,8 +239,9 @@ tr:hover td { background: var(--color-bg-alt); }
 }
 .site-nav.open > a:hover, .site-nav.open > .nav-group:hover { color: var(--color-primary); }
 
-/* Nav group toggle */
-.nav-group-toggle { display: flex; align-items: center; gap: 4px; background: none; border: none; color: var(--color-text-muted); font-size: var(--font-size-sm); font-weight: 500; cursor: pointer; padding: 8px 12px; }
+/* Nav group - collapsible */
+.nav-group { display: flex; flex-direction: column; }
+.nav-group-toggle { display: flex; align-items: center; justify-content: space-between; background: none; border: none; color: var(--color-text-muted); font-size: var(--font-size-sm); font-weight: 500; cursor: pointer; padding: var(--space-3) 0; border-bottom: 1px solid var(--color-border); width: 100%; text-align: left; }
 .nav-group-toggle:hover { color: var(--color-text); }
 .nav-group-toggle svg { transition: transform 0.2s; }
 .nav-group-toggle.open svg { transform: rotate(180deg); }
