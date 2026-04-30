@@ -217,6 +217,12 @@ tr:hover td { background: var(--color-bg-alt); }
   .burger-menu { display: flex; }
 }
 
+/* Always show burger in header-actions for testing */
+.header-actions .burger-menu { display: flex !important; }
+
+/* Mobile nav toggle - works at any width for testing */
+.site-nav.open { display: flex !important; position: fixed !important; top: var(--header-height) !important; left: 0 !important; right: 0 !important; bottom: 0 !important; z-index: 500 !important; background: var(--color-bg) !important; flex-direction: column !important; padding: var(--space-4) !important; overflow-y: auto !important; }
+
 /* Nav group (collapsible) */
 .nav-group { position: relative; }
 .nav-group-toggle { display: flex; align-items: center; gap: 4px; background: none; border: none; color: var(--color-text-muted); font-size: var(--font-size-sm); font-weight: 500; cursor: pointer; padding: 8px 12px; }
