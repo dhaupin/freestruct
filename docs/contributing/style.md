@@ -208,6 +208,22 @@ For example, here's a properly documented section:
 - Long intros (save for index page)
 - Multiple paragraphs before first step
 
+## Theme Development
+
+When working on the docs theme:
+
+- Use `{{ 'path' | relative_url }}` for internal paths in layouts (respects baseurl)
+- Use relative links without leading slashes in markdown: `href="guides/foo"` not `href="/guides/foo"`
+- Favicon should match header brand logo (in both layout and render)
+- Index needs h1 from frontmatter title or content
+
+### Template Example
+
+    <a href="{{ '/guides' | relative_url }}">Guides</a>
+    <script src="{{ 'pagefind/pagefind.js' | relative_url }}"></script>
+
+See: [_layouts/default.html](/_layouts/default.html), [index.md](/index.html)
+
 ## Common Doc Blocks
 
 | Block | Include |
