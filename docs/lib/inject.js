@@ -236,24 +236,6 @@ function inject() {
 
   // Empty sections
   if (config.emptySections !== false) emptySections(files, outputDir);
-
-  // Last updated
-  if (config.lastUpdated !== false) lastUpdated(files, outputDir);
-
-  // Twitter handles
-  if (config.twitterHandles !== false) twitterHandles(files, outputDir);
-
-  // Print config
-  if (config.printConfig !== false) printConfig(outputDir);
-
-  // Edit links
-  if (config.editLinks !== false) editLinks(outputDir);
-
-  // Extract dates
-  if (config.extractDates !== false) extractDates(files, outputDir);
-
-  // Copy year
-  if (config.copyYear !== false) copyYear(outputDir);
   }
   }
 
@@ -1472,74 +1454,4 @@ function emptySections(files, outputDir) {
   }
   fs.writeFileSync(path.join(outputDir, 'empty-sections.json'), JSON.stringify(empty, null, 2));
   console.log('empty-sections.json generated (' + empty.length + ')');
-}
-
-/**
- * Generate last updated timestamps
- * Per-page → last-updated.json
- */
-function lastUpdated(files, outputDir) {
-  const data = files.map(f => ({ file: path.basename(f), timestamp: new Date().toISOString() }));
-  fs.writeFileSync(path.join(outputDir, 'last-updated.json'), JSON.stringify(data, null, 2));
-  console.log('last-updated.json generated');
-}
-
-/**
- * Extract twitter handles
- * @username → twitter-handles.json
- */
-function twitterHandles(files, outputDir) {
-  const handles = new Set();
-  for (const file of files) {
-    const html = fs.readFileSync(file, 'utf8');
-    const matches = html.match(/@[\w_]+/g) || [];
-    matches.forEach(m => handles.add(m));
-  }
-  fs.writeFileSync(path.join(outputDir, 'twitter-handles.json'), JSON.stringify([...handles], null, 2));
-  console.log('twitter-handles.json generated');
-}
-
-/**
- * Generate print styles config
- * Print-friendly → print-config.json
- */
-function printConfig(outputDir) {
-  config = { enabled: true, css: '/css/print.css', title: 'Print' };
-  fs.writeFileSync(path.join(outputDir, 'print-config.json'), JSON.stringify(config, null, 2));
-  console.log('print-config.json generated');
-}
-
-/**
- * Generate edit links config
- * Edit on GitHub → edit-links.json
- */
-function editLinks(outputDir) {
-  const config = { enabled: true, base: 'https://github.com/user/repo/edit/main/docs/' };
-  fs.writeFileSync(path.join(outputDir, 'edit-links.json'), JSON.stringify(config, null, 2));
-  console.log('edit-links.json generated');
-}
-
-/**
- * Extract dates from content
- * YYYY-MM-DD → dates.json
- */
-function extractDates(files, outputDir) {
-  const dates = [];
-  for (const file of files) {
-    const html = fs.readFileSync(file, 'utf8');
-    const matches = html.match(/\d{4}-\d{2}-\d{2}/g) || [];
-    if (matches.length) dates.push({ file: path.basename(file), dates: [...new Set(matches)] });
-  }
-  fs.writeFileSync(path.join(outputDir, 'dates.json'), JSON.stringify(dates, null, 2));
-  console.log('dates.json generated');
-}
-
-/**
- * Generate copy year
- * Current year → year.json
- */
-function copyYear(outputDir) {
-  const data = { year: new Date().getFullYear() };
-  fs.writeFileSync(path.join(outputDir, 'year.json'), JSON.stringify(data, null, 2));
-  console.log('year.json generated');
 }
