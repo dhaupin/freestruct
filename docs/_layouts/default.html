@@ -578,7 +578,7 @@
 <body>
     <!-- Header -->
     <header class="header">
-        <a href="/freestruct/" class="header-brand">
+        <a href="/" class="header-brand">
             <svg viewBox="0 0 32 32" fill="none">
                 <rect x="4" y="4" width="24" height="24" rx="4" fill="#2563eb"/>
                 <path d="M10 16L16 10L22 16" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
@@ -783,7 +783,7 @@
         <button class="search-close" id="searchClose" aria-label="Close search">×</button>
     </div>
     
-    <script src="/freestruct/pagefind/pagefind.js"></script>
+    <script src="/pagefind/pagefind.js"></script>
     <script>
         // Search functionality using Pagefind (matching prestruct approach)
         var searchTrigger = document.getElementById('searchTrigger');
@@ -801,7 +801,7 @@
             searchResults.innerHTML = '<div class="search-empty">Searching for "' + q + '"...</div>';
             try {
                 // Import fresh each time (matching prestruct pattern)
-                var pagefind = await import('/freestruct/pagefind/pagefind.js');
+                var pagefind = await import('/pagefind/pagefind.js');
                 await pagefind.init();
                 var resp = await pagefind.search(q);
                 if (resp.results.length === 0) {
