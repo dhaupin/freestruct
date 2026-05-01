@@ -1,3 +1,8 @@
+---
+title: Cache Busting
+description: Ensure your content is always fresh with Freestruct's cache busting system
+---
+
 # Cache Busting
 
 Freestruct provides a built-in cache busting system that ensures your content is always fresh, regardless of which CDN or caching layer sits in front of your site. It works **agnostic of your SSG** - just runs post-build on your output HTML.
