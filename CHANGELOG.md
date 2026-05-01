@@ -2,38 +2,6 @@
 
 All notable changes to freestruct will be documented here.
 
-## [0.3.3] - 2026-04-25
-
-### Added (Massive expansion - 80+ new tools)
-**Batch output generators** (80+)
-- batchPass1-12: b1-b12.json
-- bigBatch: 58-feature list → big-batch.json
-- moarPass1-12: moar1-moar12.json
-- ultraPass1-10: u1-u10.json
-- megaPass1-10: mega1-mega10.json
-- hyperPass1-10: h1-h10.json
-- omegaPass1-10: o1-o10.json
-- deltaPass1-10: d1-d10.json
-
-**Content analysis** (12 new)
-- headingsTree: Nested → headings-tree.json
-- fullToc: Table data → full-toc.json
-- extractLists: ul/ol → lists.json
-- extractQuotes: blockquote → quotes.json
-- rawBlocks: pre/code → raw-blocks.json
-- externalResources: CDN/fonts → external-resources.json
-- robotsMeta: noindex → robots-meta.json
-- documentMap: All docs → document-map.json
-- extractFavicons: icon refs → favicons.json
-- viewportMeta: Mobile → viewport.json
-- langAttrs: html lang → lang-attrs.json
-
-### Stats
-- **2311 lines, 181 functions, 99+ outputs, 0 dependencies**
-
-### Docs
-- FEATURES.md: Full feature list documented
-
 ## [0.3.2] - 2026-04-25
 
 ### Added (8 rounds = 48 new tools)

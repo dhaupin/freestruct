@@ -19,7 +19,7 @@ Engineering decisions and technical details for freestruct docs and the freestru
 
 | File | Purpose |
 |------|---------|
-| `docs/lib/inject.js` | Core SEO injection script (2311 lines, 181 functions, pure Node.js) |
+| `docs/lib/inject.js` | Core SEO injection script (2218 lines, 106 functions, pure Node.js) |
 | `docs/ssr-config.yml` | Configuration for site metadata, CDN hooks, cache busting |
 | `docs/_includes/inject-brand.html` | HTML template with `{{placeholder}}` tokens |
 
