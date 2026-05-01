@@ -66,6 +66,8 @@ cacheBusting:
 
 ### Options
 
+These settings control cache busting behavior:
+
 | Option | Default | Description |
 |--------|---------|-------------|
 | `assetQueryParam` | true | Add `?v={hash}` to CSS, JS, image URLs |
