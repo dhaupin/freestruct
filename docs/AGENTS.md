@@ -19,7 +19,7 @@ Engineering decisions and technical details for freestruct docs and the freestru
 
 | File | Purpose |
 |------|---------|
-| `docs/lib/inject.js` | Core SEO injection script (2218 lines, 106 functions, pure Node.js) |
+| `docs/lib/inject.js` | Core SEO injection script (1545 lines, 58 functions, pure Node.js) |
 | `docs/ssr-config.yml` | Configuration for site metadata, CDN hooks, cache busting |
 | `docs/_includes/inject-brand.html` | HTML template with `{{placeholder}}` tokens |
 
@@ -47,7 +47,6 @@ Your SSG Build (ANY - Jekyll/Hugo/Docusaurus/VitePress/MkDocs)
    - toc.json, sidebar.json, breadcrumbs.json
    - seo-score.json, meta-summary.json
    - 45 total output files
-   - 88 output files (v0.3.2)
          ↓
    CDN Purge Hooks (optional)
 ```

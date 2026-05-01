@@ -2,21 +2,7 @@
 
 All notable changes to freestruct will be documented here.
 
-## [0.3.2] - 2026-04-25
-
-### Added (8 rounds = 48 new tools)
-**Config generators** (36 new)
-- docVersion, extractEmails, localeConfig, extractCssClasses, darkModeConfig, analyticsConfig
-- pwaConfig, ogConfig, footerLinks, socialLinks, navbarConfig, extractVideos
-- mermaidConfig, diagramConfig, extractMath, chartConfig, highlightConfig, extractEndpoints
-- sidebarConfig, tocConfig, extractScripts, extractStyles, paginationConfig, searchUx
-- docsetConfig, algoliaConfig, pagefindConfig, mermaidThemes, codegroupConfig, tabsConfig
-- adsConfig, commentConfig, feedbackConfig, donateConfig, announcementConfig, calloutsConfig
-- badgeConfig, cardConfig, menuConfig, modalConfig, tooltipConfig, copyButtonConfig
-- versionDropdown, languagePicker, themePicker, manifestRefs, sitemapIndex, buildManifest
-
-### Stats
-- **2218 lines, 106 functions, 88 outputs, 0 dependencies**
+## [0.3.1] - 2026-04-25
 
 ### Agent Tools (8 new)
 - **extractApis**: Extract functions/classes from source → apis.json
