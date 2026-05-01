@@ -345,6 +345,33 @@
             letter-spacing: -0.02em;
         }
         
+        /* Index page sections */
+        .intro { font-size: 1.25rem; line-height: 1.7; color: #4b5563; }
+        .how-it-works, .features-grid, .quickstart, .why-Freestruct, .concepts, .comparison { margin: 48px 0; }
+        .how-it-works h2, .features-grid h2, .quickstart h2, .why-Freestruct h2, .concepts h2, .comparison h2 { font-size: 1.5rem; margin-bottom: 16px; }
+        .section-intro { color: #6b7280; margin-bottom: 24px; }
+        
+        .steps { display: flex; gap: 16px; flex-wrap: wrap; }
+        .step { flex: 1 1 200px; background: #f9fafb; padding: 20px; border-radius: 8px; }
+        .step h3 { font-size: 1rem; margin-bottom: 8px; color: #2563eb; }
+        
+        .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+        .feature { background: #f9fafb; padding: 20px; border-radius: 8px; }
+        .feature h3 { font-size: 1rem; margin-bottom: 8px; }
+        .feature p { font-size: 0.875rem; color: #6b7280; line-height: 1.5; }
+        
+        /* Comparison table */
+        .comparison table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+        .comparison th, .comparison td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        .comparison th { background: #f9fafb; font-weight: 600; }
+        .comparison td:first-child { font-weight: 500; }
+        .comparison tr:nth-child(even) { background: #f9fafb; }
+        .comparison .check { color: #2563eb; }
+        .comparison .cross { color: #9ca3af; }
+        
+        /* Quickstart code */
+        .quickstart pre { background: #1f2937; color: #e5e7eb; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 0.875rem; }
+        
         .main h2 {
             font-size: 1.4rem;
             font-weight: 600;
