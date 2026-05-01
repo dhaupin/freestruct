@@ -1,6 +1,6 @@
 {
   "name": "freestruct",
-  "version": "0.3.3",
+  "version": "0.3.2",
   "description": "Post-build SEO layer for static doc sites - works with any SSG",
   "bin": {
     "freestruct": "./docs/lib/inject.js"
