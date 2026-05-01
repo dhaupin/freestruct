@@ -106,21 +106,24 @@ Best practices:
 
 ### Examples
 
-**CloudFlare:**
+**CloudFlare** - API-based cache purge:
+
 ```yaml
 purge:
   - name: cloudflare
     command: curl -X DELETE "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/purge_cache" -H "Authorization: Bearer $CLOUDFLARE_TOKEN" -H "Content-Type: application/json" -d '{"files":["$SITE_URL/*"]}'
 ```
 
-**Fastly:**
+**Fastly** - Purge all endpoints:
+
 ```yaml
 purge:
   - name: fastly
     command: curl -X POST "https://api.fastly.com/service/$FASTLY_SERVICE_ID/purge_all" -H "Fastly-Key: $FASTLY_API_KEY"
 ```
 
-**Custom Script:**
+**Custom** - Run your own purge script:
+
 ```yaml
 purge:
   - name: my-cdn
@@ -166,6 +169,8 @@ Set these in your CDN (CloudFlare, Fastly, CloudFront, etc.):
 
 ### CloudFlare (Page Rules)
 
+Set cache rules per file type:
+
 ```
 # HTML - don't cache
 *.yoursite.com/*.html
@@ -177,6 +182,8 @@ Cache-Control: public, max-age=31536000
 ```
 
 ### CloudFront (Behaviors)
+
+Configure cache policies:
 
 ```
 # HTML cache policy
