@@ -123,11 +123,9 @@ Purge hooks run commands via `execSync`. Only use trusted commands. See docs/gui
 
 ---
 
-## v0.3.1
+## v0.3.0
 
-**1545 lines, 58 functions, 45 outputs, 0 deps**
-
-See CHANGELOG.md for full history.
+Production ready. See CHANGELOG.md for full history.
 
 ---
 

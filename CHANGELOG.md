@@ -2,62 +2,6 @@
 
 All notable changes to freestruct will be documented here.
 
-## [0.3.1] - 2026-04-25
-
-### Agent Tools (8 new)
-- **extractApis**: Extract functions/classes from source → apis.json
-- **chunkForRag**: Split docs by headings for LLM → rag-chunks.json
-- **linkSourceToDocs**: Map source → docs → source-links.json
-- **extractExamples**: Parse @example from JSDoc → examples.json
-- **generateSidebar**: Auto nav from file structure → sidebar.json
-- **injectHeadingIds**: Add id= to h1-h6 for anchors
-- **extractTypes**: JSDoc @param/@returns → types.json
-- **getGitModified**: git log → git-modified.json
-- **indexLinks**: Internal link map → internal-links.json
-- **generateSitemapPriority**: Priority by depth → sitemap-priorities.xml
-- **generateToc**: Markdown headings → toc.json
-- **seoScore**: Per-page SEO → seo-score.json
-- **extractFrontmatter**: YAML frontmatter → frontmatter.json
-- **detectLanguages**: Code block stats → languages.json
-- **wordStats**: Per-page word counts → word-stats.json
-- **findOrphans**: Unlinked pages → orphans.json
-- **breadcrumbs**: Path-based → breadcrumbs.json
-
-### Feature Tools (6 new)
-- **structuredData**: JSON-LD → structured-data.json
-- **hreflangs**: i18n → hreflangs.json
-- **extractFaq**: Q&A → faq.json
-- **metaSummary**: All meta → meta-summary.json
-- **duplicateTitles**: Alerts → duplicates.json
-- **extractImages**: <img> → images.json
-- **extractAllLinks**: Internal/external → all-links.json
-- **missingAlt**: img w/o alt → missing-alt.json
-- **viewTransitions**: SPA config → view-transitions.json
-- **extractKeywords**: Content → keywords.json
-- **depthScore**: URL depth → depth-score.json
-- **validateUrls**: HTTP refs → url-valid.json
-
-### UX Tools (6 new)
-- **readingProgress**: Scroll config → reading-progress.json
-- **codeStats**: Code lines → code-stats.json
-- **clipboardConfig**: Copy btn → clipboard-config.json
-- **extractAnchors**: IDs → anchors.json
-- **searchConfig**: Client config → search-config.json
-- **emptySections**: Empty pages → empty-sections.json
-- **lastUpdated**: Timestamps → last-updated.json
-- **twitterHandles**: → twitter-handles.json
-- **printConfig**: → print-config.json
-- **editLinks**: → edit-links.json
-- **extractDates**: YYYY-MM-DD → dates.json
-- **copyYear**: Year → year.json
-
-### Configuration
-- 27 feature flags added to ssr-config.yml (all on by default)
-- All toggleable: `searchIndex: false`, `extractApis: false`, etc.
-
-### Stats
-- **1545 lines, 58 functions, 45 outputs, 0 dependencies**
-
 ## [0.3.0] - 2026-04-25
 
 ### Added
