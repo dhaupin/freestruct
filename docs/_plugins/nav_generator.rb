@@ -1,5 +1,6 @@
 # Dynamic navigation generator - builds nav from docs folder structure
 # Folders become collapsible sections, files become links
+# Supports nav_sections for custom titles, nav_order for sorting
 require 'fileutils'
 
 module Jekyll
@@ -13,43 +14,65 @@ module Jekyll
     end
 
     def build_nav(pages, config)
-      nav = []
-      docs_dir = config['source'] || 'docs'
-
-      # Get all docs folders
+      section_titles = config['nav_sections'] || {}
+      section_order = config['nav_order'] || {}
+      root_docs = []
       folders = {}
+
       pages.each do |page|
         next unless page.path
         path = page.path
 
-        # Skip special files
+        # Skip special folders/files
         next if path.start_with?('_') || path.start_with?('lib/')
+        next if path == 'CHANGELOG.md' || path == 'LICENSE' || path == 'README.md'
 
-        # Get folder
         folder = File.dirname(path)
-        folder = '.' if folder == '.'
-
-        # Get title from frontmatter or filename
-        title = page.data['title'] || File.basename(path, '.md').gsub('-', ' ').capitalize
-        title = title.to_s
-
-        # Skip index and hidden pages
+        filename = File.basename(path, '.md')
+        
+        # Skip index and hidden pages  
         next if page.data['nav'] == false
-        next if File.basename(path) == 'index.md'
-
-        if folder == '.'
-          nav << { 'title' => title, 'url' => page.url }
+        next if filename == 'index.md'
+        
+        # Title from frontmatter or filename
+        title = page.data['title'] || filename.gsub('-', ' ').capitalize
+        title = title.to_s
+        
+        # Sort order from frontmatter (default to 999 if not set)
+        sort_order = page.data['nav_order'] || 999
+        
+        if folder == '.' || folder == ''
+          # Root-level doc - add to root list
+          root_docs << { 'title' => title, 'url' => page.url, 'order' => sort_order }
         else
-          folders[folder] ||= { 'title' => folder.gsub('-', ' ').capitalize, 'items' => [] }
-          folders[folder]['items'] << { 'title' => title, 'url' => page.url }
+          # Folder name = section, file = link
+          section_title = section_titles[folder] || folder.gsub('-', ' ').capitalize
+          folders[folder] ||= { 'title' => section_title, 'items' => [] }
+          folders[folder]['items'] << { 'title' => title, 'url' => page.url, 'order' => sort_order }
         end
       end
 
-      # Sort folders
-      folders.each { |k, v| v['items'].sort_by! { |i| i['title'] } }
+      # Sort: items by nav_order (then title), folders by nav_order
+      folders.each { |k, v| v['items'].sort_by! { |i| [i['order'].to_i, i['title']] } }
 
-      # Merge root items and folders
-      nav + folders.values.sort_by { |f| f['title'] }
+      # Build result: root docs first, then folders by nav_order
+      result = []
+      
+      # Add root docs as "Docs" section (sorted by nav_order)
+      if root_docs.any?
+        root_docs.sort_by! { |i| [i['order'].to_i, i['title']] }
+        result << { 'title' => 'Docs', 'items' => root_docs }
+      end
+      
+      # Add folders sorted by nav_order (find folder key from title)
+      result += folders.values.sort_by do |f|
+        title = f['title']
+        # Find folder name with this title
+        folder_key = section_titles.key(title) || title.downcase
+        section_order[folder_key] || 999
+      end
+      
+      result
     end
   end
 end
