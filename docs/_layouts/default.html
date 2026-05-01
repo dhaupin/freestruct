@@ -9,7 +9,7 @@
     <title>{{ page.title | default: "freestruct Docs" }}</title>
     <meta name="description" content="{{ page.description | default: "freestruct: SEO layer for static doc sites" }}">
     <link rel="canonical" href="{{ page.url | absolute_url }}">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%232563eb'/><text x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' fill='white' font-family='system-ui' font-weight='bold' font-size='18'>f</text></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='4' y='4' width='24' height='24' rx='4' fill='%232563eb'/><path d='M10 16L16 10L22 16' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' fill='none'/><path d='M16 10V22' stroke='white' stroke-width='2' stroke-linecap='round'/></svg>">
 
     <!-- Prism.js for syntax highlighting -->
     <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
@@ -342,14 +342,23 @@
             max-width: 800px;
         }
 
-        .main h1 {
+        /* Article/content wrapper for markdown */
+        .content {
+            max-width: 100%;
+        }
+
+        .content > *:first-child {
+            margin-top: 0;
+        }
+
+        .content h1 {
             font-size: 2rem;
             font-weight: 700;
             margin-bottom: 8px;
             letter-spacing: -0.02em;
         }
 
-        .main h2 {
+        .content h2 {
             font-size: 1.4rem;
             font-weight: 600;
             margin: 30px 0 12px;
@@ -357,16 +366,254 @@
             border-bottom: 1px solid var(--border);
         }
 
-        .main h3 {
+        .content h3 {
             font-size: 1.15rem;
             font-weight: 600;
             margin: 24px 0 8px;
         }
 
-        .main p {
+        .content h4, .content h5, .content h6 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 20px 0 8px;
+        }
+
+        .content p {
             margin-bottom: 16px;
             color: var(--text-muted);
+            line-height: 1.7;
         }
+
+        .content strong {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .content a {
+            color: var(--link);
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        .content a:hover {
+            text-decoration: none;
+        }
+
+        .content ul, .content ol {
+            margin: 0 0 16px 20px;
+            color: var(--text-muted);
+        }
+
+        .content li {
+            margin-bottom: 6px;
+            line-height: 1.6;
+        }
+
+        .content li ul, .content li ol {
+            margin-top: 6px;
+            margin-bottom: 0;
+        }
+
+        .content dl {
+            margin-bottom: 16px;
+        }
+
+        .content dt {
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .content dd {
+            margin-left: 20px;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+        }
+
+        .content hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 30px 0;
+        }
+
+        .content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 16px 0;
+        }
+
+        .content .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: var(--accent);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 4px;
+            vertical-align: middle;
+            margin-left: 6px;
+        }
+
+        /* Code styling */
+        .content code {
+            background: var(--bg-hover);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-family: 'SF Mono', Menlo, Monaco, monospace;
+        }
+
+        /* Inline code */
+        .content p code, .content li code, .content td code, .content th code {
+            background: var(--bg-hover);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-family: 'SF Mono', Menlo, Monaco, monospace;
+            color: var(--accent);
+            border: 1px solid var(--border);
+        }
+
+        /* Code blocks */
+        .content pre {
+            position: relative;
+            background: #1e1e1e;
+            padding: 16px;
+            padding-top: 40px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 16px 0;
+            font-size: 0.9em;
+        }
+
+        .content pre code {
+            background: none;
+            padding: 0;
+            color: #d4d4d4;
+        }
+
+        /* Tables */
+        .content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+
+        .content th, .content td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .content th {
+            font-weight: 600;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .content tr:hover {
+            background: var(--bg-hover);
+        }
+
+        /* Blockquotes */
+        .content blockquote {
+            border-left: 3px solid var(--accent);
+            padding-left: 16px;
+            margin: 16px 0;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .content blockquote p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Feature grid/cards */
+        .content .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .content .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .content .feature-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .content .feature-card h4 {
+            margin-top: 0;
+            color: var(--text);
+        }
+
+        .content .feature-card p {
+            margin-bottom: 0;
+            font-size: 0.9rem;
+        }
+
+        /* Callouts/alerts */
+        .content .callout {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin: 16px 0;
+            border-left: 3px solid;
+        }
+
+        .content .callout-info {
+            background: rgba(37, 99, 235, 0.1);
+            border-left-color: var(--accent);
+        }
+
+        .content .callout-warning {
+            background: rgba(234, 179, 8, 0.1);
+            border-left-color: #eab308;
+        }
+
+        .content .callout-error {
+            background: rgba(239, 68, 68, 0.1);
+            border-left-color: #ef4444;
+        }
+
+        .content .callout-success {
+            background: rgba(34, 197, 94, 0.1);
+            border-left-color: #22c55e;
+        }
+
+        /* Breadcrumbs */
+        .content .breadcrumbs {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-bottom: 16px;
+        }
+
+        .content .breadcrumbs a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+
+        .content .breadcrumbs a:hover {
+            color: var(--accent);
+        }
+
+        .content .breadcrumbs span {
+            color: var(--text-light);
+            margin: 0 6px;
+        }
+
+        /* Legacy .main styles for compatibility */
+        .main h1 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.02em; }
+        .main h2 { font-size: 1.4rem; font-weight: 600; margin: 30px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+        .main h3 { font-size: 1.15rem; font-weight: 600; margin: 24px 0 8px; }
+        .main p { margin-bottom: 16px; color: var(--text-muted); }
 
         .main ul, .main ol {
             margin: 0 0 16px 20px;
@@ -583,9 +830,10 @@
     <!-- Header -->
     <header class="header">
         <a href="{{ '/' | relative_url }}" class="header-brand">
-            <svg viewBox="0 0 32 32" fill="currentColor">
-                <rect width="32" height="32" rx="4" fill="var(--accent)"/>
-                <text x="50%" y="50%" dominant-baseline='central' text-anchor='middle' fill='white' font-family='system-ui' font-weight='bold' font-size='18'>f</text>
+            <svg viewBox="0 0 32 32" fill="none" stroke="#2563eb" stroke-width="2.5">
+                <rect x="4" y="4" width="24" height="24" rx="4" fill="#2563eb"/>
+                <path d="M10 16L16 10L22 16" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M16 10V22" stroke="white" stroke-width="2" stroke-linecap="round"/>
             </svg>
             freestruct
         </a>
@@ -648,8 +896,9 @@
 
     <!-- Main content -->
     <main class="main">
-        <!-- Page content -->
+        <article class="content">
         {{ content }}
+        </article>
 
         <!-- Footer -->
         <footer class="footer">
