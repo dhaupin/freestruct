@@ -370,7 +370,10 @@
         .comparison .cross { color: #9ca3af; }
         
         /* Quickstart code */
-        .quickstart pre { background: #1f2937; color: #e5e7eb; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 0.875rem; }
+        .quickstart pre { background: #1f2937; color: #e5e7eb; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 0.875rem; word-break: break-all; }
+        
+        /* Code blocks - prevent viewport overflow */
+        pre { max-width: 100%; overflow-x: auto; }
         
         .main h2 {
             font-size: 1.4rem;
