@@ -102,21 +102,3 @@ findOrphans: true
 
 # Generate breadcrumbs (on by default)
 breadcrumbs: true
-
-# Structured data (on by default)
-structuredData: true
-
-# Hreflang i18n (on by default)
-hreflangs: true
-
-# Extract FAQ (on by default)
-extractFaq: true
-
-# Meta summary (on by default)
-metaSummary: true
-
-# Find duplicate titles (on by default)
-duplicateTitles: true
-
-# Extract images (on by default)
-extractImages: true
