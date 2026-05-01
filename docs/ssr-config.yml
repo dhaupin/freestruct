@@ -93,12 +93,3 @@ extractFrontmatter: true
 
 # Detect code languages (on by default)
 detectLanguages: true
-
-# Word stats (on by default)
-wordStats: true
-
-# Find orphan pages (on by default)
-findOrphans: true
-
-# Generate breadcrumbs (on by default)
-breadcrumbs: true
