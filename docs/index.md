@@ -67,7 +67,7 @@ description: Post-build SEO and search layer for static doc sites.
     <div class="feature">
       <h3>Custom Code Hooks</h3>
       <p>Add custom code to every page via hooks. Header, body-start, and footer templates let you inject fonts, analytics, skip links - no template changes needed.</p>
-      <p><a href="/guides/custom-injection">- Custom Hooks Guide</a></p>
+      <p><a href="guides/custom-injection">- Custom Hooks Guide</a></p>
     </div>
 
     <div class="feature">
@@ -81,7 +81,7 @@ description: Post-build SEO and search layer for static doc sites.
     </div>
   </div>
   
-  <p><a href="/configuration">- Full configuration reference</a></p>
+  <p><a href="configuration">- Full configuration reference</a></p>
 </section>
 
 <section class="quickstart">
@@ -95,7 +95,7 @@ description: Post-build SEO and search layer for static doc sites.
 
 node docs/lib/inject.js</code></pre>
   
-  <p>That's it. See <a href="/getting-started">Getting Started</a> for the full guide.</p>
+  <p>That's it. See <a href="getting-started">Getting Started</a> for the full guide.</p>
 </section>
 
 <section class="why-Freestruct">
@@ -158,37 +158,37 @@ node docs/lib/inject.js</code></pre>
   <h2>Guides</h2>
   
   <div class="guides">
-    <a href="/getting-started" class="guide">
+    <a href="getting-started" class="guide">
       <h3>Getting Started</h3>
       <p>Full setup in 5 minutes</p>
     </a>
     
-    <a href="/guides/ssr-config" class="guide">
+    <a href="guides/ssr-config" class="guide">
       <h3>Configuration</h3>
       <p>All available options</p>
     </a>
     
-    <a href="/guides/cache-busting" class="guide">
+    <a href="guides/cache-busting" class="guide">
       <h3>Cache Busting</h3>
       <p>How the hash works</p>
     </a>
 
-    <a href="/guides/custom-injection" class="guide">
+    <a href="guides/custom-injection" class="guide">
       <h3>Custom Hooks</h3>
       <p>Inject any code</p>
     </a>
 
-    <a href="/guides/troubleshooting" class="guide">
+    <a href="guides/troubleshooting" class="guide">
       <h3>Troubleshooting</h3>
       <p>Common issues</p>
     </a>
 
-    <a href="/guides/cicd" class="guide">
+    <a href="guides/cicd" class="guide">
       <h3>CI/CD</h3>
       <p>GitHub Actions</p>
     </a>
 
-    <a href="/guides/post-render-hooks" class="guide">
+    <a href="guides/post-render-hooks" class="guide">
       <h3>Post-Render Hooks</h3>
       <p>Beyond SEO</p>
     </a>
