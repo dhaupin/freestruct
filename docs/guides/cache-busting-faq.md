@@ -12,7 +12,7 @@ You rebuild your docs. Deploy. But users still see old content. You check the CM
 
 This is the "I'm so fucking sick of this" moment.
 
-freestruct solves this by injecting a unique hash into every build. The HTML is different. CDNs must re-fetch. Browser cache is bypassed via query params.
+Freestruct solves this by injecting a unique hash into every build. The HTML is different. CDNs must re-fetch. Browser cache is bypassed via query params.
 
 ## Why can't I just use Cache-Control headers?
 
@@ -105,7 +105,7 @@ We don't recommend this. The hash is what makes cache busting work.
 
 ## Does this work with SSGs other than Jekyll?
 
-Yes! freestruct is completely agnostic:
+Yes! Freestruct is completely agnostic:
 
 - **Jekyll** - `docs/_site` output
 - **Hugo** - `public/` output  
@@ -143,7 +143,7 @@ SSGs often hash static assets (JS, CSS, images) with filenames like `app.a1b2c3d
 2. **Requires SSG support** - Not all SSGs do this well
 3. **Doesn't help CDN HTML cache** - The HTML is still cached
 
-freestruct complements asset hashing by handling the HTML layer. Use both together for maximum cache control.
+Freestruct complements asset hashing by handling the HTML layer. Use both together for maximum cache control.
 
 ## My site still shows old content. What do I do?
 

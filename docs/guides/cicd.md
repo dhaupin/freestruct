@@ -1,6 +1,6 @@
 ---
 title: CI/CD
-description: Deploy freestruct with GitHub Actions
+description: Deploy Freestruct with GitHub Actions
 ---
 
 # CI/CD

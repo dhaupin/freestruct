@@ -1,6 +1,6 @@
 # Cache Busting
 
-freestruct provides a built-in cache busting system that ensures your content is always fresh, regardless of which CDN or caching layer sits in front of your site. It works **agnostic of your SSG** - just runs post-build on your output HTML.
+Freestruct provides a built-in cache busting system that ensures your content is always fresh, regardless of which CDN or caching layer sits in front of your site. It works **agnostic of your SSG** - just runs post-build on your output HTML.
 
 ## How It Works
 
@@ -129,7 +129,7 @@ purge:
 
 ## Frame-Agnostic
 
-freestruct doesn't care what SSG you use. It only looks at the HTML files after they're built:
+Freestruct doesn't care what SSG you use. It only looks at the HTML files after they're built:
 
 - Jekyll `_site/`
 - Hugo `public/`
@@ -138,7 +138,7 @@ freestruct doesn't care what SSG you use. It only looks at the HTML files after 
 - VitePress `.vitepress/dist/`
 - Anything else with HTML output
 
-The cache busting works the same way - just point freestruct at your output folder.
+The cache busting works the same way - just point Freestruct at your output folder.
 
 ## Debugging
 

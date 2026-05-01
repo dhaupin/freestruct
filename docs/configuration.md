@@ -1,6 +1,6 @@
 ---
 title: Configuration
-description: Configure freestruct for your doc site
+description: Configure Freestruct for your doc site
 ---
 
 ## Configure

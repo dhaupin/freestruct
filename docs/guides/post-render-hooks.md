@@ -1,27 +1,27 @@
 ---
 title: Post-Render Hooks
-description: Use freestruct as a build-time HTML processor for anything you need
+description: Use Freestruct as a build-time HTML processor for anything you need
 ---
 
 # Beyond SEO: Post-Render HTML Processing
 
-freestruct isn't just for SEO. It's a **build-time HTML processor** that runs after your SSG completes. This opens up possibilities beyond meta tags.
+Freestruct isn't just for SEO. It's a **build-time HTML processor** that runs after your SSG completes. This opens up possibilities beyond meta tags.
 
 ## What Is Post-Render Processing?
 
 ```
-Your SSG builds → freestruct modifies → deploy
+Your SSG builds → Freestruct modifies → deploy
                  ↑
            This is your hook
 ```
 
-Your static site generator (Jekyll, Hugo, Docusaurus) outputs HTML. freestruct reads that HTML, gives you the full content in JavaScript, and lets you modify it before deploy.
+Your static site generator (Jekyll, Hugo, Docusaurus) outputs HTML. Freestruct reads that HTML, gives you the full content in JavaScript, and lets you modify it before deploy.
 
 ## Why This Matters
 
 ### 1. Fix Legacy SSG Issues
 
-Your Jekyll/Hugo version is ancient. Can't upgrade without breaking things. But you can use freestruct to inject fixes:
+Your Jekyll/Hugo version is ancient. Can't upgrade without breaking things. But you can use Freestruct to inject fixes:
 
 ```javascript
 // Fix broken internal links
@@ -67,7 +67,7 @@ html = html.replace(/<img (?!.*loading=)/g, '<img loading="lazy" ');
 
 ## Build Hook System
 
-The freestruct build runs as a Node.js script. You can extend it by modifying inject.js:
+The Freestruct build runs as a Node.js script. You can extend it by modifying inject.js:
 
 ```javascript
 // Add custom post-render logic in injectFile():
@@ -130,12 +130,12 @@ Post-render modifications can confuse developers who inspect the page and wonder
 3. **Onboarding** - New devs understand the build pipeline
 4. **Maintenance** - Future upgrades won't accidentally break custom injections
 
-freestruct automatically adds this:
+Freestruct automatically adds this:
 
 ```html
-<!-- freestruct SEO -->
+<!-- Freestruct SEO -->
 <meta name="freestruct-build" content="abc123">
-<!-- freestruct -->
+<!-- Freestruct -->
 ```
 
 Add your own markers following the same pattern.

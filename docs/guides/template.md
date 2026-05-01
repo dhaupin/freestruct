@@ -3,7 +3,7 @@ title: Example Page Template
 description: Copy this template when creating new docs pages. Shows all supported frontmatter and section structure.
 ---
 
-<!-- This is the complete template for freestruct docs. Copy it when creating new pages. -->
+<!-- This is the complete template for Freestruct docs. Copy it when creating new pages. -->
 
 ## Frontmatter
 

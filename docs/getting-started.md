@@ -1,6 +1,6 @@
 ---
 title: Getting Started
-description: Get freestruct running in 5 minutes
+description: Get Freestruct running in 5 minutes
 ---
 
 This guide walks you through setting up freestruct. If you hit any snags, the [FAQ](/guides/cache-busting-faq) might help.
@@ -36,7 +36,7 @@ cd your-docs-folder
 npm install js-yaml
 ```
 
-That's it. freestruct has zero runtime dependencies. `js-yaml` is the only thing it needs.
+That's it. Freestruct has zero runtime dependencies. `js-yaml` is the only thing it needs.
 
 ## Step 2: Create Your Config
 
