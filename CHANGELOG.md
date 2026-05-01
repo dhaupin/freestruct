@@ -12,11 +12,6 @@ All notable changes to freestruct will be documented here.
 - **Link Check**: Validates internal links, warns on broken ones. Configure via `linkCheck: true`.
 - **Search Index**: Generates search.json for client-side search. Configure via `searchIndex: true`.
 
-### Agent Tools
-- **Extract APIs**: Generates apis.json from source code (functions, classes).
-- **Chunk for RAG**: Generates rag-chunks.json split by headings for LLM.
-- **Link Source to Docs**: Generates source-links.json mapping.
-
 ### Security
 - **Purge Hooks**: Added warning in docs. Commands in `ssr-config.yml` execute via `execSync`. Only run trusted commands.
 
