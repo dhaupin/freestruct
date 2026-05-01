@@ -212,8 +212,9 @@ tr:hover td { background: var(--color-bg-alt); }
 .burger-menu.open span:nth-child(2) { opacity: 0; }
 .burger-menu.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
 
-/* Site nav - hidden by default */
+/* Site nav - hidden by default, hidden when nested */
 .site-nav { display: none; }
+.site-header .site-nav { display: none; }
 
 /* Site nav - overlay when open */
 .site-nav.open {
