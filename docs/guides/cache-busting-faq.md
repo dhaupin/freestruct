@@ -3,8 +3,6 @@ title: Cache Busting FAQ
 description: Common questions about Freestruct's cache busting system
 ---
 
-# Cache Busting FAQ
-
 ## Why do I need this? My site is already built.
 
 Every time you deploy, your SSG (Jekyll, Hugo, Docusaurus) generates fresh HTML. But here's the painful truth:

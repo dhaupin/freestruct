@@ -2,9 +2,6 @@
 title: Troubleshooting
 description: Common issues and how to fix them
 ---
-
-# Troubleshooting
-
 Common issues and solutions.
 
 ## Errors

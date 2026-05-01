@@ -3,8 +3,6 @@ title: CI/CD
 description: Deploy Freestruct with GitHub Actions
 ---
 
-# CI/CD
-
 Freestruct integrates with any CI/CD. Here's how with GitHub Actions.
 
 ## GitHub Actions
