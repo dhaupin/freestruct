@@ -1,5 +1,5 @@
 ---
-# Jekyll layout for freestruct docs - Vant-style theme with freestruct blue branding
+# Jekyll layout for Vant docs with sidebar navigation
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -7,14 +7,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ page.title | default: "freestruct Docs" }}</title>
-    <meta name="description" content="{{ page.description | default: "freestruct: SEO layer for static doc sites" }}">
+    <meta name="description" content="{{ page.description | default: "freestruct: SEO layer for AI agent memory persistence" }}">
     <link rel="canonical" href="{{ page.url | absolute_url }}">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='4' y='4' width='24' height='24' rx='4' fill='%232563eb'/><path d='M10 16L16 10L22 16' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' fill='none'/><path d='M16 10V22' stroke='white' stroke-width='2' stroke-linecap='round'/></svg>">
-
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%23059669'/><text x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' fill='white' font-family='system-ui' font-weight='bold' font-size='20'>V</text></svg>">
+    
     <!-- Prism.js for syntax highlighting -->
     <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/line-numbers/prism-line-numbers.min.css" rel="stylesheet" />
-
+    
     <!-- Pagefind search -->
     <style>
         .search-trigger {
@@ -130,52 +130,48 @@
             }
         }
     </style>
-
+    
     <style>
         :root {
-            /* freestruct blue palette */
             --bg: #fafafa;
             --bg-card: #ffffff;
             --bg-sidebar: #f5f5f5;
-            --bg-hover: #f3f4f6;
-            --text: #1f2937;
-            --text-muted: #4b5563;
-            --text-light: #6b7280;
-            --border: #e5e7eb;
+            --text: #222222;
+            --text-muted: #666666;
+            --text-light: #888888;
+            --border: #e0e0e0;
             --accent: #2563eb;
             --accent-hover: #1d4ed8;
             --link: #2563eb;
             --sidebar-width: 260px;
             --header-height: 56px;
-            --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
         [data-theme="dark"] {
             --bg: #0f0f12;
             --bg-card: #18181c;
             --bg-sidebar: #141418;
-            --bg-hover: #1f1f23;
             --text: #e8e8e8;
             --text-muted: #a0a0a0;
             --text-light: #707070;
             --border: #2a2a32;
-            --accent: #3b82f6;
-            --accent-hover: #60a5fa;
-            --link: #3b82f6;
+            --accent: #2563eb;
+            --accent-hover: #3b82f6;
+            --link: #2563eb;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
+        
         body {
-            font-family: var(--font);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg);
             color: var(--text);
             line-height: 1.6;
             min-height: 100vh;
             transition: background 0.3s, color 0.3s;
         }
-
+        
         a { color: var(--link); text-decoration: none; }
         a:hover { text-decoration: underline; }
-
+        
         /* Header */
         .header {
             position: fixed;
@@ -190,7 +186,7 @@
             padding: 0 20px;
             z-index: 100;
         }
-
+        
         .header-brand {
             font-size: 1.25rem;
             font-weight: 700;
@@ -201,19 +197,19 @@
             gap: 8px;
         }
         .header-brand:hover { text-decoration: none; }
-
+        
         .header-brand svg {
             width: 28px;
             height: 28px;
         }
-
+        
         .header-right {
             margin-left: auto;
             display: flex;
             align-items: center;
             gap: 4px;
         }
-
+        
         /* Header buttons */
         .search-trigger,
         .theme-toggle,
@@ -230,14 +226,14 @@
             align-items: center;
             justify-content: center;
         }
-
+        
         .search-trigger:hover,
         .theme-toggle:hover,
         .github-cta:hover,
         .hamburger:hover {
             background: var(--bg-hover);
         }
-
+        
         .search-trigger svg,
         .theme-toggle svg,
         .github-cta svg,
@@ -246,36 +242,36 @@
             height: 18px;
             display: block;
         }
-
+        
         /* Theme toggle icons */
         .theme-toggle .icon-sun,
         .theme-toggle .icon-moon {
             display: none;
         }
-
+        
         body:not(.dark) .theme-toggle .icon-moon {
             display: block;
         }
-
+        
         body.dark .theme-toggle .icon-sun {
             display: block;
         }
-
+        
         /* GitHub CTA button */
         .github-cta {
             color: var(--text-muted);
         }
-
+        
         .github-cta svg {
             width: 20px;
             height: 20px;
         }
-
+        
         /* Hide header hamburger on desktop */
         .header .hamburger {
             display: none;
         }
-
+        
         /* Sidebar */
         .sidebar {
             position: fixed;
@@ -289,11 +285,11 @@
             padding: 20px 0;
             transition: transform 0.3s ease;
         }
-
+        
         .sidebar-section {
             margin-bottom: 20px;
         }
-
+        
         .sidebar-title {
             font-size: 0.7rem;
             font-weight: 600;
@@ -303,15 +299,15 @@
             padding: 8px 20px;
             margin-bottom: 4px;
         }
-
+        
         .sidebar-nav {
             list-style: none;
         }
-
+        
         .sidebar-nav li {
             margin: 0;
         }
-
+        
         .sidebar-nav a {
             display: block;
             padding: 8px 20px;
@@ -320,20 +316,20 @@
             transition: background 0.15s, color 0.15s;
             border-left: 3px solid transparent;
         }
-
+        
         .sidebar-nav a:hover {
             background: var(--bg);
             color: var(--text);
             text-decoration: none;
         }
-
+        
         .sidebar-nav a.active {
             color: var(--accent);
             border-left-color: var(--accent);
             background: var(--bg);
             font-weight: 500;
         }
-
+        
         /* Main content */
         .main {
             margin-left: var(--sidebar-width);
@@ -341,289 +337,42 @@
             padding: 30px 40px;
             max-width: 800px;
         }
-
-        /* Article/content wrapper for markdown */
-        .content {
-            max-width: 100%;
-        }
-
-        .content > *:first-child {
-            margin-top: 0;
-        }
-
-        .content h1 {
+        
+        .main h1 {
             font-size: 2rem;
             font-weight: 700;
             margin-bottom: 8px;
             letter-spacing: -0.02em;
         }
-
-        .content h2 {
+        
+        .main h2 {
             font-size: 1.4rem;
             font-weight: 600;
             margin: 30px 0 12px;
             padding-bottom: 8px;
             border-bottom: 1px solid var(--border);
         }
-
-        .content h3 {
+        
+        .main h3 {
             font-size: 1.15rem;
             font-weight: 600;
             margin: 24px 0 8px;
         }
-
-        .content h4, .content h5, .content h6 {
-            font-size: 1rem;
-            font-weight: 600;
-            margin: 20px 0 8px;
-        }
-
-        .content p {
+        
+        .main p {
             margin-bottom: 16px;
             color: var(--text-muted);
-            line-height: 1.7;
         }
-
-        .content strong {
-            font-weight: 600;
-            color: var(--text);
-        }
-
-        .content a {
-            color: var(--link);
-            text-decoration: underline;
-            text-underline-offset: 2px;
-        }
-
-        .content a:hover {
-            text-decoration: none;
-        }
-
-        .content ul, .content ol {
-            margin: 0 0 16px 20px;
-            color: var(--text-muted);
-        }
-
-        .content li {
-            margin-bottom: 6px;
-            line-height: 1.6;
-        }
-
-        .content li ul, .content li ol {
-            margin-top: 6px;
-            margin-bottom: 0;
-        }
-
-        .content dl {
-            margin-bottom: 16px;
-        }
-
-        .content dt {
-            font-weight: 600;
-            color: var(--text);
-            margin-bottom: 4px;
-        }
-
-        .content dd {
-            margin-left: 20px;
-            margin-bottom: 8px;
-            color: var(--text-muted);
-        }
-
-        .content hr {
-            border: none;
-            border-top: 1px solid var(--border);
-            margin: 30px 0;
-        }
-
-        .content img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            margin: 16px 0;
-        }
-
-        .content .badge {
-            display: inline-block;
-            padding: 2px 8px;
-            background: var(--accent);
-            color: white;
-            font-size: 0.75rem;
-            font-weight: 600;
-            border-radius: 4px;
-            vertical-align: middle;
-            margin-left: 6px;
-        }
-
-        /* Code styling */
-        .content code {
-            background: var(--bg-hover);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.9em;
-            font-family: 'SF Mono', Menlo, Monaco, monospace;
-        }
-
-        /* Inline code */
-        .content p code, .content li code, .content td code, .content th code {
-            background: var(--bg-hover);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.9em;
-            font-family: 'SF Mono', Menlo, Monaco, monospace;
-            color: var(--accent);
-            border: 1px solid var(--border);
-        }
-
-        /* Code blocks */
-        .content pre {
-            position: relative;
-            background: #1e1e1e;
-            padding: 16px;
-            padding-top: 40px;
-            border-radius: 8px;
-            overflow-x: auto;
-            margin: 16px 0;
-            font-size: 0.9em;
-        }
-
-        .content pre code {
-            background: none;
-            padding: 0;
-            color: #d4d4d4;
-        }
-
-        /* Tables */
-        .content table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 16px 0;
-        }
-
-        .content th, .content td {
-            padding: 10px 12px;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .content th {
-            font-weight: 600;
-            background: var(--bg);
-            color: var(--text);
-        }
-
-        .content tr:hover {
-            background: var(--bg-hover);
-        }
-
-        /* Blockquotes */
-        .content blockquote {
-            border-left: 3px solid var(--accent);
-            padding-left: 16px;
-            margin: 16px 0;
-            color: var(--text-muted);
-            font-style: italic;
-        }
-
-        .content blockquote p:last-child {
-            margin-bottom: 0;
-        }
-
-        /* Feature grid/cards */
-        .content .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 16px;
-            margin: 20px 0;
-        }
-
-        .content .feature-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 16px;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .content .feature-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .content .feature-card h4 {
-            margin-top: 0;
-            color: var(--text);
-        }
-
-        .content .feature-card p {
-            margin-bottom: 0;
-            font-size: 0.9rem;
-        }
-
-        /* Callouts/alerts */
-        .content .callout {
-            padding: 12px 16px;
-            border-radius: 6px;
-            margin: 16px 0;
-            border-left: 3px solid;
-        }
-
-        .content .callout-info {
-            background: rgba(37, 99, 235, 0.1);
-            border-left-color: var(--accent);
-        }
-
-        .content .callout-warning {
-            background: rgba(234, 179, 8, 0.1);
-            border-left-color: #eab308;
-        }
-
-        .content .callout-error {
-            background: rgba(239, 68, 68, 0.1);
-            border-left-color: #ef4444;
-        }
-
-        .content .callout-success {
-            background: rgba(34, 197, 94, 0.1);
-            border-left-color: #22c55e;
-        }
-
-        /* Breadcrumbs */
-        .content .breadcrumbs {
-            font-size: 0.85rem;
-            color: var(--text-light);
-            margin-bottom: 16px;
-        }
-
-        .content .breadcrumbs a {
-            color: var(--text-muted);
-            text-decoration: none;
-        }
-
-        .content .breadcrumbs a:hover {
-            color: var(--accent);
-        }
-
-        .content .breadcrumbs span {
-            color: var(--text-light);
-            margin: 0 6px;
-        }
-
-        /* Legacy .main styles for compatibility */
-        .main h1 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.02em; }
-        .main h2 { font-size: 1.4rem; font-weight: 600; margin: 30px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
-        .main h3 { font-size: 1.15rem; font-weight: 600; margin: 24px 0 8px; }
-        .main p { margin-bottom: 16px; color: var(--text-muted); }
-
+        
         .main ul, .main ol {
             margin: 0 0 16px 20px;
             color: var(--text-muted);
         }
-
+        
         .main li {
             margin-bottom: 6px;
         }
-
+        
         .main code {
             background: var(--bg);
             padding: 2px 6px;
@@ -631,7 +380,7 @@
             font-size: 0.9em;
             font-family: 'SF Mono', Menlo, Monaco, monospace;
         }
-
+        
         /* Inline code styling (not inside pre blocks) */
         .main p code, .main li code, .main td code {
             background: var(--bg);
@@ -642,7 +391,7 @@
             color: var(--accent);
             border: 1px solid var(--border);
         }
-
+        
         /* Code blocks with syntax highlighting */
         .main pre {
             position: relative;
@@ -654,7 +403,7 @@
             margin: 16px 0;
             font-size: 0.9em;
         }
-
+        
         .main pre[data-language]::before {
             content: attr(data-language);
             position: absolute;
@@ -665,13 +414,13 @@
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
-
+        
         .main pre code {
             background: none;
             padding: 0;
             font-family: 'SF Mono', Menlo, Monaco, 'Consolas', monospace;
         }
-
+        
         /* Copy button */
         .copy-btn {
             position: absolute;
@@ -687,52 +436,52 @@
             font-size: 0.8rem;
             color: #ccc;
         }
-
+        
         .main pre:hover .copy-btn {
             opacity: 1;
         }
-
+        
         .copy-btn:hover {
             background: rgba(255, 255, 255, 0.2);
             color: #fff;
         }
-
+        
         .copy-btn.copied {
-            color: #3b82f6;
-            border-color: #3b82f6;
+            color: #2563eb;
+            border-color: #2563eb;
         }
-
+        
         /* Prism.js overrides for better dark theme */
         pre[class*="language-"] {
             background: #1e1e1e !important;
         }
-
+        
         code[class*="language-"] {
             background: transparent !important;
         }
-
+        
         /* Line numbers */
         .line-numbers .line-numbers-rows {
             border-right: 1px solid #333 !important;
         }
-
+        
         .main table {
             width: 100%;
             border-collapse: collapse;
             margin: 16px 0;
         }
-
+        
         .main th, .main td {
             padding: 10px 12px;
             text-align: left;
             border-bottom: 1px solid var(--border);
         }
-
+        
         .main th {
             font-weight: 600;
             background: var(--bg);
         }
-
+        
         .main blockquote {
             border-left: 3px solid var(--accent);
             padding-left: 16px;
@@ -740,27 +489,27 @@
             color: var(--text-muted);
             font-style: italic;
         }
-
+        
         /* Breadcrumbs */
         .breadcrumbs {
             font-size: 0.85rem;
             color: var(--text-light);
             margin-bottom: 16px;
         }
-
+        
         .breadcrumbs a {
             color: var(--text-muted);
         }
-
+        
         .breadcrumbs a:hover {
             color: var(--accent);
         }
-
+        
         .breadcrumbs span {
             color: var(--text-light);
             margin: 0 6px;
         }
-
+        
         /* Footer */
         .footer {
             margin-top: 60px;
@@ -770,43 +519,43 @@
             color: var(--text-light);
             font-size: 0.85rem;
         }
-
+        
         .footer a {
             color: var(--link);
         }
-
+        
         /* Mobile responsive */
         @media (max-width: 768px) {
             /* Show hamburger in header on mobile */
             .header .hamburger {
                 display: flex;
             }
-
+            
             /* Move header brand to left, hide text on very small screens */
             .header-brand span,
             .header-brand svg + span {
                 display: inline;
             }
-
+            
             .sidebar {
                 transform: translateX(-100%);
                 z-index: 99;
             }
-
+            
             .sidebar.open {
                 transform: translateX(0);
             }
-
+            
             .main {
                 margin-left: 0;
                 padding: 20px 16px;
             }
-
+            
             .header {
                 padding: 0 12px;
             }
         }
-
+        
         /* Sidebar overlay for mobile */
         .sidebar-overlay {
             display: none;
@@ -818,7 +567,7 @@
             background: rgba(0,0,0,0.5);
             z-index: 98;
         }
-
+        
         @media (max-width: 768px) {
             .sidebar-overlay.open {
                 display: block;
@@ -829,15 +578,15 @@
 <body>
     <!-- Header -->
     <header class="header">
-        <a href="{{ '/' | relative_url }}" class="header-brand">
-            <svg viewBox="0 0 32 32" fill="none" stroke="#2563eb" stroke-width="2.5">
+        <a href="/freestruct/" class="header-brand">
+            <svg viewBox="0 0 32 32" fill="none">
                 <rect x="4" y="4" width="24" height="24" rx="4" fill="#2563eb"/>
-                <path d="M10 16L16 10L22 16" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M16 10V22" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                <path d="M10 16L16 10L22 16" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <path d="M16 10V22" stroke="white" stroke-width="2" stroke-linecap="round" fill="none"/>
             </svg>
-            freestruct
+            freestruct Docs
         </a>
-
+        
         <div class="header-right">
             <button class="search-trigger" id="searchTrigger" aria-label="Search">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -851,7 +600,7 @@
                     <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
                 </svg>
                 <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
                 </svg>
             </button>
             <a href="https://github.com/dhaupin/freestruct" class="github-cta" aria-label="GitHub">
@@ -866,10 +615,10 @@
             </button>
         </div>
     </header>
-
+    
     <!-- Sidebar overlay (mobile) -->
     <div class="sidebar-overlay" onclick="closeSidebar()"></div>
-
+    
     <!-- Sidebar navigation -->
     <aside class="sidebar" id="sidebar">
         {% if site.nav %}
@@ -883,37 +632,32 @@
                 {% endfor %}
                 </ul>
             </div>
-            {% else %}
-            <div class="sidebar-section">
-                <ul class="sidebar-nav">
-                <li><a href="{{ section.url | relative_url }}">{{ section.title }}</a></li>
-                </ul>
-            </div>
             {% endif %}
           {% endfor %}
         {% endif %}
     </aside>
-
+    
     <!-- Main content -->
     <main class="main">
-        <article class="content">
+        <!-- Page content -->
         {{ content }}
-        </article>
-
+        
         <!-- Footer -->
         <footer class="footer">
             <p>Open source under <a href="https://github.com/dhaupin/freestruct/blob/main/LICENSE">MIT license</a>.</p>
             <p style="margin-top: 8px;">
-                <a href="https://github.com/dhaupin/freestruct">GitHub</a> .
-                <a href="https://github.com/dhaupin/freestruct/releases">Releases</a> .
+                <a href="https://github.com/dhaupin/freestruct">GitHub</a> · 
+                <a href="https://github.com/dhaupin/freestruct/releases">Releases</a> · 
                 <a href="https://github.com/dhaupin/freestruct/issues">Issues</a>
             </p>
         </footer>
     </main>
-
+    
     <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
-
+    
+    <!-- Pagefind search -->
+    
     <script>
         // Theme toggle
         function toggleTheme() {
@@ -926,7 +670,7 @@
                 localStorage.setItem('theme', 'dark');
             }
         }
-
+        
         // Load saved theme
         const saved = localStorage.getItem('theme');
         if (saved === 'dark') {
@@ -936,18 +680,18 @@
         } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
             document.documentElement.setAttribute('data-theme', 'dark');
         }
-
+        
         // Mobile sidebar toggle
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('open');
             document.querySelector('.sidebar-overlay').classList.toggle('open');
         }
-
+        
         function closeSidebar() {
             document.getElementById('sidebar').classList.remove('open');
             document.querySelector('.sidebar-overlay').classList.remove('open');
         }
-
+        
         // Set active nav item based on current URL
         document.addEventListener('DOMContentLoaded', function() {
             const path = window.location.pathname;
@@ -957,32 +701,32 @@
                     link.classList.add('active');
                 }
             });
-
+            
             // Initialize syntax highlighting
             initCodeBlocks();
         });
-
+        
         // Syntax highlighting and copy button setup
         function initCodeBlocks() {
             const preBlocks = document.querySelectorAll('.main pre');
-
+            
             preBlocks.forEach(pre => {
                 const code = pre.querySelector('code');
                 if (!code) return;
-
+                
                 // Detect language from class
                 const langClass = Array.from(code.classList).find(c => c.startsWith('language-'));
                 const lang = langClass ? langClass.replace('language-', '') : detectLanguage(code.textContent);
-
+                
                 if (lang) {
                     pre.setAttribute('data-language', lang);
-
+                    
                     // Try to apply highlighting
                     if (Prism.languages[lang]) {
                         code.innerHTML = Prism.highlight(code.textContent, Prism.languages[lang], lang);
                     }
                 }
-
+                
                 // Add copy button
                 const copyBtn = document.createElement('button');
                 copyBtn.className = 'copy-btn';
@@ -990,7 +734,7 @@
                 copyBtn.setAttribute('aria-label', 'Copy code');
                 copyBtn.setAttribute('title', 'Copy to clipboard');
                 pre.appendChild(copyBtn);
-
+                
                 copyBtn.addEventListener('click', async function() {
                     const text = code.textContent;
                     try {
@@ -1007,7 +751,7 @@
                 });
             });
         }
-
+        
         // Simple language detection based on content patterns
         function detectLanguage(code) {
             const patterns = {
@@ -1018,10 +762,10 @@
                 python: [/\bdef\b.*\(.*\)\s*:/, /\bimport\b/, /\bclass\b.*:/, /print\s*\(/],
                 dockerfile: [/FROM\s+\w+/, /RUN\s+/, /COPY\s+/],
                 markdown: [/^\s*#+\s+/m, /\*\*[^*]+\*\*/, /^\s*[-*]\s+/m],
-                html: [/<\/?[a-z]+[^>]*>/i, /<\/?[a-z]+[^>]*\s*>/i],
+                html: [/<\/?[a-z]+[^>]*>/i, /<\/?[a-z]+[^>]*\/\s*>/i],
                 css: [/\{[^}]*\}/, /\.[a-z-]+\s*{/, /#[a-z-]+\s*{/]
             };
-
+            
             for (const [lang, regexes] of Object.entries(patterns)) {
                 if (regexes.some(regex => regex.test(code))) {
                     return lang;
@@ -1030,22 +774,24 @@
             return null;
         }
     </script>
-    <!-- Search Modal -->
+<!-- Search Modal -->
     <div class="search-modal" id="searchModal">
         <div class="search-modal-content">
             <input type="text" class="search-input" id="searchInput" placeholder="Search docs..." autocomplete="off">
             <div class="search-results" id="searchResults"></div>
         </div>
-        <button class="search-close" id="searchClose" aria-label="Close search">.</button>
+        <button class="search-close" id="searchClose" aria-label="Close search">×</button>
     </div>
-
+    
+    <script src="/freestruct/pagefind/pagefind.js"></script>
     <script>
-        // Search functionality using Pagefind
+        // Search functionality using Pagefind (matching prestruct approach)
         var searchTrigger = document.getElementById('searchTrigger');
         var searchModal = document.getElementById('searchModal');
         var searchInput = document.getElementById('searchInput');
         var searchResults = document.getElementById('searchResults');
         var searchClose = document.getElementById('searchClose');
+        var pfModule = null;
 
         async function doSearch(q) {
             if (q.length < 2) {
@@ -1054,7 +800,8 @@
             }
             searchResults.innerHTML = '<div class="search-empty">Searching for "' + q + '"...</div>';
             try {
-                var pagefind = await import('/pagefind/pagefind.js');
+                // Import fresh each time (matching prestruct pattern)
+                var pagefind = await import('/freestruct/pagefind/pagefind.js');
                 await pagefind.init();
                 var resp = await pagefind.search(q);
                 if (resp.results.length === 0) {
@@ -1073,7 +820,7 @@
                 }
                 searchResults.innerHTML = html;
             } catch (e) {
-                searchResults.innerHTML = '<div class="search-empty">Search unavailable</div>';
+                searchResults.innerHTML = '<div class="search-empty">Error: ' + e.message + '</div>';
                 console.error('Search error:', e);
             }
         }
