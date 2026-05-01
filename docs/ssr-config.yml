@@ -81,15 +81,3 @@ indexLinks: true
 
 # Priority sitemap (on by default)
 generateSitemapPriority: true
-
-# Generate TOC from markdown (on by default)
-generateToc: true
-
-# SEO score per page (on by default)
-seoScore: true
-
-# Extract frontmatter (on by default)
-extractFrontmatter: true
-
-# Detect code languages (on by default)
-detectLanguages: true
