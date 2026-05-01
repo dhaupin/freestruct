@@ -1,5 +1,5 @@
 ---
-layout: home
+layout: default
 title: Freestruct
 description: Post-build SEO and search layer for static doc sites.
 ---
