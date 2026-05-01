@@ -218,24 +218,6 @@ function inject() {
 
   // Validate URLs
   if (config.validateUrls !== false) validateUrls(files, outputDir, config.site?.url);
-
-  // Reading progress
-  if (config.readingProgress !== false) readingProgress(outputDir);
-
-  // Code stats
-  if (config.codeStats !== false) codeStats(files, outputDir);
-
-  // Clipboard
-  if (config.clipboardConfig !== false) clipboardConfig(outputDir);
-
-  // Anchors
-  if (config.extractAnchors !== false) extractAnchors(files, outputDir);
-
-  // Search config
-  if (config.searchConfig !== false) searchConfig(outputDir);
-
-  // Empty sections
-  if (config.emptySections !== false) emptySections(files, outputDir);
   }
   }
 
@@ -1373,85 +1355,4 @@ function validateUrls(files, outputDir, siteUrl) {
 
   fs.writeFileSync(path.join(outputDir, 'url-valid.json'), JSON.stringify(results.slice(0, 100), null, 2));
   console.log('url-valid.json generated (' + results.length + ')');
-}
-
-/**
- * Generate reading progress bar config
- * Scroll-based → reading-progress.json
- */
-function readingProgress(outputDir) {
-  const config = { enabled: true, height: '3px', color: '#0070f3' };
-  fs.writeFileSync(path.join(outputDir, 'reading-progress.json'), JSON.stringify(config, null, 2));
-  console.log('reading-progress.json generated');
-}
-
-/**
- * Extract code line counts
- * Count lines of code examples → code-stats.json
- */
-function codeStats(files, outputDir) {
-  const stats = [];
-  for (const file of files) {
-    if (!file.endsWith('.md')) continue;
-    const content = fs.readFileSync(file, 'utf8');
-    const blocks = content.match(/```\w+\n[\s\S]+?```/g) || [];
-    let lines = 0;
-    blocks.forEach(b => lines += b.split('\n').length - 2);
-    if (lines) stats.push({ file: path.basename(file), lines });
-  }
-  fs.writeFileSync(path.join(outputDir, 'code-stats.json'), JSON.stringify(stats, null, 2));
-  console.log('code-stats.json generated');
-}
-
-/**
- * Generate clipboard copy config
- * For code blocks → clipboard-config.json
- */
-function clipboardConfig(outputDir) {
-  const config = { enabled: true, text: 'Copy', copiedText: 'Copied!', timeout: 2000 };
-  fs.writeFileSync(path.join(outputDir, 'clipboard-config.json'), JSON.stringify(config, null, 2));
-  console.log('clipboard-config.json generated');
-}
-
-/**
- * Extract anchors from content
- * ID, name, href=# → anchors.json
- */
-function extractAnchors(files, outputDir) {
-  const anchors = [];
-  for (const file of files) {
-    const html = fs.readFileSync(file, 'utf8');
-    const ids = html.match(/id="([^"]+)"/g) || [];
-    const names = html.match(/name="([^"]+)"/g) || [];
-    const hrefs = html.match(/href="#([^"]+)"/g) || [];
-    if (ids.length || names.length || hrefs.length) {
-      anchors.push({ file: path.basename(file), ids: ids.length, names: names.length, hrefs: hrefs.length });
-    }
-  }
-  fs.writeFileSync(path.join(outputDir, 'anchors.json'), JSON.stringify(anchors, null, 2));
-  console.log('anchors.json generated');
-}
-
-/**
- * Generate search config for client
- * Algolia/Pagefind alternative → search-config.json
- */
-function searchConfig(outputDir) {
-  const config = { provider: 'local', index: 'search.json', results: 10, placeholder: 'Search docs...' };
-  fs.writeFileSync(path.join(outputDir, 'search-config.json'), JSON.stringify(config, null, 2));
-  console.log('search-config.json generated');
-}
-
-/**
- * Find empty sections
- * Contentless → empty-sections.json
- */
-function emptySections(files, outputDir) {
-  const empty = [];
-  for (const file of files) {
-    const html = fs.readFileSync(file, 'utf8');
-    if (html.split('<p>').length < 3) empty.push(path.basename(file));
-  }
-  fs.writeFileSync(path.join(outputDir, 'empty-sections.json'), JSON.stringify(empty, null, 2));
-  console.log('empty-sections.json generated (' + empty.length + ')');
 }

@@ -138,21 +138,3 @@ depthScore: true
 
 # URL validation (on by default)
 validateUrls: true
-
-# Reading progress (on by default)
-readingProgress: true
-
-# Code stats (on by default)
-codeStats: true
-
-# Clipboard config (on by default)
-clipboardConfig: true
-
-# Extract anchors (on by default)
-extractAnchors: true
-
-# Search config (on by default)
-searchConfig: true
-
-# Find empty sections (on by default)
-emptySections: true
