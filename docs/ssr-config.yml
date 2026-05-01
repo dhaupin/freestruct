@@ -1,0 +1,56 @@
+# Site configuration
+site:
+  name: freestruct
+  url: https://freestruct.creadev.org
+  description: Post-build SEO layer for static docs
+
+# Twitter Cards
+twitter:
+  username: "@yourhandle"
+  card: summary
+
+# Open Graph
+og:
+  image: /og-image.png
+  type: website
+  locale: en_US
+
+# Base path to strip from URLs
+basePath: 
+
+# Generate sitemap.xml
+generateSitemap: true
+
+# Generate 404.html
+generate404: true
+
+# Generate robots.txt
+generateRobots: true
+
+# Minify HTML (experimental, off by default)
+# minify: true
+
+# Preserve existing meta tags
+preserveExistingMeta: true
+
+# Cache busting
+cacheBusting:
+  hash: true
+
+# Generate RSS feed (on by default)
+generateFeed: true
+
+# Inject reading time (on by default)
+readingTime: true
+
+# Inject last modified (on by default)
+lastModified: true
+
+# Add lazy loading to images (on by default)
+lazyLoad: true
+
+# Check internal links (on by default)
+linkCheck: true
+
+# Generate search.json (on by default)
+searchIndex: true

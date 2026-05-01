@@ -1,0 +1,55 @@
+title: freestruct
+description: SEO layer for static doc sites
+url: http://freestruct.creadev.org
+baseurl:
+
+# Theme
+theme: null
+# plugins:
+#   - jekyll-sitemap  # removed - freestruct generates sitemap.xml
+
+# Search
+search:
+  provider: pagefind
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+permalink: pretty
+
+# Sass
+sass:
+  sass_dir: assets/scss
+  style: compressed
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: page
+
+# Navigation
+nav:
+  - title: Configuration
+    url: /configuration/
+  - title: Getting Started
+    url: /getting-started/
+  - title: Contributing
+    items:
+      - title: Voice & Style
+        url: /contributing/style/
+      - title: CI/CD
+        url: /guides/cicd/
+      - title: Example Page Template
+        url: /guides/template/
+      - title: Post-Render Hooks
+        url: /guides/post-render-hooks/
+      - title: Troubleshooting
+        url: /guides/troubleshooting/
+  - title: Guides
+    items:
+      - title: ssr-config.yml Reference
+        url: /guides/ssr-config/

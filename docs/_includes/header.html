@@ -1,0 +1,183 @@
+<header class="site-header">
+  <div class="container">
+    <a href="{{ '/' | relative_url }}" class="site-logo">
+      {{ site.title }}<span class="nav-badge">beta</span>
+    </a>
+
+    <nav class="site-nav" id="siteNav">
+      {% if site.nav %}
+        {% for item in site.nav %}
+          {% if item.items %}
+          <div class="nav-group">
+            <button class="nav-group-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">
+              {{ item.title }}
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div class="nav-group-items">
+              {% for sub in item.items %}
+              <a href="{{ sub.url | relative_url }}">{{ sub.title }}</a>
+              {% endfor %}
+            </div>
+          </div>
+          {% else %}
+          <a href="{{ item.url | relative_url }}">{{ item.title }}</a>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    </nav>
+
+    <div class="header-actions">
+      <button class="search-trigger" id="searchTrigger" aria-label="Search" onclick="document.getElementById('searchModal').classList.add('open')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="M21 21l-4.35-4.35"/>
+        </svg>
+      </button>
+
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" onclick="toggleTheme()">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/>
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+
+      <a href="https://github.com/dhaupin/freestruct" class="github-link" target="_blank" rel="noopener" aria-label="GitHub">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+        </svg>
+      </a>
+
+      <button class="burger-menu" id="burgerMenu" aria-label="Toggle menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="search-modal" id="searchModal">
+  <div class="search-modal-content">
+    <input type="text" class="search-input" id="searchInput" placeholder="Search docs..." autocomplete="off">
+    <div class="search-results" id="searchResults"></div>
+    <button class="search-close" id="searchClose" aria-label="Close search">×</button>
+  </div>
+</div>
+
+<script>
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.classList.contains('dark');
+  html.classList.toggle('dark');
+  localStorage.setItem('theme', isDark ? 'light' : 'dark');
+}
+(function() {
+  const saved = localStorage.getItem('theme');
+  const prefers = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  if (saved === 'dark' || (!saved && prefers)) {
+    document.documentElement.classList.add('dark');
+  }
+})();
+</script>
+
+<script>
+var burger = document.getElementById('burgerMenu');
+var nav = document.getElementById('siteNav');
+if (burger && nav) {
+  burger.addEventListener('click', function() {
+    burger.classList.toggle('open');
+    nav.classList.toggle('open');
+  });
+}
+document.querySelectorAll('#siteNav a').forEach(function(link) {
+  link.addEventListener('click', function() {
+    nav.classList.remove('open');
+    burger.classList.remove('open');
+  });
+});
+document.querySelectorAll('.nav-group-toggle').forEach(function(toggle) {
+  toggle.addEventListener('click', function(e) {
+    e.stopPropagation();
+    var items = this.nextElementSibling;
+    var isOpen = items.classList.contains('open');
+    document.querySelectorAll('.nav-group-items.open').forEach(function(openItems) {
+      openItems.classList.remove('open');
+    });
+    document.querySelectorAll('.nav-group--toggle.open').forEach(function(openToggle) {
+      openToggle.classList.remove('open');
+    });
+    if (!isOpen) {
+      items.classList.add('open');
+      this.classList.add('open');
+    }
+  });
+});
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.nav-group')) {
+    document.querySelectorAll('.nav-group-items.open').forEach(function(items) {
+      items.classList.remove('open');
+    });
+    document.querySelectorAll('.nav-group-toggle.open').forEach(function(toggle) {
+      toggle.classList.remove('open');
+    });
+  }
+});
+</script>
+
+<script>
+var pagefind = null;
+var pagefindPath = '/pagefind/pagefind.js';
+async function initPagefind() {
+  if (pagefind) return pagefind;
+  pagefind = await import(pagefindPath);
+  await pagefind.init();
+  return pagefind;
+}
+window.doSearch = async function(q, resultsEl) {
+  if (q.length < 2) {
+    resultsEl.innerHTML = '';
+    return;
+  }
+  resultsEl.innerHTML = '<div style="padding:1rem 1.25rem;color:var(--color-text-muted)">Loading...</div>';
+  try {
+    var pf = await initPagefind();
+    var resp = await pf.search(q);
+    if (resp.results.length === 0) {
+      resultsEl.innerHTML = '<div style="padding:1rem 1.25rem;color:var(--color-text-muted)">No results found</div>';
+      return;
+    }
+    var html = '';
+    for (var i = 0; i < resp.results.length && i < 8; i++) {
+      var r = resp.results[i];
+      var data = await r.data();
+      html += '<a href="' + data.url + '" class="search-result"><div class="search-result-title">' + (data.meta?.title || data.url) + '</div>';
+      if (data.excerpt) html += '<div class="search-result-excerpt">' + data.excerpt + '</div>';
+      html += '</a>';
+    }
+    resultsEl.innerHTML = html;
+  } catch (e) {
+    resultsEl.innerHTML = '<div style="padding:1rem 1.25rem;color:var(--color-text-muted)">Search unavailable</div>';
+  }
+};
+</script>
+<script>
+var searchModal=document.getElementById('searchModal');
+var searchInput=document.getElementById('searchInput');
+var searchResults=document.getElementById('searchResults');
+var searchClose=document.getElementById('searchClose');
+var searchTrigger=document.getElementById('searchTrigger');
+document.addEventListener('keydown',function(e){
+  if(!searchModal)return;
+  if(e.key==='Escape')searchModal.classList.remove('open');
+  if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();searchModal.classList.add('open');searchInput.focus();}
+});
+if(searchClose)searchClose.addEventListener('click',function(){searchModal.classList.remove('open')});
+if(searchInput)searchInput.addEventListener('input',function(){doSearch(this.value,searchResults)});
+if(searchTrigger)searchTrigger.addEventListener('click',function(){
+  searchModal.classList.add('open');
+  searchInput.focus();
+});
+</script>

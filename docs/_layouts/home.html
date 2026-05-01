@@ -1,0 +1,236 @@
+---
+layout: default
+---
+
+<div class="home-hero">
+  <div class="hero-badge">v0.2.0</div>
+  <h1>freestruct</h1>
+  {% if page.description %}
+  <p>{{ page.description }}</p>
+  {% endif %}
+  <div class="hero-actions">
+    <a href="{{ '/getting-started' | relative_url }}" class="btn btn-primary">Get Started →</a>
+    <a href="https://github.com/dhaupin/freestruct" class="btn btn-secondary">GitHub</a>
+  </div>
+</div>
+
+<section class="home-content">
+  {{ content }}
+</section>
+
+<style>
+.home-hero {
+  text-align: center;
+  padding: var(--space-8) 0 var(--space-6);
+}
+.hero-badge {
+  display: inline-block;
+  background: var(--color-bg-alt);
+  color: var(--color-primary);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  margin-bottom: var(--space-4);
+  border: 1px solid var(--color-border);
+}
+.home-hero h1 {
+  font-size: var(--font-size-4xl);
+  letter-spacing: -0.025em;
+  margin-bottom: var(--space-4);
+}
+.home-hero p {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-muted);
+  max-width: 32rem;
+  margin: 0 auto;
+}
+.hero-actions {
+  display: flex;
+  gap: var(--space-4);
+  justify-content: center;
+  margin-top: var(--space-6);
+}
+
+/* Landing page intro */
+.intro {
+  max-width: 32rem;
+  margin: 0 auto var(--space-8);
+  padding: 0 var(--space-4);
+  text-align: center;
+}
+.intro p {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* Landing page sections */
+.how-it-works,
+.features-grid,
+.quickstart,
+.why-freestruct,
+.concepts,
+.comparison,
+.guides-grid {
+  padding: var(--space-12) var(--space-4);
+}
+.how-it-works,
+.features-grid,
+.quickstart,
+.why-freestruct,
+.concepts,
+.comparison {
+  max-width: 40rem;
+  margin: 0 auto;
+}
+.how-it-works h2,
+.features-grid h2,
+.quickstart h2,
+.why-freestruct h2,
+.concepts h2,
+.comparison h2,
+.guides-grid h2 {
+  text-align: center;
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--space-8);
+}
+.section-intro {
+  text-align: center;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-8);
+  max-width: 32rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+.quickstart {
+  background: var(--color-bg-alt);
+}
+.quickstart h2 {
+  margin-bottom: var(--space-4);
+}
+.quickstart > p {
+  text-align: center;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-6);
+}
+.quickstart pre {
+  margin-bottom: var(--space-4);
+}
+.quickstart > p:last-child {
+  text-align: center;
+  color: var(--color-text-muted);
+  margin-bottom: 0;
+}
+.quickstart + .guides-grid {
+  background: var(--color-bg);
+}
+.why-freestruct {
+  background: var(--color-bg-alt);
+}
+.why-freestruct h2 {
+  margin-bottom: var(--space-4);
+}
+.why-freestruct .section-intro {
+  margin-bottom: var(--space-8);
+}
+.concepts {
+  background: var(--color-bg-alt);
+}
+.concepts h2 {
+  margin-bottom: var(--space-4);
+}
+.concepts .section-intro {
+  margin-bottom: var(--space-8);
+}
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  max-width: 28rem;
+  margin: 0 auto;
+}
+.step-content h3 {
+  font-size: var(--font-size-base);
+  margin-bottom: var(--space-2);
+}
+.step-content p {
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-sm);
+}
+.step-content pre {
+  margin: 0;
+}
+.guides-grid {
+  padding: var(--space-12) var(--space-4);
+  background: var(--color-bg-alt);
+}
+.guides {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-4);
+  max-width: 36rem;
+  margin: 0 auto;
+}
+.guide {
+  padding: var(--space-4);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s;
+}
+.guide:hover {
+  border-color: var(--color-primary);
+}
+.guide h3 {
+  font-size: var(--font-size-base);
+  margin-bottom: var(--space-1);
+}
+.guide p {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+.feature h3 {
+  font-size: var(--font-size-base);
+  margin-bottom: var(--space-2);
+}
+.feature p {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+.features-grid p a,
+.guides-grid p a {
+  color: var(--color-primary);
+}
+.comparison table {
+  max-width: 24rem;
+  margin: 0 auto;
+}
+.comparison td:first-child {
+  font-size: var(--font-size-sm);
+}
+.check {
+  color: var(--color-accent);
+  text-align: center;
+}
+.x {
+  color: var(--color-text-muted);
+  text-align: center;
+}
+@media (max-width: 640px) {
+  .hero-actions {
+    flex-direction: column;
+  }
+}
+</style>
