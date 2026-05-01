@@ -4,6 +4,8 @@ title: Freestruct
 description: Post-build SEO and search layer for static doc sites.
 ---
 
+<h1>Freestruct</h1>
+
 <section class="intro">
   <p>Freestruct adds SEO tags and search to your static docs after build. It works with any SSG - Jekyll, Hugo, Docusaurus, MkDocs, VitePress. Run it once, and every page gets proper meta tags, Open Graph cards, Twitter meta, a sitemap, and cache-busting hashes.</p>
 </section>
