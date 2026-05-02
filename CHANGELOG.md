@@ -2,6 +2,23 @@
 
 All notable changes to freestruct will be documented here.
 
+## [0.3.2] - 2026-05-02
+
+### Added
+- **Dynamic Navigation**: Auto-generates nav from docs folder structure. Folders become collapsible sections, files become links. Configure via `nav_sections` and `nav_order` in `_config.yml`.
+- **Error Handling**: Added validation for config file, YAML parsing, `site` section, output directory, and template file. Exits with clear errors on misconfiguration.
+- **Security**: `runHooks` flag - purge hooks disabled by default, must set `runHooks: true` to enable.
+
+### Fixed
+- **Purge Hooks**: Code was executing `execSync` but logging "disabled for safety" - inconsistent. Now properly disabled by default.
+- **Vant Reference**: Fixed layout comment from "Vant docs" to "Freestruct docs".
+
+### Docs
+- Added [Dynamic Navigation](/guides/dynamic-nav) guide
+- Updated [ssr-config.yml Reference](/guides/ssr-config) with cacheBusting and runHooks options
+- Updated [Cache Busting](/guides/cache-busting) with runHooks documentation
+- Updated README Security section with runHooks flag
+
 ## [0.3.1] - 2026-05-02
 
 ### Added

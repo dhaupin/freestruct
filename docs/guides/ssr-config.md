@@ -114,6 +114,40 @@ searchIndex: true   # generates search.json (on by default)
 searchIndex: false  # skip search index
 ```
 
+## Cache Busting Options
+
+### cacheBusting
+
+Configuration for the cache busting system.
+
+```yaml
+cacheBusting:
+  hash: true              # generate build hash (default: true)
+  assetQueryParam: true   # add ?v=hash to assets (default: true)
+  hashInCanonicalUrl: false # add ?v=hash to canonical (default: false)
+```
+
+### runHooks
+
+**Security: Disabled by default**. Enable to run purge commands defined in `cacheBusting.purge`.
+
+```yaml
+# Must be explicitly enabled
+runHooks: true   # allow purge commands to execute
+runHooks: false # default - no commands run
+```
+
+When enabled, you can define purge commands:
+
+```yaml
+cacheBusting:
+  purge:
+    - name: cloudflare
+      command: "curl -X DELETE https://api.cloudflare.com/..."
+
+runHooks: true  # required to enable
+```
+
 ## Path Options
 
 ### basePath
