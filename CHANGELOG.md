@@ -6,6 +6,8 @@ All notable changes to freestruct will be documented here.
 
 ### Added
 - **Dynamic Navigation**: Auto-generates nav from docs folder structure. Folders become collapsible sections, files become links. Configure via `nav_sections` and `nav_order` in `_config.yml`.
+- **generateNav**: Add config to disable dynamic nav. Set `generateNav: false` to use SSG menu instead (full non-SSG build).
+- **Navigation Guide**: New docs/guides/navigation.md covering nav config, sorting, and SSG menu passthrough.
 - **Error Handling**: Added validation for config file, YAML parsing, `site` section, output directory, and template file. Exits with clear errors on misconfiguration.
 - **Security**: `runHooks` flag - purge hooks disabled by default, must set `runHooks: true` to enable.
 

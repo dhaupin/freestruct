@@ -1,6 +1,7 @@
 # Dynamic navigation generator - builds nav from docs folder structure
 # Folders become collapsible sections, files become links
 # Supports nav_sections for custom titles, nav_order for sorting
+# Disable via generateNav: false in _config.yml to use SSG menu instead
 require 'fileutils'
 
 module Jekyll
@@ -8,6 +9,7 @@ module Jekyll
     safe true
 
     def generate(site)
+      return if site.config['generateNav'] == false
       @site = site
       nav_data = build_nav(site.pages, site.config)
       site.config['nav'] = nav_data

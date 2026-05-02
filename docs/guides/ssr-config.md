@@ -114,6 +114,15 @@ searchIndex: true   # generates search.json (on by default)
 searchIndex: false  # skip search index
 ```
 
+### generateNav
+
+Generate navigation from docs folder structure (default: true). Set false to use SSG menu.
+
+```yaml
+generateNav: true   # auto-generate from folder (default)
+generateNav: false  # use SSG built-in menu
+```
+
 ## Cache Busting Options
 
 ### cacheBusting
