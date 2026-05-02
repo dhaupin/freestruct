@@ -2,6 +2,19 @@
 
 All notable changes to freestruct will be documented here.
 
+## [0.3.1] - 2026-05-02
+
+### Added
+- **Gap-filling SEO**: freestruct now detects existing SEO from SSG/frontmatter and only injects missing pieces. Avoids duplicating OG, Twitter, JSON-LD, or canonical tags.
+- **Frontmatter title**: Extracts title from `<meta name="title">` first (rendered from frontmatter), falls back to `<title>` tag.
+- **Description fallback**: Falls back to site config if page has no description (prevents "undefined").
+
+### Fixed
+- Description could show as "undefined" when page had no meta description.
+
+### Changed
+- Test script now creates output directory automatically.
+
 ## [0.3.0] - 2026-04-25
 
 ### Added
