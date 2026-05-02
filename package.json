@@ -1,7 +1,9 @@
 {
   "name": "freestruct",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "description": "Post-build SEO layer for static doc sites - works with any SSG",
+  "homepage": "https://github.com/dhaupin/freestruct#readme",
+  "bugs": "https://github.com/dhaupin/freestruct/issues",
   "bin": {
     "freestruct": "./docs/lib/inject.js"
   },
