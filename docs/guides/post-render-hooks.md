@@ -74,14 +74,14 @@ The Freestruct build runs as a Node.js script. You can extend it by modifying in
 // Add custom post-render logic in injectFile():
 function injectFile(filePath, config, template, outputDir, buildHash) {
   let html = fs.readFileSync(filePath, 'utf8');
-  
+
   // YOUR CUSTOM LOGIC HERE
   if (config.customHooks) {
     for (const hook of config.customHooks) {
       html = applyHook(html, hook);
     }
   }
-  
+
   // ... rest of existing injection logic
 }
 ```

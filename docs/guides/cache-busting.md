@@ -49,14 +49,14 @@ cacheBusting:
   # Asset query params (default: true)
   # Adds ?v={hash} to CSS, JS, and images automatically
   assetQueryParam: true
-  
+
   # Hash in canonical URLs (default: false)
   # Enable if your CDN doesn't invalidate on deploy
   hashInCanonicalUrl: false
-  
+
   # Hash generation (default: true - always on)
   hash: true
-  
+
   # Optional: run purge commands after injection
   # MUST set runHooks: true to enable (disabled by default for security)
   purge:
@@ -199,7 +199,7 @@ Configure cache policies:
 # HTML cache policy
 - Cache-Control policy: Cache no-cache
 
-# Static assets cache policy  
+# Static assets cache policy
 - Cache-Control policy: Cache immutable
 - Query string forwarding: None (important!)
 ```

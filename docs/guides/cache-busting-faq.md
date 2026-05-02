@@ -76,7 +76,7 @@ Yes! Both have their own CDNs:
 
 ## What if I don't configure purge hooks?
 
-**The hash still works!** 
+**The hash still works!**
 
 Without purge hooks configured:
 - Every build generates a new hash
@@ -112,7 +112,7 @@ We don't recommend this. The hash is what makes cache busting work.
 Yes! Freestruct is completely agnostic:
 
 - **Jekyll** - `docs/_site` output
-- **Hugo** - `public/` output  
+- **Hugo** - `public/` output
 - **Docusaurus** - `build/` output
 - **Gatsby** - `public/` output
 - **Any SSG** - Just point `outputDir` to your build folder
@@ -132,7 +132,7 @@ Yes! The hash includes your entire config. If you have:
 site:
   url: https://docs.example.com
 
-# Staging  
+# Staging
 site:
   url: https://staging.example.com
 ```

@@ -51,7 +51,7 @@ Found 0 HTML files
 # If using Jekyll
 node docs/lib/inject.js docs/_site
 
-# If using Hugo  
+# If using Hugo
 node docs/_site
 ```
 

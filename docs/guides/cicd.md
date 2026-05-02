@@ -181,6 +181,6 @@ node docs/lib/inject.js docs/_site
 # Hugo
 node docs/lib/inject.js public
 
-# Docusaurus  
+# Docusaurus
 node docs/lib/inject.js build
 ```
