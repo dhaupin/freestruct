@@ -52,6 +52,17 @@ generateSitemap: true   # generates sitemap.xml
 generateSitemap: false  # skip sitemap generation
 ```
 
+### robots.txt
+
+Freestruct automatically generates `robots.txt` pointing to your sitemap. This is always enabled and cannot be disabled.
+
+```html
+User-agent: *
+Allow: /
+
+Sitemap: https://yoursite.com/sitemap.xml
+```
+
 ### generate404
 
 Generate `404.html` automatically (default: true). If a custom `404.html` already exists in the output directory, Freestruct will use it instead of generating one.
