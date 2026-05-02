@@ -52,15 +52,13 @@ generateSitemap: true   # generates sitemap.xml
 generateSitemap: false  # skip sitemap generation
 ```
 
-### robots.txt
+### generateRobots
 
-Freestruct automatically generates `robots.txt` pointing to your sitemap. This is always enabled and cannot be disabled.
+Generate `robots.txt` automatically (default: true).
 
-```html
-User-agent: *
-Allow: /
-
-Sitemap: https://yoursite.com/sitemap.xml
+```yaml
+generateRobots: true   # generates robots.txt
+generateRobots: false  # skip robots.txt
 ```
 
 ### generate404
