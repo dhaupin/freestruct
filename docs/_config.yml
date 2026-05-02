@@ -31,25 +31,14 @@ defaults:
     values:
       layout: page
 
-# Navigation
-nav:
-  - title: Configuration
-    url: /configuration/
-  - title: Getting Started
-    url: /getting-started/
-  - title: Contributing
-    items:
-      - title: Voice & Style
-        url: /contributing/style/
-      - title: CI/CD
-        url: /guides/cicd/
-      - title: Example Page Template
-        url: /guides/template/
-      - title: Post-Render Hooks
-        url: /guides/post-render-hooks/
-      - title: Troubleshooting
-        url: /guides/troubleshooting/
-  - title: Guides
-    items:
-      - title: ssr-config.yml Reference
-        url: /guides/ssr-config/
+# Navigation - dynamic from docs folder structure
+nav_sections:
+  guides: "Guides"
+  contributing: "Contributing"
+
+nav_order:
+  getting-started: 1
+  guides: 2
+  contributing: 3
+
+# Navigation (legacy - remove after verifying dynamic nav works)

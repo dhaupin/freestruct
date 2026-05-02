@@ -1,6 +1,7 @@
 ---
 title: Getting Started
 description: Get Freestruct running in 5 minutes
+nav_order: 1
 ---
 
 This guide walks you through setting up freestruct. If you hit any snags, the [FAQ](/guides/cache-busting-faq) might help.
