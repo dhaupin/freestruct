@@ -58,6 +58,7 @@ cacheBusting:
   hash: true
   
   # Optional: run purge commands after injection
+  # MUST set runHooks: true to enable (disabled by default for security)
   purge:
     - name: cloudflare
       command: >
@@ -65,6 +66,9 @@ cacheBusting:
         -H "Authorization: Bearer $CLOUDFLARE_TOKEN"
         -H "Content-Type: application/json"
         -d '{"files":["$SITE_URL/*"]}'
+
+# Enable explicitly to run purge commands (security: disabled by default)
+runHooks: true
 ```
 
 ### Options
@@ -76,6 +80,7 @@ These settings control cache busting behavior:
 | `assetQueryParam` | true | Add `?v={hash}` to CSS, JS, image URLs |
 | `hashInCanonicalUrl` | false | Add `?v={hash}` to canonical URLs |
 | `hash` | true | Always generate build hash |
+| `runHooks` | false | Run purge commands (must be enabled explicitly) |
 
 ## Environment Variables
 
