@@ -77,6 +77,12 @@ function inject() {
     process.exit(1);
   }
   
+  // Validate template exists
+  if (!fs.existsSync(TEMPLATE)) {
+    console.error('Template not found: ' + TEMPLATE);
+    process.exit(1);
+  }
+  
   const template = fs.readFileSync(TEMPLATE, 'utf8');
 
   // Generate build hash for cache busting
