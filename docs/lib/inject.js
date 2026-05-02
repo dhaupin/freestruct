@@ -211,7 +211,7 @@ function injectFile(filePath, config, template, outputDir, buildHash) {
 
   const replacements = {
     '{{pageTitle}}': pageTitle + ' | ' + config.site.name,
-    '{{pageDescription}}': pageDescription,
+    '{{pageDescription}}': pageDescription || config.site.description,
     '{{pageUrl}}': canonicalUrl,
     '{{canonicalUrl}}': canonicalUrl,
     '{{siteUrl}}': config.site.url,
@@ -228,13 +228,37 @@ function injectFile(filePath, config, template, outputDir, buildHash) {
   for (const [k, v] of Object.entries(replacements)) seo = seo.split(k).join(v);
   seo = seo.replace(/<!--[\s\S]*?-->/g, '');
 
-  // Remove existing freestruct-build and canonical tags before adding new ones
+  // Remove existing freestruct-build tag (always refresh)
   html = html.replace(/<meta[^>]*name="freestruct-build"[^>]*>/gi, '');
-  html = html.replace(/<link[^>]*rel="canonical"[^>]*>/gi, '');
+
+  // Only inject SEO if page doesn't have it from SSG/frontmatter
+  const hasOg = hasSeoType(html, 'og');
+  const hasTwitter = hasSeoType(html, 'twitter');
+  const hasJsonLd = hasSeoType(html, 'jsonld');
+  const hasCanonical = hasSeoType(html, 'canonical');
+
+  // Build SEO components - only inject missing ones
+  let seoInjection = '';
+  if (!hasOg) {
+    const ogMatch = seo.match(/<meta property="og:[^"]*"[^>]*>/gi);
+    if (ogMatch) seoInjection += '\n' + ogMatch.join('\n');
+  }
+  if (!hasTwitter) {
+    const twMatch = seo.match(/<meta name="twitter:[^"]*"[^>]*>/gi);
+    if (twMatch) seoInjection += '\n' + twMatch.join('\n');
+  }
+  if (!hasJsonLd) {
+    const ldMatch = seo.match(/<script type="application\/ld\+json">[\s\S]*?<\/script>/gi);
+    if (ldMatch) seoInjection += '\n' + ldMatch.join('\n');
+  }
+  if (!hasCanonical) {
+    const canMatch = seo.match(/<link rel="canonical"[^>]*>/);
+    if (canMatch) seoInjection += '\n' + canMatch[0];
+  }
 
   // Version tag for cache busting - injected into every page
   const versionTag = '<meta name="freestruct-build" content="' + buildHash + '">';
-  html = html.replace(/<\/head>/i, seo + '\n' + versionTag + '\n<!-- freestruct -->\n</head>');
+  html = html.replace(/<\/head>/i,seoInjection + '\n' + versionTag + '\n<!-- freestruct -->\n</head>');
 
   // Add custom header injection before </head>
   const headerPath = 'docs/_freestruct/inject-header.html';
@@ -299,14 +323,42 @@ function minifyHtml(html) {
     .trim();
 }
 
+// Extract SEO from page - falls back to SSG/frontmatter rendered SEO
+// Priority: meta name="title" > <title> > config default
+
 function extractTitle(html) {
-  const m = html.match(/<title>([^<]+)<\/title>/i);
-  return m ? m[1].split(' | ')[0] : null;
+  // Check <meta name="title"> first (rendered from frontmatter)
+  const m = html.match(/<meta name="title" content="([^"]+)"/i);
+  if (m) return m[1];
+  // Fall back to <title>
+  const t = html.match(/<title>([^<]+)<\/title>/i);
+  return t ? t[1].split(' | ')[0] : null;
 }
 
 function extractDescription(html) {
+  // Check <meta name="description"> (rendered from frontmatter)
   const m = html.match(/<meta name="description" content="([^"]+)"/i);
   return m ? m[1] : null;
+}
+
+// Check if page already has SEO (from SSG/frontmatter)
+// Used to avoid duplicate injection
+
+function hasSeoType(html, type) {
+  // Check for existing OG, Twitter, or JSON-LD tags
+  if (type === 'og') {
+    return html.includes('property="og:title"') || html.includes('property="og:description"');
+  }
+  if (type === 'twitter') {
+    return html.includes('name="twitter:card"') || html.includes('name="twitter:title"');
+  }
+  if (type === 'jsonld') {
+    return html.includes('application/ld+json');
+  }
+  if (type === 'canonical') {
+    return html.includes('rel="canonical"') || html.includes('link rel="canonical"');
+  }
+  return false;
 }
 
 function generateSitemap(files, config, outputDir) {

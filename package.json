@@ -12,7 +12,7 @@
   "scripts": {
     "build": "jekyll build && npm run inject",
     "inject": "node docs/lib/inject.js",
-    "test": "node docs/lib/inject.js test-output"
+    "test": "mkdir -p test-output && node docs/lib/inject.js test-output"
   },
   "repository": {
     "type": "git",
