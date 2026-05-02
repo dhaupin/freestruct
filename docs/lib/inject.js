@@ -155,11 +155,15 @@ function runPurgeHooks(config, buildHash, outputDir) {
 
     console.log('Purge hook ' + name + ': running...');
     try {
-      // Only log what we're running, don't actually execute for safety
-      // SECURITY: Users control commands in their ssr-config.yml - only run trusted commands
+      // Only run if explicitly enabled in config
+      if (!config.runHooks) {
+        console.log('  Command: ' + command.substring(0, 100) + '...');
+        console.log('  Purge hooks disabled (set runHooks: true to enable)');
+        return;
+      }
       execSync(command, { stdio: 'inherit', timeout: 30000 });
       console.log('  Command: ' + command.substring(0, 100) + '...');
-      console.log('Purge hook ' + name + ': would run (disabled for safety)');
+      console.log('Purge hook ' + name + ': done');
     } catch (e) {
       console.log('Purge hook ' + name + ': error - ' + e.message);
     }
