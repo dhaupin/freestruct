@@ -119,7 +119,18 @@ searchIndex: false    # skip search index
 
 ## Security
 
-Purge hooks run commands via `execSync`. Only use trusted commands. See docs/guides/cache-busting.md.
+Purge hooks run shell commands via `execSync`. Enable explicitly in config:
+
+```yaml
+# In ssr-config.yml
+runHooks: true  # must be set to enable
+cacheBusting:
+  purge:
+    - name: cloudflare
+      command: "cf-cli purge $SITE_URL"
+```
+
+Use only trusted commands. Disabled by default.
 
 ---
 
