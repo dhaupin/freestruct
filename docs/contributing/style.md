@@ -2,6 +2,7 @@
 permalink: /contributing/style.html
 layout: default
 title: Voice & Style
+nav_order: 21
 ---
 # Voice & Style
 

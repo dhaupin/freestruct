@@ -1,6 +1,7 @@
 ---
 title: Example Page Template
 description: Copy this template when creating new docs pages. Shows all supported frontmatter and section structure.
+nav_order: 17
 ---
 
 <!-- This is the complete template for Freestruct docs. Copy it when creating new pages. -->

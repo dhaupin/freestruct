@@ -1,6 +1,7 @@
 ---
 title: Cache Busting FAQ
 description: Common questions about Freestruct's cache busting system
+nav_order: 10
 ---
 
 ## Why do I need this? My site is already built.

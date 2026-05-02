@@ -1,6 +1,7 @@
 ---
 title: Troubleshooting
 description: Common issues and how to fix them
+nav_order: 18
 ---
 Common issues and solutions.
 

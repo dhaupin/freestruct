@@ -1,3 +1,9 @@
+---
+title: Engineering Decisions
+description: Technical details for freestruct
+nav_order: 5
+---
+
 # AGENTS.md
 
 Engineering decisions and technical details for freestruct docs and the freestruct tool itself.

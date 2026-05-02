@@ -1,3 +1,8 @@
+---
+title: Feature Roadmap
+description: Planned features and open issues
+nav_order: 22
+---
 
 ## Cache Busting Feature
 

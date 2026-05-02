@@ -1,7 +1,7 @@
-
 ---
 title: Custom Injection
 description: Add custom code via injection hooks
+nav_order: 14
 ---
 
 # Custom Injection

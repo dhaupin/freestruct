@@ -37,6 +37,8 @@ nav_sections:
   contributing: "Contributing"
 
 nav_order:
+  index: 0
   getting-started: 1
-  guides: 2
-  contributing: 3
+  configuration: 2
+  guides: 10
+  contributing: 20

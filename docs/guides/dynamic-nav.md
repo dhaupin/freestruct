@@ -1,6 +1,7 @@
 ---
 title: Dynamic Navigation
 description: Auto-generate navigation from docs folder structure
+nav_order: 15
 ---
 
 Freestruct can auto-generate your site navigation from the docs folder structure. No manual nav config needed - just add files and folders.

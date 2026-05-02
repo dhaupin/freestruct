@@ -1,6 +1,7 @@
 ---
 title: Post-Render Hooks
 description: Use Freestruct as a build-time HTML processor for anything you need
+nav_order: 16
 ---
 
 # Beyond SEO: Post-Render HTML Processing

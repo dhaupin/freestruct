@@ -1,6 +1,7 @@
 ---
 title: Configuration
 description: Configure Freestruct for your doc site
+nav_order: 2
 ---
 
 ## Configure
