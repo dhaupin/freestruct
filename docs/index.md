@@ -78,11 +78,6 @@ nav_order: 0
       <p>Configure CloudFlare, Fastly, or CloudFront to purge automatically after each build. Add a purge command to your config, and Freestruct runs it. Your docs stay fresh.</p>
     </div>
     
-    <div class="feature">
-      <h3>CDN Purge Hooks</h3>
-      <p>Configure CloudFlare, Fastly, or CloudFront to purge automatically after each build. Add a purge command to your config, and Freestruct runs it. Your docs stay fresh.</p>
-    </div>
-  </div>
   
   <p><a href="configuration">- Full configuration reference</a></p>
 </section>
