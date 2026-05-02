@@ -49,8 +49,34 @@ const TEMPLATE = 'docs/_freestruct/inject-brand.html';
 
 function inject() {
   console.log('freestruct: Loading config...');
-  let config = yaml.load(fs.readFileSync(SSR_CONFIG, 'utf8'));
+  
+  // Validate config file exists and parses
+  if (!fs.existsSync(SSR_CONFIG)) {
+    console.error('Config not found: ' + SSR_CONFIG);
+    process.exit(1);
+  }
+  
+  let config;
+  try {
+    config = yaml.load(fs.readFileSync(SSR_CONFIG, 'utf8'));
+  } catch (e) {
+    console.error('Config parse error: ' + e.message);
+    process.exit(1);
+  }
+  
+  if (!config || !config.site) {
+    console.error('Invalid config: must have site section');
+    process.exit(1);
+  }
+  
   const outputDir = process.argv[2] || config.outputDir || OUTPUT_DIR;
+  
+  // Validate output directory exists
+  if (!fs.existsSync(outputDir)) {
+    console.error('Output directory not found: ' + outputDir);
+    process.exit(1);
+  }
+  
   const template = fs.readFileSync(TEMPLATE, 'utf8');
 
   // Generate build hash for cache busting
