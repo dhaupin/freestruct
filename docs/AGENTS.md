@@ -20,13 +20,13 @@ Engineering decisions and technical details for freestruct docs and the freestru
 - **No SSG dependencies** - Works with ANY static site generator
 - **No plugins** - Pure post-build layer, doesn't touch your SSG
 - **Zero runtime deps** - Can run with just Node.js built-ins (optional js-yaml for config)
-- **One command** - `node docs/lib/inject.js` after your SSG builds
+- **One command** - `node bin/freestruct.mjs` after your SSG builds
 
 ### Key Files
 
 | File | Purpose |
 |------|---------|
-| `docs/lib/inject.js` | Core SEO injection script (~230 lines, vanilla Node.js) |
+| `engine/inject.js` | Engine entry + CLI orchestrator (vanilla Node.js ESM) |
 | `docs/freestruct.config.yml` | Configuration for site metadata, CDN hooks, cache busting (legacy name `ssr-config.yml` still read) |
 | `docs/_includes/inject-brand.html` | HTML template with `{{placeholder}}` tokens |
 
@@ -37,7 +37,7 @@ Your SSG Build (ANY - Jekyll/Hugo/Docusaurus/VitePress/MkDocs)
          ↓
    [SSG output folder - _site/public/build/site]
          ↓
-   node docs/lib/inject.js [output-folder]
+   node bin/freestruct.mjs [output-folder]
          ↓
    freestruct reads:
    - freestruct.config.yml (your site config)
@@ -176,14 +176,14 @@ freestruct works with ANY static site generator. Just point it at the output fol
 
 | SSG | Output Folder | Command |
 |-----|--------------|---------|
-| Jekyll | `_site` | `jekyll build && node docs/lib/inject.js docs/_site` |
-| Hugo | `public` | `hugo && node docs/lib/inject.js public` |
-| Docusaurus | `build` | `docusaurus build && node docs/lib/inject.js build` |
-| VitePress | `.vitepress/dist` | `vitepress build && node docs/lib/inject.js .vitepress/dist` |
-| MkDocs | `site` | `mkdocs build && node docs/lib/inject.js site` |
-| Astro | `dist` | `astro build && node docs/lib/inject.js dist` |
-| Eleventy | `_site` | `eleventy && node docs/lib/inject.js _site` |
-| Any other | *any folder* | `node docs/lib/inject.js [your-output-folder]` |
+| Jekyll | `_site` | `jekyll build && node bin/freestruct.mjs docs/_site` |
+| Hugo | `public` | `hugo && node bin/freestruct.mjs public` |
+| Docusaurus | `build` | `docusaurus build && node bin/freestruct.mjs build` |
+| VitePress | `.vitepress/dist` | `vitepress build && node bin/freestruct.mjs .vitepress/dist` |
+| MkDocs | `site` | `mkdocs build && node bin/freestruct.mjs site` |
+| Astro | `dist` | `astro build && node bin/freestruct.mjs dist` |
+| Eleventy | `_site` | `eleventy && node bin/freestruct.mjs _site` |
+| Any other | *any folder* | `node bin/freestruct.mjs [your-output-folder]` |
 
 Just set `outputDir` in `freestruct.config.yml` or pass as argument.
 
@@ -210,16 +210,16 @@ freestruct is a *layer* - it runs AFTER your SSG builds.
 YOUR_SSG_BUILD
 
 # 2. Run freestruct on the output
-node docs/lib/inject.js [output-folder]
+node bin/freestruct.mjs [output-folder]
 
 # Example with Jekyll:
-jekyll build && node docs/lib/inject.js docs/_site
+jekyll build && node bin/freestruct.mjs docs/_site
 
 # Example with Hugo:
-hugo && node docs/lib/inject.js public
+hugo && node bin/freestruct.mjs public
 
 # Example with Docusaurus:
-docusaurus build && node docs/lib/inject.js build
+docusaurus build && node bin/freestruct.mjs build
 ```
 
 ### GitHub Actions
@@ -229,14 +229,14 @@ docusaurus build && node docs/lib/inject.js build
   run: jekyll build  # or hugo, docusaurus build, etc.
 
 - name: Inject SEO
-  run: node docs/lib/inject.js docs/_site
+  run: node bin/freestruct.mjs docs/_site
 ```
 
 ### Configuration
 
 ```bash
 # Optional: Pass output folder as argument
-node docs/lib/inject.js /path/to/output
+node bin/freestruct.mjs /path/to/output
 ```
 
 Default output folder: `docs/_site`
@@ -249,17 +249,17 @@ freestruct is a layer - use your SSG's commands, then run inject.js:
 
 ```bash
 # Build your site, then inject
-jekyll build && node docs/lib/inject.js docs/_site
+jekyll build && node bin/freestruct.mjs docs/_site
 
 # Or inject only (your site is already built)
-node docs/lib/inject.js
+node bin/freestruct.mjs
 ```
 
 ---
 
 ## Template Files
 
-freestruct templates live in `docs/_freestruct/` (not `_includes/` which collides with Jekyll):
+freestruct templates live in `engine/_freestruct/` (canonical, packaged; `docs/_freestruct/` and `init/docs/_freestruct/` hold synced copies):
 
 | File | Purpose |
 |------|---------|
@@ -283,7 +283,7 @@ Create or edit these files to add custom code. Files auto-load if they exist.
 ### Testing locally
 
 1. Build your site with your SSG
-2. Run `node docs/lib/inject.js [output-folder]`
+2. Run `node bin/freestruct.mjs [output-folder]`
 3. Check the output HTML files
 
 ### Important quirks

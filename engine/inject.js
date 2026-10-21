@@ -11,7 +11,8 @@
 //   hooks.js     purge hooks
 //
 // CLI (Phase 0/2 contract):
-//   --version   print the package.json version and exit 0 (works configless)
+//   --version   print the package.json version and exit 0 (works configless;
+//               resolved one level up: engine/ is the package root's sibling dir)
 //   --strict    opt-in: broken links / noindex leaks exit 1 instead of
 //               shipping green
 //   --tolerant  opt-out for CI tolerance: fatal config errors log and exit 0
@@ -59,7 +60,9 @@ function fail(message, code = EXIT_CONFIG) {
 }
 
 function printVersion() {
-  const pkg = JSON.parse(fs.readFileSync(new URL('../../package.json', import.meta.url), 'utf8'));
+  // engine/inject.js sits in engine/, one level under the package root -
+  // that stays true inside an npm install (node_modules/freestruct/engine/).
+  const pkg = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
   console.log(pkg.version);
 }
 
@@ -87,11 +90,12 @@ export function runInject(options = {}) {
   if (!fs.existsSync(outputDir)) fail('Output directory not found: ' + outputDir, EXIT_OUTPUT);
 
   // Template resolution: user-staged first (docs/_freestruct next to the
-  // config), then the PACKAGE-shipped copy (npm install ships docs/_freestruct
+  // config), then the PACKAGE-shipped copy (npm install ships engine/_freestruct
   // - repo-shaped runs always hit the staged one, fresh-machine installs fall
   // back here; caught by the tarball e2e on a fresh install). The battery
   // pins the staged-only exit-2 shape via FREESTRUCT_SKIP_PACKAGE_FALLBACK.
-  const packageTemplateDir = path.join(fileURLToPath(new URL('../_freestruct/', import.meta.url)));
+  // engine/_freestruct is a SIBLING of this engine file, hence './', not '../'.
+  const packageTemplateDir = path.join(fileURLToPath(new URL('./_freestruct/', import.meta.url)));
   let snippetDir = path.join(configDir, '_freestruct');
   if (!fs.existsSync(path.join(snippetDir, 'inject-brand.html')) &&
       process.env.FREESTRUCT_SKIP_PACKAGE_FALLBACK !== '1' &&

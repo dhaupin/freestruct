@@ -36,3 +36,6 @@ jobs:
 
       - name: Tarball e2e (fresh-install quick start, PRD §4.1 step 5)
         run: node scripts/e2e-install.cjs
+
+      - name: Engine template sync check (canonical engine/_freestruct in lockstep)
+        run: node scripts/sync-templates.mjs check

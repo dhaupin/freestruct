@@ -273,7 +273,7 @@ Injected HTML includes a source comment:
 You can override config values via environment variables:
 
 ```bash
-FREESTRUCT_URL=https://staging.example.com node docs/lib/inject.js
+FREESTRUCT_URL=https://staging.example.com npx freestruct
 ```
 
 ## Related

@@ -42,7 +42,7 @@ jobs:
         run: npm install
 
       - name: Run freestruct (--strict: broken links fail the build; the #4 graduation)
-        run: node docs/lib/inject.js --strict
+        run: node bin/freestruct.mjs --strict
 
       - name: Install Pagefind (official npm dist, not the global install)
         working-directory: docs

@@ -77,6 +77,23 @@ contract becomes honest: schema-checked, diagnosed, opinionated defaults.
 - The battery version pin now enforces exactly 0.6.0 (owner freeze) across
   package.json, README, and CHANGELOG.
 
+### House structure (prestruct-pattern, owner-directed)
+- **`engine/`** is the shipped runtime (`engine/inject.js` + the eight lib
+  modules, previously `docs/lib/`); `main`/`exports` point at it; the CLI is
+  a thin `bin/freestruct.mjs` shim (prestruct's `bin/cli.mjs` pattern).
+- **`engine/_freestruct/`** is the canonical packaged template set;
+  `docs/_freestruct/` (the example site) and **`init/`** (new consumer
+  scaffold kit: `VERSION`, `README`, starter config, template copies) hold
+  synced copies. `scripts/sync-templates.mjs check` is a CI drift gate
+  (the W1 engine-drift lesson, encoded).
+- `/docs` stays the example (no new example folder); Jekyll no longer copies
+  source code into `_site` (the `docs/lib` leak is gone).
+- `files` whitelist is `bin/`, `engine/`, `init/` (with `node_modules` and
+  dist exclusions); the package now also `exports ./init/*` so the kit is
+  consumable via `cp -r node_modules/freestruct/init/docs .`.
+- no compat shims for old paths: the package was never published, and there
+  are no external consumers yet; the version freeze (0.6.0) stays.
+
 ## [0.5.0] - 2026-10-21
 
 Phase 1 of the v1.0.0 rehaul (PRD: labs/prd-freestruct.md) - runtime decision

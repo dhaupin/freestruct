@@ -28,7 +28,7 @@ nav_order: 0
       <div class="step-content">
         <h3>2. Run Freestruct</h3>
         <p>A single command that reads your config, scans your output folder, and injects SEO into every HTML file.</p>
-        <pre><code>node docs/lib/inject.js</code></pre>
+        <pre><code>npx freestruct</code></pre>
       </div>
     </div>
 
@@ -91,7 +91,7 @@ nav_order: 0
 
 # Create docs/freestruct.config.yml with your site info
 
-node docs/lib/inject.js</code></pre>
+npx freestruct</code></pre>
 
   <p>That's it. See <a href="getting-started">Getting Started</a> for the full guide.</p>
 </section>

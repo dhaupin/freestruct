@@ -5,17 +5,32 @@
   "homepage": "https://github.com/dhaupin/freestruct#readme",
   "bugs": "https://github.com/dhaupin/freestruct/issues",
   "type": "module",
+  "main": "engine/inject.js",
   "bin": {
-    "freestruct": "./docs/lib/inject.js"
+    "freestruct": "bin/freestruct.mjs"
+  },
+  "exports": {
+    ".": "./engine/inject.js",
+    "./bin": "./bin/freestruct.mjs",
+    "./engine/*": "./engine/*",
+    "./init/*": "./init/*",
+    "./package.json": "./package.json"
   },
   "files": [
-    "docs/lib/",
-    "docs/_freestruct/"
+    "bin/",
+    "engine/",
+    "init/",
+    "!init/node_modules",
+    "!init/dist"
   ],
   "scripts": {
-    "build": "cd docs && jekyll build && node lib/inject.js",
-    "inject": "node docs/lib/inject.js",
-    "test": "node test/run.js"
+    "build": "cd docs && jekyll build && cd .. && node bin/freestruct.mjs",
+    "sync": "node scripts/sync-templates.mjs",
+    "sync:check": "node scripts/sync-templates.mjs check",
+    "inject": "node bin/freestruct.mjs",
+    "test": "node test/run.js",
+    "e2e": "node scripts/e2e-install.cjs",
+    "lint:docs": "node scripts/run-docs-audit.cjs"
   },
   "repository": {
     "type": "git",

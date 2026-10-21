@@ -192,6 +192,34 @@
 - **Jekyll-leg safety belt (§5.5 tidbit 2):** docs.yml build step inlines
   `cd docs &&` instead of trusting step-level working-directory.
 
+### Pass 10 — prestruct-shaped house structure: engine/ + init/ + bin/ (done, on 0.6.0)
+- **Owner approved the prestruct-derived house structure.** Study: prestruct
+  ships `engine/` (runtime), `init/` (consumer scaffold kit, version-stamped,
+  shipped in `files`), `example/` (dogfood site), `bin/cli.mjs` (thin CLI),
+  and syncs engine-vs-kit copies in CI (the W1 engine-drift lesson, which
+  bit their published qc.test, encoded as a `sync:check` CI step).
+- Mapping executed: `docs/lib/*.js` → **`engine/`** (8 modules + orchestrator,
+  `main`/`exports` point there); canonical packaged templates →
+  **`engine/_freestruct/`** (fixed a `'../_freestruct/'` vs `'./_freestruct/'`
+  sibling-path bug the battery's fallback pin caught immediately);
+  **`/docs` stays the example** (staged template copies restored via sync,
+  so the dogfood build exercises the recommended consumer shape);
+  **`init/`** scaffold kit created (VERSION + README + starter config +
+  template copies, exported and shipped); **`bin/freestruct.mjs`** thin CLI
+  entry; **`scripts/sync-templates.mjs check`** wired into test.yml.
+- Consumers' guide commands moved to `npx freestruct`; repo/CI invocations
+  moved to `node bin/freestruct.mjs`; `printVersion()` fixed for the new
+  depth (`../package.json`); battery's packaging pin updated to assert the
+  house structure (bin/engine/init whitelist + bin + main targets).
+- Side benefit realized: Jekyll previously copied `docs/lib/*.js` into
+  `_site/lib/` (source code shipping in the docs artifact); the move
+  eliminates that leakage.
+- No compat shims for old paths: the package was never npm-published, and
+  vant (the prototype) is not a consumer — breaking internal paths now is
+  free; the freeze (0.6.0) stays.
+- End-to-end: battery 37/37, sync-check lockstep, docs audit clean,
+  tarball e2e proven (bin/engine/init all in the 0.6.0 tarball).
+
 ## Next up (open, unowned)
 
 - Phase 4 residual: refresh the stone at pass end (convention above) — not

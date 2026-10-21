@@ -32,7 +32,7 @@ Error: Config file not found: docs/freestruct.config.yml
 **Fix:** Create the config file:
 
 ```bash
-node docs/lib/inject.js path/to/output
+npx freestruct path/to/output
 ```
 
 Freestruct looks for `docs/freestruct.config.yml` first (the legacy name `docs/ssr-config.yml` also works), searching upward from your current directory.
@@ -114,13 +114,16 @@ The hash should change every build.
 
 ### 4. Jekyll _includes collision
 
-Template files are in `docs/_freestruct/` (not `_includes/`):
+Template files live in `engine/_freestruct/` inside the installed package and are used automatically; a staged `docs/_freestruct/` copy (not `_includes/`, which collides with Jekyll) always wins:
 
 ```text
-docs/_freestruct/
+docs/_freestruct/           <- staged: your overrides (optional)
   inject-header.html
   inject-footer.html
   inject-brand.html
+
+node_modules/freestruct
+  engine/_freestruct/       <- packaged: the canonical copy used otherwise
 ```
 
 This avoids Jekyll's `_includes/` folder.

@@ -29,7 +29,7 @@ jobs:
         run: npm run docs  # your SSG build command
 
       - name: Run freestruct
-        run: node docs/lib/inject.js docs/_site
+        run: npx freestruct docs/_site
 
       - name: Upload build
         uses: actions/upload-artifact@v4
@@ -70,7 +70,7 @@ jobs:
         run: bundle exec jekyll build
 
       - name: Run freestruct
-        run: node docs/lib/inject.js _site
+        run: npx freestruct _site
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -94,7 +94,7 @@ For private sites, use secrets:
 
 ```yaml
 - name: Run freestruct
-  run: node docs/lib/inject.js
+  run: npx freestruct
   env:
     SITE_URL: ${{ secrets.SITE_URL }}
     API_KEY: ${{ secrets.API_KEY }}
@@ -117,7 +117,7 @@ Add to `netlify.toml`:
 
 ```toml
 [build]
-  command = "your-ssg-build && node docs/lib/inject.js docs/_site"
+  command = "your-ssg-build && npx freestruct docs/_site"
   publish = "docs/_site"
 ```
 
@@ -127,7 +127,7 @@ Add to `vercel.json`:
 
 ```json
 {
-  "buildCommand": "your-ssg-build && node docs/lib/inject.js",
+  "buildCommand": "your-ssg-build && npx freestruct",
   "outputDirectory": "docs/_site"
 }
 ```
@@ -140,7 +140,7 @@ build:
   script:
     - npm install
     - your-ssg-build
-    - node docs/lib/inject.js docs/_site
+    - npx freestruct docs/_site
   artifacts:
     paths:
       - docs/_site/
@@ -156,7 +156,7 @@ Test without deploying:
 # Build + inject to temp folder
 mkdir -p /tmp/test-build
 cp -r docs/_site/* /tmp/test-build/
-node docs/lib/inject.js /tmp/test-build
+npx freestruct /tmp/test-build
 
 # Check output
 grep freestruct-build /tmp/test-build/index.html
@@ -179,11 +179,11 @@ Always match your SSG output:
 
 ```yaml
 # Jekyll
-node docs/lib/inject.js docs/_site
+npx freestruct docs/_site
 
 # Hugo
-node docs/lib/inject.js public
+npx freestruct public
 
 # Docusaurus
-node docs/lib/inject.js build
+npx freestruct build
 ```

@@ -16,7 +16,7 @@ npm install
 jekyll build   # or hugo, docusaurus build, etc
 
 # 3. Inject SEO
-node docs/lib/inject.js
+npx freestruct
 
 # 4. Deploy
 # That's it. Every page now has perfect SEO.
@@ -73,23 +73,23 @@ After your SSG builds:
 
 ```bash
 # Full build for Jekyll
-jekyll build && node docs/lib/inject.js
+jekyll build && npx freestruct
 ```
 
 For other SSGs, just swap the build command:
 
 ```bash
 # Hugo
-hugo && node docs/lib/inject.js public
+hugo && npx freestruct public
 
 # Docusaurus
-docusaurus build && node docs/lib/inject.js build
+docusaurus build && npx freestruct build
 
 # MkDocs
-mkdocs build && node docs/lib/inject.js site
+mkdocs build && npx freestruct site
 
 # VitePress
-vitepress build && node docs/lib/inject.js .vitepress/dist
+vitepress build && npx freestruct .vitepress/dist
 ```
 
 ## Step 4: Verify It Works
@@ -122,7 +122,7 @@ Add this to your GitHub Actions workflow:
 - name: Build site + inject SEO
   run: |
     jekyll build
-    node docs/lib/inject.js
+    npx freestruct
 ```
 
 Or add to your `package.json`:
@@ -130,7 +130,7 @@ Or add to your `package.json`:
 ```json
 {
   "scripts": {
-    "build": "jekyll build && node docs/lib/inject.js"
+    "build": "jekyll build && npx freestruct"
   }
 }
 ```

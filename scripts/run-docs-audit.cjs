@@ -234,16 +234,16 @@ function gateStyle() {
 // Gate: truthfulness
 // ---------------------------------------------------------------------------
 
-// Flags the injector CLI actually parses (truth source: docs/lib/inject.js).
+// Flags the injector CLI actually parses (truth source: engine/inject.js).
 function cliFlags() {
-  const src = fs.readFileSync(path.join(ROOT, 'docs', 'lib', 'inject.js'), 'utf8');
+  const src = fs.readFileSync(path.join(ROOT, 'engine', 'inject.js'), 'utf8');
   const flags = new Set();
   for (const m of src.matchAll(/['"]--([a-zA-Z][\w-]*)['"]/g)) flags.add(m[1]);
   flags.add('help').add('h').add('version').add('V');
   return flags;
 }
 
-// Config schema keys (truth source: docs/lib/config.js README + test/fixture).
+// Config schema keys (truth source: engine/config.js README + test/fixture).
 function schemaKeys() {
   // Truth source: the KNOWN_CONFIG_KEYS list + nested cache keys in config.js:
   // those are the keys the schema accepts without warning.
@@ -253,7 +253,7 @@ function schemaKeys() {
     'lastModified', 'lazyLoad', 'linkCheck', 'minify', 'runHooks',
     'twitter', 'og', 'cacheBusting',
   ]);
-  const src = fs.readFileSync(path.join(ROOT, 'docs', 'lib', 'config.js'), 'utf8');
+  const src = fs.readFileSync(path.join(ROOT, 'engine', 'config.js'), 'utf8');
   const known = src.match(/KNOWN_CONFIG_KEYS = Object\.freeze\(\[([\s\S]*?)\]\)/);
   if (known) for (const m of known[1].matchAll(/'([a-zA-Z][\w]*)'/g)) keys.add(m[1]);
   for (const m of src.matchAll(/\['([^']+)'(?:,\s*'[^']+')*\s*\]/g)) { // nested key lists

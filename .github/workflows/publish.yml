@@ -16,7 +16,7 @@
 #
 # Runbook (when it is time):
 #   1. npm test all green; npm pack --dry-run shows the intended tarball
-#      (docs/lib/ + docs/_freestruct/ per the files whitelist).
+#      (bin/ + engine/ + init/ per the files whitelist).
 #   2. npm publish            # one-time manual bootstrap, creates the package
 #   3. npmjs.com -> freestruct -> Settings -> Trusted Publisher
 #   4. npm version minor      # future releases land as v0.x / v1.x

@@ -6,7 +6,7 @@ nav_order: 14
 
 # Custom Injection
 
-Freestruct supports custom injection hooks - create template files in `docs/_freestruct/` and they'll be auto-loaded if they exist.
+Freestruct supports custom injection hooks - template files in `docs/_freestruct/` are auto-loaded if they exist (they win over the packaged `engine/_freestruct/` templates; see the init kit to stage them).
 
 > **Note:** Location is `_freestruct/` (not `_includes/`) to avoid collisions with Jekyll and other SSGs.
 
@@ -51,7 +51,7 @@ All hooks support these placeholders:
 
 1. Create or edit the template file in `docs/_freestruct/`
 2. Run your SSG build
-3. Run `node docs/lib/inject.js [output]`
+3. Run `npx freestruct [output]`
 4. Check the output HTML
 
 The files are loaded only if they exist - no config needed.

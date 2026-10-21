@@ -1,0 +1,14 @@
+# freestruct starter config (part of the init kit).
+# Copy this whole docs/ folder into your project, then fill in site.name and
+# site.url - they are required and everything else has a working default.
+
+site:
+  name: My Docs
+  url: https://example.com/docs
+  description: My documentation
+
+# The rest is optional; see the README Configuration table for the list.
+# basePath: /project-docs      # when the output tree is served under a prefix
+# searchIndex: true            # opt-in: generate search.json
+# outputDir: _site             # your SSG's output folder (relative to docs/)
+# minify: true                 # experimental HTML minifier

@@ -1,6 +1,7 @@
 // freestruct regression battery - Phase 1 (PRD labs/prd-freestruct.md)
 //
-// Runs docs/lib/inject.js (the ESM orchestrator) against committed fixture
+// Runs the ESM engine orchestrator (engine/inject.js via bin/freestruct.mjs)
+// against committed fixture
 // sites and pins observable behavior. Phase 0 warts FIXED in Phase 1 have
 // their pins flipped consciously, each noted here:
 //   - noindex honored by default (issue #5, owner decision)
@@ -20,7 +21,7 @@ import { spawnSync } from 'child_process';
 import yaml from 'js-yaml';
 
 const ROOT = path.resolve(new URL('.', import.meta.url).pathname, '..');
-const INJECT = path.join(ROOT, 'docs', 'lib', 'inject.js');
+const INJECT = path.join(ROOT, 'engine', 'inject.js');
 const FIXTURES = path.join(ROOT, 'test', 'fixtures');
 
 const NODE_OK = parseInt(process.versions.node, 10) >= 20;
@@ -90,12 +91,18 @@ test('bin shim has a shebang so npx freestruct works (issue #2)', () => {
   assert.match(first, /^#!.*node/);
 });
 
-test('package.json is ESM with node >= 20 and docs/ files whitelist', () => {
+test('package.json is ESM, node >= 20, and ships the house structure (bin + engine + init, prestruct pattern)', () => {
   const pkg = JSON.parse(read('.', 'package.json'));
   assert.strictEqual(pkg.type, 'module', 'Phase 1 runtime decision: ESM');
   assert.match(pkg.version, /^\d+\.\d+\.\d+$/);
   assert.match(pkg.engines.node, /^>=20/);
-  assert.ok(pkg.files.length > 0 && pkg.files.every(f => f.startsWith('docs/')));
+  assert.ok(pkg.files.includes('bin/'), 'bin/ ships (thin CLI entry)');
+  assert.ok(pkg.files.includes('engine/'), 'engine/ ships (runtime + packaged templates)');
+  assert.ok(pkg.files.includes('init/'), 'init/ ships (consumer scaffold kit)');
+  assert.ok(pkg.files.every(f => ['bin/', 'engine/', 'init/', '!init/node_modules', '!init/dist'].includes(f)),
+    'files whitelist is the prestruct-shaped house structure');
+  assert.strictEqual(pkg.bin.freestruct, 'bin/freestruct.mjs', 'bin entry is the thin shim');
+  assert.strictEqual(pkg.main, 'engine/inject.js', 'main points at the engine');
 });
 
 // ---------- version truth (issue #7) ----------
@@ -531,8 +538,8 @@ test('missing template: exits 2 after config + outputDir validation (staged-only
 });
 
 test('fresh-install template fallback: package copy rescues a config dir without _freestruct', () => {
-  // No staged docs/_freestruct in the fixture: production installs ship the
-  // template inside node_modules/freestruct/docs/_freestruct, so a repo that
+// No staged docs/_freestruct in the fixture: production installs ship the
+// template inside node_modules/freestruct/engine/_freestruct, so a repo that
   // only stages the config must still inject (tarball-e2e finding, pass 9).
   const dir = scenario('main');
   try {
