@@ -1,6 +1,9 @@
 title: freestruct
 description: SEO layer for static doc sites
-url: http://freestruct.creadev.org
+# Canonical scheme truth: https everywhere (issue #12 - the absolute_url
+# canonicals in _layouts/default.html inherit THIS scheme, and freestruct
+# preserves existing canonicals, so an http value here ships wrong canonicals)
+url: https://freestruct.creadev.org
 baseurl:
 
 # Theme
@@ -31,15 +34,6 @@ defaults:
     values:
       layout: page
 
-# Navigation - dynamic from docs folder structure
-generateNav: true  # set false to use SSG menu instead
-nav_sections:
-  guides: "Guides"
-  contributing: "Contributing"
-
-nav_order:
-  index: 0
-  getting-started: 1
-  configuration: 2
-  guides: 10
-  contributing: 20
+# Navigation: single-sourced in docs/_data/nav.yml (see docs/guides/navigation.md).
+# No generateNav/nav_sections/nav_order - those belonged to the deleted
+# plugin and are retired config keys, not recognized anywhere.

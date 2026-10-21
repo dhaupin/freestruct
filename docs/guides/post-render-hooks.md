@@ -10,7 +10,7 @@ Freestruct isn't just for SEO. It's a **build-time HTML processor** that runs af
 
 ## What Is Post-Render Processing?
 
-```
+```text
 Your SSG builds → Freestruct modifies → deploy
                  ↑
            This is your hook
@@ -145,7 +145,7 @@ Add your own markers following the same pattern.
 
 When processing HTML at build time:
 
-1. **Trust your config** - Don't let user input in ssr-config.yml execute arbitrary code
+1. **Trust your config** - Don't let user input in freestruct.config.yml execute arbitrary code
 2. **Validate modifications** - Test your transformations don't break HTML
 3. **Version control your hooks** - Keep custom scripts in repo, not hardcoded
 4. **Comment changes** - See above
@@ -166,4 +166,4 @@ When processing HTML at build time:
 
 - [Cache Busting](/guides/cache-busting) - Built-in hash system
 - [Template](/guides/template) - How inject-brand.html works
-- [ssr-config.yml](/guides/ssr-config) - Configuration reference
+- [Freestruct.config.yml Reference](/guides/ssr-config) - Configuration reference

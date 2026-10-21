@@ -651,8 +651,8 @@
     
     <!-- Sidebar navigation -->
     <aside class="sidebar" id="sidebar">
-        {% if site.nav %}
-          {% for section in site.nav %}
+        {% if site.data.nav %}
+          {% for section in site.data.nav %}
             {% if section.items %}
             <div class="sidebar-section">
                 <div class="sidebar-title">{{ section.title }}</div>

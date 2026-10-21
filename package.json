@@ -1,9 +1,10 @@
 {
   "name": "freestruct",
-  "version": "0.3.2",
+  "version": "0.6.0",
   "description": "Post-build SEO layer for static doc sites - works with any SSG",
   "homepage": "https://github.com/dhaupin/freestruct#readme",
   "bugs": "https://github.com/dhaupin/freestruct/issues",
+  "type": "module",
   "bin": {
     "freestruct": "./docs/lib/inject.js"
   },
@@ -12,9 +13,9 @@
     "docs/_freestruct/"
   ],
   "scripts": {
-    "build": "jekyll build && npm run inject",
+    "build": "cd docs && jekyll build && node lib/inject.js",
     "inject": "node docs/lib/inject.js",
-    "test": "mkdir -p test-output && node docs/lib/inject.js test-output"
+    "test": "node test/run.js"
   },
   "repository": {
     "type": "git",
@@ -23,7 +24,7 @@
   "keywords": ["seo", "ssg", "static-site-generator", "docs", "jekyll", "hugo", "docusaurus", "search", "sitemap"],
   "license": "MIT",
   "engines": {
-    "node": ">=14"
+    "node": ">=20"
   },
   "dependencies": {
     "js-yaml": "^4.1.0"

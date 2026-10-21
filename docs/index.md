@@ -89,7 +89,7 @@ nav_order: 0
 
   <pre><code>npm install js-yaml
 
-# Create docs/ssr-config.yml with your site info
+# Create docs/freestruct.config.yml with your site info
 
 node docs/lib/inject.js</code></pre>
 
@@ -142,7 +142,7 @@ node docs/lib/inject.js</code></pre>
 
     <div class="feature">
       <h3>Single source of truth</h3>
-      <p>Your SEO config lives in one place - ssr-config.yml. Change your site name once, and Freestruct updates every page. No hunting through templates.</p>
+      <p>Your SEO config lives in one place - freestruct.config.yml. Change your site name once, and Freestruct updates every page. No hunting through templates.</p>
     </div>
 
     <div class="feature">

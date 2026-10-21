@@ -10,6 +10,7 @@ Freestruct integrates with any CI/CD. Here's how with GitHub Actions.
 
 Add to your existing workflow:
 
+<!-- TRUTH-KNOB: yaml below is a GitHub Actions workflow, not a freestruct config -->
 ```yaml
 name: Build and Deploy
 
@@ -41,6 +42,7 @@ jobs:
 
 ## Full Example
 
+<!-- TRUTH-KNOB: yaml below is a GitHub Actions workflow, not a freestruct config -->
 ```yaml
 name: Build
 
@@ -132,6 +134,7 @@ Add to `vercel.json`:
 
 ### GitLab CI
 
+<!-- TRUTH-KNOB: yaml below is a GitLab CI config, not a freestruct config -->
 ```yaml
 build:
   script:

@@ -6,7 +6,7 @@ nav_order: 22
 
 ## Cache Busting Feature
 
-**Status: COMPLETE in v0.1.1** ✅
+**Status: complete in v0.1.1** (verified)
 
 ### Problem
 - CDNs (CloudFlare, Fastly, CloudFront) cache aggressively
@@ -26,7 +26,7 @@ freestruct now provides **two independent mechanisms**:
 2. **Purge Hooks** (optional):
    - Run ANY shell command post-build
    - Supports any CDN or cache system
-   - Config in `ssr-config.yml`:
+   - Config in `freestruct.config.yml`:
      ```yaml
      cacheBusting:
        purge:

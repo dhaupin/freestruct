@@ -2,6 +2,7 @@
 title: Engineering Decisions
 description: Technical details for freestruct
 nav_order: 5
+permalink: /engineering-decisions
 ---
 
 # AGENTS.md
@@ -26,12 +27,12 @@ Engineering decisions and technical details for freestruct docs and the freestru
 | File | Purpose |
 |------|---------|
 | `docs/lib/inject.js` | Core SEO injection script (~230 lines, vanilla Node.js) |
-| `docs/ssr-config.yml` | Configuration for site metadata, CDN hooks, cache busting |
+| `docs/freestruct.config.yml` | Configuration for site metadata, CDN hooks, cache busting (legacy name `ssr-config.yml` still read) |
 | `docs/_includes/inject-brand.html` | HTML template with `{{placeholder}}` tokens |
 
 ### Architecture
 
-```
+```text
 Your SSG Build (ANY - Jekyll/Hugo/Docusaurus/VitePress/MkDocs)
          ↓
    [SSG output folder - _site/public/build/site]
@@ -39,7 +40,7 @@ Your SSG Build (ANY - Jekyll/Hugo/Docusaurus/VitePress/MkDocs)
    node docs/lib/inject.js [output-folder]
          ↓
    freestruct reads:
-   - ssr-config.yml (your site config)
+   - freestruct.config.yml (your site config)
    - inject-brand.html (SEO template)
          ↓
    freestruct outputs (same folder):
@@ -56,7 +57,7 @@ Your SSG Build (ANY - Jekyll/Hugo/Docusaurus/VitePress/MkDocs)
 
 ### How inject.js Works
 
-1. **Load config**: Reads `ssr-config.yml` via js-yaml
+1. **Load config**: Reads `freestruct.config.yml` via js-yaml
 2. **Generate hash**: SHA1 of config + timestamp (8 chars)
 3. **Find HTML files**: Recursive scan of outputDir
 4. **Per-file injection**:
@@ -109,7 +110,7 @@ Timestamp in milliseconds makes collisions practically impossible.
 
 ### CDN Purge Hooks
 
-Configured in `ssr-config.yml`:
+Configured in `freestruct.config.yml`:
 
 ```yaml
 cacheBusting:
@@ -184,7 +185,7 @@ freestruct works with ANY static site generator. Just point it at the output fol
 | Eleventy | `_site` | `eleventy && node docs/lib/inject.js _site` |
 | Any other | *any folder* | `node docs/lib/inject.js [your-output-folder]` |
 
-Just set `outputDir` in `ssr-config.yml` or pass as argument.
+Just set `outputDir` in `freestruct.config.yml` or pass as argument.
 
 ---
 
@@ -277,7 +278,7 @@ Create or edit these files to add custom code. Files auto-load if they exist.
 
 1. Add placeholders to `inject-brand.html`
 2. Handle replacement in `inject.js::injectFile()`
-3. Document in `docs/guides/ssr-config.md`
+3. Document in `docs/guides/ssr-config.md` (the Freestruct.config.yml Reference page)
 
 ### Testing locally
 

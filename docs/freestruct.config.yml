@@ -52,5 +52,9 @@ lazyLoad: true
 # Check internal links (on by default)
 linkCheck: true
 
-# Generate search.json (on by default)
-searchIndex: true
+# Generate search.json - OPT-IN as of Phase 1 (default off)
+# Our own docs site does NOT use it: Pagefind owns search here
+# (the layout's client-side search loads /pagefind/). Decision recorded
+# per issue #13 + owner call: search.json stays an opt-in feature for
+# consumers, this site indexes with Pagefind.
+searchIndex: false

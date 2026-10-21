@@ -1,11 +1,13 @@
 ---
-title: ssr-config.yml Reference
-description: Complete reference for ssr-config.yml options
+title: Freestruct.config.yml Reference
+description: Complete reference for freestruct.config.yml options
 ---
 
 ## Overview
 
-`ssr-config.yml` is the central configuration file for freestruct. It defines your site's SEO settings that get injected into every page.
+`freestruct.config.yml` is the central configuration file for freestruct. It defines your site's SEO settings that get injected into every page.
+
+> NOTE: before v0.6.0 the file was named `ssr-config.yml`. Both names are read (the legacy name participates in the same upward search), but new installs should use `freestruct.config.yml`.
 
 ## Example
 
@@ -16,10 +18,6 @@ site:
   url: https://example.com
   name: My Docs
   description: Documentation for my project
-
-author:
-  name: Jane Developer
-  url: https://github.com/janedev
 
 twitter:
   username: "@janedev"
@@ -68,6 +66,7 @@ Generate `404.html` automatically (default: true). If a custom `404.html` alread
 ```yaml
 generate404: true   # generates 404.html (or uses custom)
 generate404: false  # skip 404 page generation
+```
 
 ### generateFeed
 

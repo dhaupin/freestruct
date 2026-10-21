@@ -1,0 +1,63 @@
+# release.yml
+# -----------
+# Fires when a version tag (v*) is pushed. Cuts a GitHub Release alongside the
+# npm publish (publish.yml); the release notes come from CHANGELOG.md so the
+# changelog stays the single source of truth.
+#
+# To release:
+#   git tag v0.4.0
+#   git push origin v0.4.0
+#
+# (npm publish happens in publish.yml; these two workflows run on the same tag.)
+
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract changelog section for this version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          TAG="$TAG" node -e "
+            const fs = require('fs');
+            const md = fs.readFileSync('CHANGELOG.md', 'utf8');
+            const start = md.indexOf('## [' + process.env.TAG + ']');
+            if (start === -1) {
+              console.error('CHANGELOG.md has no section for version ' + process.env.TAG + ' - tag abandoned');
+              process.exit(1);
+            }
+            const rest = md.slice(start + 1);
+            const next = rest.indexOf('\n## [');
+            const section = next === -1 ? rest : rest.slice(0, next);
+            fs.mkdirSync('.github-releasenotes', { recursive: true });
+            fs.writeFileSync('.github-releasenotes/notes.md', section.trim() + '\n');
+          "
+
+      - name: Version pin check (tag == package.json)
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG=$(node -p "require('./package.json').version")
+          [ "$TAG" = "$PKG" ] || { echo "tag v$TAG != package.json $PKG - refusing to release"; exit 1; }
+
+      - name: Attach source tarball info
+        run: echo "Release notes prepared from CHANGELOG.md"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file .github-releasenotes/notes.md \
+            --verify-tag

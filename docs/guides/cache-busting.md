@@ -42,7 +42,7 @@ Supported assets: CSS, JS, images (png, jpg, gif, svg, webp), icons (ico), fonts
 
 ## Configuration
 
-Add to `ssr-config.yml`:
+Add to `freestruct.config.yml`:
 
 ```yaml
 cacheBusting:
@@ -103,9 +103,9 @@ The purge system runs **any shell command**, so it supports:
 - **Custom scripts** - Run your own purge logic
 - **CI hooks** - Trigger GitHub Actions, etc.
 
-## ⚠️ Security Warning
+## Security Warning
 
-The purge hooks feature runs commands from your `ssr-config.yml` via `execSync`.
+The purge hooks feature runs commands from your `freestruct.config.yml` via `execSync`.
 
 **Only run trusted commands.** If your config file is compromised, attackers can execute arbitrary code on your build server.
 
@@ -116,28 +116,31 @@ Best practices:
 
 ### Examples
 
-**CloudFlare** - API-based cache purge:
+**CloudFlare** - API-based cache purge (nested under `cacheBusting:`, enabled by `runHooks: true`):
 
 ```yaml
-purge:
-  - name: cloudflare
-    command: curl -X DELETE "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/purge_cache" -H "Authorization: Bearer $CLOUDFLARE_TOKEN" -H "Content-Type: application/json" -d '{"files":["$SITE_URL/*"]}'
+cacheBusting:
+  purge:
+    - name: cloudflare
+      command: curl -X DELETE "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/purge_cache" -H "Authorization: Bearer $CLOUDFLARE_TOKEN" -H "Content-Type: application/json" -d '{"files":["$SITE_URL/*"]}'
 ```
 
 **Fastly** - Purge all endpoints:
 
 ```yaml
-purge:
-  - name: fastly
-    command: curl -X POST "https://api.fastly.com/service/$FASTLY_SERVICE_ID/purge_all" -H "Fastly-Key: $FASTLY_API_KEY"
+cacheBusting:
+  purge:
+    - name: fastly
+      command: curl -X POST "https://api.fastly.com/service/$FASTLY_SERVICE_ID/purge_all" -H "Fastly-Key: $FASTLY_API_KEY"
 ```
 
 **Custom** - Run your own purge script:
 
 ```yaml
-purge:
-  - name: my-cdn
-    command: ./scripts/purge.sh $SITE_URL $BUILD_HASH
+cacheBusting:
+  purge:
+    - name: my-cdn
+      command: ./scripts/purge.sh $SITE_URL $BUILD_HASH
 ```
 
 ## Frame-Agnostic
@@ -181,7 +184,7 @@ Set these in your CDN (CloudFlare, Fastly, CloudFront, etc.):
 
 Set cache rules per file type:
 
-```
+```text
 # HTML - don't cache
 *.yoursite.com/*.html
 Cache-Control: no-cache, max-age=0
@@ -195,7 +198,7 @@ Cache-Control: public, max-age=31536000
 
 Configure cache policies:
 
-```
+```text
 # HTML cache policy
 - Cache-Control policy: Cache no-cache
 

@@ -1,6 +1,6 @@
 # PRD: Freestruct rehaul (stone handoff)
 
-**Status:** Planning (pre-rehaul). Authored 2026-10-20 from a full code read.
+**Status:** ~~Planning (pre-rehaul)~~ → **Phases 0–2 complete (see\nlabs/TASKS.md pass log). Phase 3 in progress**. Authored 2026-10-20 from a\nfull code read. Owner calls so far: ESM + node >= 20 (§4.2), config renamed\n`freestruct.config.yml` w/ back-compat (§4.3), search.json opt-in (§4.5),\nnoindex honored by default (§4.4). **Version frozen at 0.6.0 per owner — do\nnot bump; see labs/TASKS.md VERSION POLICY.**
 **Authors:** prestruct agent session, on behalf of the owner.
 **Reads first:** freestruct README.md, CHANGELOG.md, issue tracker (#2-#8),
 docs/lib/inject.js, package.json.
@@ -107,11 +107,16 @@ possible). Behavior parity is asserted by the fixture battery each step.
   writes `site.data.nav` or layout reads config) or deleted; docs-audit suite
   (frontmatter/links/style/language/truthfulness/fiction-signatures gates)
   ported and wired into CI.
-- README rewritten around a WORKING quick start (install -> config scaffold ->
+-  README rewritten around a WORKING quick start (install -> config scaffold ->
   build -> verify), stale claims culled (home.html `v0.2.0` badge), releases
   flow documented (tags publish, CHANGELOG is the changelog).
-- Decide search.json's fate (F12): opt-in feature with updated docs, or
-  retired in favor of the Pagefind story on the docs site.
+- Decide search.json's fate (F12): **RESOLVED in Phase 2 — kept as opt-in
+  (`searchIndex: true`), docs site stays Pagefind-only.**
+- **update (owner call, this pass): version stays 0.6.0 through this phase;
+  no v1.0.0 tag/bump is baked in — see labs/TASKS.md VERSION POLICY.**
+- **update (this pass): the "home.html v0.2.0 badge" figure no longer exists
+  in the tree (verified by read; no home.html/docs/home.html/docs/index.html
+  found) — the stale-claim sweep targets the live files instead.**
 
 ---
 
@@ -150,10 +155,11 @@ playbook, and its two owner-gate lessons transfer directly:
 1. **Finish Phases 0-2 first.** v1.0.0 earns "1" by semantics: real test
    battery in CI, module decomposition, honest config contract. A version
    number cannot make a monolith either of those.
-2. **Version truth in front, not behind:** tag the rehaul release as
-   `v1.0.0` the moment Phase 2 lands, with README/package.json/CHANGELOG
-   aligned by a CI pin (prestruct's test pin: root == template == stamp).
-   No more "README says 0.3.0, package.json says 0.3.2, nothing tag-able."
+2. **Version truth in front, not behind:** ~~tag the rehaul release as
+   `v1.0.0` the moment Phase 2 lands~~ **update (owner call, this pass): the
+   version is FROZEN at 0.6.0 — no bump now or at Phase 3's end; see
+   labs/TASKS.md VERSION POLICY. The *aligned-by-CI-pin* idea stands, it just
+   pins 0.6.0 everywhere instead of promoting to v1.0.0.**
 3. **First publish is manual, exactly once.** npm OIDC/Trusted Publisher
    cannot create a package; the bootstrap publish from a dev machine carries
    no provenance (adding publishConfig.provenance: true breaks it - the
@@ -186,6 +192,50 @@ Phase 3) rides along so the docs site passes the same gates at v1.0.0.
   roots, zero cwd surprises.
 - The docs site passes the same audit gates prestruct and vant pass.
 - The age of unverifiable versions ends: tags + releases + README all agree.
+
+---
+
+## 5.5 Docs-pipleline learnings from prestruct + vant (2026-10-21)
+
+Focused “absorb” pass over dhaupin/prestruct (full clone read) and
+dhaupin/vant docs pipeline, ahead of Phases 2-3.
+
+### Ground truth: who actually consumes freestruct today
+- **vant /docs does NOT run freestruct.** No ssr-config.yml, no _freestruct
+templates, no injector step in docs/deploy workflow. Its docs.yml is pure
+Jekyll + Pagefind (workflow header says "copied from prestruct's docs
+workflow"). The freestruct references in vant are the brain files
+(models/private/freestruct) and a nav comment.
+- **freestruct DOES consume itself** in docs.yml (Jekyll -> freestruct inject
+-> Pagefind -> artifact deploy). That recursive loop is the dogfood value.
+
+### Tidbits / fixes to adopt
+1. Pagefind via official npm dist: vant replaced the curl-scrape-TAR dance
+with `npm i --no-save pagefind` + `npx pagefind --site _site` (pass 316;
+predeploy of version pinning off mutable latest). freestruct docs.yml still
+uses `npm install -g pagefind` - port the npm-dist pattern.
+2. Workflow jekyll-leg safety: vant's build step inlines `cd docs && bundle
+exec jekyll build` rather than trusting step-level working-directory; pair
+this with freestruct#14's root-build-script fix (done for the npm script,
+workflow keeps working-directory + inline cd as belt-and-suspenders).
+3. Docs frame model (vant + prestruct): presentation lives in a custom
+no-theme layout; nav is a single source file (_data/nav.yml, grouped by
+section, one entry per page-with-permalink) read DIRECTLY by the layout.
+vant's nav file calls itself "freestruct menu layer" - the design freestruct's
+nav_generator.rb was meant to produce automatically. Phase 3 decision:
+either fix the generator to write site.data.nav, or delete it and adopt the
+single-source nav file with a docs audit that keeps it in sync.
+4. Prestruct's docs audit gates (checked-scripts/check-docs-style/links/
+frontmatter/language/truthfulness/fiction-signatures.cjs) are the gating
+pattern to port in Phase 3, plus `lint:docs` wiring.
+5. Canonical lesson is live: vant layouts emit `page.url | absolute_url`
+(- the same inheritance chain that produced freestruct#12's http://
+canonicals). Scheme truth must be pinned at _config.yml.
+6. Prestruct PRD lesson (W1 engine-drift): their published qc.test failing
+because init/ and example/ engine copies drifted. Mirror for freestruct:
+freestruct ships docs/_freestruct templates inside the package (Phase 1
+whitelist), consumer scaffolding must come from the package never cwd
+(F3, Phase 2/3 packaging work + tarball e2e).
 
 ---
 

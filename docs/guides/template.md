@@ -10,6 +10,7 @@ nav_order: 17
 
 Every page starts with YAML frontmatter:
 
+<!-- TRUTH-KNOB: yaml below is a Jekyll frontmatter sample, not a freestruct config -->
 ```yaml
 ---
 title: Page Title
@@ -57,15 +58,13 @@ More detailed content if needed.
 
 Use fenced code blocks with language labels:
 
-<pre><code>```yaml
-key: value
-```</code></pre>
+When you need to show a fence literally, indent the whole sample by four spaces so the parser does not open it:
 
-Renders as:
+    ```yaml
+    key: value
+    ```
 
-```yaml
-key: value
-```
+Inline literal fences have the same shape in any markdown renderer. Do not wrap fences in `<pre><code>` HTML - raw markdown inside HTML tags is not parsed consistently across SSGs.
 
 ## Tables
 
@@ -88,4 +87,4 @@ Use markdown tables for structured data:
 ## Related
 
 - [Voice & Style Guide](/contributing/style) - Writing conventions
-- [ssr-config.yml Reference](/guides/ssr-config) - Configuration options
+- [Freestruct.config.yml Reference](/guides/ssr-config) - Configuration options

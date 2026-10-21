@@ -1,0 +1,54 @@
+# freestruct docs nav (single nav source; layouts read site.data.nav)
+# This file is THE menu layer. Pages are NOT auto-collected from the folder
+# tree - a page exists in the nav only if it is listed here. Order follows a
+# new user's arc: start -> guides -> contributing.
+#
+# The audit gate holds this file honest (scripts/run-docs-audit.cjs):
+#   check-docs-frontmatter - every page listed here carries the 5 fields
+#   check-docs-links       - every URL listed here resolves to a page
+#   check-docs-nav         - every naviagted page is listed exactly once
+#
+# Shape (matches docs/_includes/header.html and docs/_layouts/default.html):
+# - title: <section title>
+#   items:
+#     - title: <link text>
+#       url: /<deployment-path-without-.html>
+
+- title: Start
+  items:
+    - title: Home
+      url: /
+    - title: Getting Started
+      url: /getting-started
+    - title: Configuration
+      url: /configuration
+
+- title: Guides
+  items:
+    - title: Navigation
+      url: /guides/navigation
+    - title: Cache Busting
+      url: /guides/cache-busting
+    - title: Cache Busting FAQ
+      url: /guides/cache-busting-faq
+    - title: CI/CD
+      url: /guides/cicd
+    - title: Custom Injection
+      url: /guides/custom-injection
+    - title: Post-Render Hooks
+      url: /guides/post-render-hooks
+    - title: Template
+      url: /guides/template
+    - title: Troubleshooting
+      url: /guides/troubleshooting
+    - title: Freestruct.config Reference
+      url: /guides/ssr-config
+
+- title: Contributing
+  items:
+    - title: Voice & Style
+      url: /contributing/style
+    - title: Feature Roadmap
+      url: /contributing/issues
+    - title: Engineering Decisions
+      url: /engineering-decisions

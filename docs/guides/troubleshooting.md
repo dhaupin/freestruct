@@ -9,7 +9,7 @@ Common issues and solutions.
 
 ### "Cannot find module 'js-yaml'"
 
-```
+```text
 Error: Cannot find module 'js-yaml'
 ```
 
@@ -25,8 +25,8 @@ yarn add js-yaml
 
 ### "Config file not found"
 
-```
-Error: Config file not found: docs/ssr-config.yml
+```text
+Error: Config file not found: docs/freestruct.config.yml
 ```
 
 **Fix:** Create the config file:
@@ -35,19 +35,19 @@ Error: Config file not found: docs/ssr-config.yml
 node docs/lib/inject.js path/to/output
 ```
 
-Freestruct looks for `docs/ssr-config.yml` in the repo root.
+Freestruct looks for `docs/freestruct.config.yml` first (the legacy name `docs/ssr-config.yml` also works), searching upward from your current directory.
 
 ---
 
 ### "No HTML files found"
 
-```
+```text
 Found 0 HTML files
 ```
 
 **Fix:** Check your output path - it should contain `.html` files:
 
-```bash
+```text
 # If using Jekyll
 node docs/lib/inject.js docs/_site
 
@@ -116,7 +116,7 @@ The hash should change every build.
 
 Template files are in `docs/_freestruct/` (not `_includes/`):
 
-```
+```text
 docs/_freestruct/
   inject-header.html
   inject-footer.html
@@ -133,7 +133,7 @@ No built-in debug mode yet. To debug:
 
 1. Add temporary console.log to inject.js
 2. Check output HTML directly
-3. Verify config with: `node -e "console.log(require('./docs/ssr-config.yml'))"`
+3. Verify config keys against the Configuration Reference page (Freestruct.config Reference in the menu).
 
 ---
 

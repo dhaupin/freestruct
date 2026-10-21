@@ -1,0 +1,15 @@
+# Fixture config - every feature flag intentionally unset (all default ON)
+site:
+  name: Foo Docs
+  url: https://docs.example.com
+  description: A test docs site
+
+twitter:
+  username: "@foos"
+  card: summary_large_image
+
+og:
+  image: /og.png
+
+# search.json is OPT-IN as of Phase 2 - the main fixture explicitly opts in
+searchIndex: true

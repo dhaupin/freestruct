@@ -1,0 +1,62 @@
+# publish.yml
+# -----------
+# npm Trusted Publishing (OIDC) -- releases publish on version tags ONLY.
+# There is no NPM_TOKEN secret stored anywhere. Provenance: TRUSTED-PUBLISHER
+# runs (this workflow) generate attestations automatically per npm docs
+# (docs.npmjs.com/trusted-publishers). The one-time MANUAL bootstrap publish
+# from a dev machine carries no provenance -- no OIDC root exists there -- and
+# does not need one; do not add publishConfig.provenance to package.json, it
+# would break that bootstrap (sigstore cert needs a CI OIDC identity).
+#
+# DORMANT BY DESIGN: this fires on `v*` tags, which do not exist yet. The
+# first publish must be done manually once (bootstrap -- OIDC cannot create
+# a brand-new package, see npm/cli#8544), then a Trusted Publisher entry is
+# configured on npmjs.com (user dhaupin, repo freestruct, workflow publish.yml).
+# Until then, no tag will be created and this workflow never runs.
+#
+# Runbook (when it is time):
+#   1. npm test all green; npm pack --dry-run shows the intended tarball
+#      (docs/lib/ + docs/_freestruct/ per the files whitelist).
+#   2. npm publish            # one-time manual bootstrap, creates the package
+#   3. npmjs.com -> freestruct -> Settings -> Trusted Publisher
+#   4. npm version minor      # future releases land as v0.x / v1.x
+#      git push origin main --follow-tags
+#
+# Rules (same as the prestruct runbook this mirrors):
+#   - Only publish from version tags, never from main directly.
+#   - No tag until the battery is green and the tarball is proven by a fresh
+#     install (tarball e2e comes later in the rehaul).
+#
+# GitHub releases are cut alongside npm publishes -- see release.yml.
+
+name: npm-publish
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Trusted publishing needs node >= 22.14 / npm >= 11.5.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
+
+      - name: Install
+        run: npm install --no-audit --no-fund
+
+      - name: Test
+        run: npm test
+
+      - name: Publish
+        run: npm publish

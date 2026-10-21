@@ -41,7 +41,7 @@ That's it. Freestruct has zero runtime dependencies. `js-yaml` is the only thing
 
 ## Step 2: Create Your Config
 
-Create `docs/ssr-config.yml` with this minimum setup:
+Create `docs/freestruct.config.yml` with this minimum setup:
 
 ```yaml
 # Where your SSG outputs files
@@ -104,7 +104,7 @@ Open any generated HTML file. You should see in the `<head>`:
 <meta name="freestruct-build" content="abc123">
 ```
 
-If you see those tags, you're golden. 🎉
+If you see those tags, you're ready to ship.
 
 ## Step 5: Automate with CI/CD
 
@@ -139,7 +139,7 @@ Or add to your `package.json`:
 
 1. **Check the hash** - View page source, look for `freestruct-build`
 2. **Verify outputDir** - Does it match your SSG's output folder?
-3. **Check config** - Run `node -e "console.log(require('js-yaml').load(require('fs').readFileSync('docs/ssr-config.yml')))"` to debug
+3. **Check config** - Run `cat docs/freestruct.config.yml` and verify `site.name` and `site.url` on first run; freestruct prints `[freestruct] config warning` lines for any key it does not recognize
 4. **See the [FAQ](/guides/cache-busting-faq)** - We documented every weird edge case
 
 ## Next Steps

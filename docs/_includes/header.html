@@ -5,8 +5,8 @@
     </a>
 
     <nav class="site-nav" id="siteNav">
-      {% if site.nav %}
-        {% for item in site.nav %}
+      {% if site.data.nav %}
+        {% for item in site.data.nav %}
           {% if item.items %}
           <div class="nav-group">
             <button class="nav-group-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">

@@ -2,6 +2,7 @@
 permalink: /contributing/style.html
 layout: default
 title: Voice & Style
+description: How freestruct docs are written - voice rules, formatting and fence conventions
 nav_order: 21
 ---
 # Voice & Style
@@ -24,7 +25,7 @@ freestruct uses Title Case for brand references. Use lowercase for CLI commands 
 |-----|--------|---------|
 | Brand name | Title Case | freestruct |
 | CLI command | lowercase | `freestruct build` |
-| File path | lowercase | `ssr-config.yml` |
+| File path | lowercase | `freestruct.config.yml` |
 | Config option | lowercase | `outputDir`, `site.url` |
 | CLI flag | lowercase | `--help`, `--verbose` |
 | Acronym | UPPERCASE or Title | SEO or Seo |
@@ -48,7 +49,7 @@ Our core writing principles.
 
 Always use `-` instead of `—` or `–`.
 
-| ✓ Right | ✗ Wrong |
+| Right | Wrong |
 |--------|----------|
 | "Git is memory - every commit is a checkpoint" | "Git is memory — every commit is a checkpoint" |
 
@@ -74,14 +75,14 @@ Just say what you mean.
 
 ### 3. Be Specific, Not Abstract
 
-| ✗ Abstract | ✓ Specific |
+| Abstract | Specific |
 |------------|----------|
 | "This feature empowers users to do more" | "This feature generates sitemaps automatically" |
 | "freestruct unlocks seamless SEO" | "freestruct injects SEO meta tags post-build" |
 
 ### 4. State Facts, Not Hype
 
-| ✗ Hype | ✓ Fact |
+| Hype | Fact |
 |--------|-------|
 | "freestruct is a revolutionary SEO system" | "freestruct injects meta tags into static HTML files" |
 
@@ -89,7 +90,7 @@ Just say what you mean.
 
 Use subject-verb-object. Present tense.
 
-| ✗ Passive | ✓ Active |
+| Passive | Active |
 |----------|---------|
 | "The brain is loaded by the CLI" | "The CLI loads the brain" |
 
@@ -116,7 +117,7 @@ Show, don't just tell. Include working commands.
 
 Never use numbered lists (`1. 2. 3.`) inside markdown code blocks. Use dashes instead:
 
-```
+```text
 Steps to run:
 - Clone: git clone https://github.com/dhaupin/freestruct.git
 - Configure: cp config.example.ini config.ini
@@ -128,10 +129,10 @@ Why: Markdown parsers may render numbered lists incorrectly inside fenced code b
 
 Never use "This section covers..." as a section intro. Write actual content:
 
-| ✗ Placeholder | ✓ Real Content |
+| Placeholder | Real Content |
 |--------------|--------------|
 | "Track system events for debugging and compliance." | "Track system events for debugging and compliance." |
-| "This section covers setup." | "Configure freestruct with your ssr-config.yml." |
+| "This section covers setup." | "Configure freestruct with your freestruct.config.yml." |
 
 ### Code Blocks Need Briefs
 
@@ -199,9 +200,9 @@ Every section header should have a 1-2 sentence intro that answers:
 For example, here's a properly documented section:
 
     ## Installation
-    
+
     Install freestruct locally or via Docker.
-    
+
     ### Local Install
     For local development:
 
@@ -223,7 +224,7 @@ When working on the docs theme:
     <a href="{{ '/guides' | relative_url }}">Guides</a>
     <script src="{{ 'pagefind/pagefind.js' | relative_url }}"></script>
 
-See: [_layouts/default.html](/_layouts/default.html), [index.md](/index.html)
+See: [_layouts/default.html](../_layouts/default.html), [index.md](/)
 
 ## Common Doc Blocks
 
@@ -231,7 +232,7 @@ See: [_layouts/default.html](/_layouts/default.html), [index.md](/index.html)
 |-------|--------|
 | Tables | Headers, 1-2 sentence intro |
 | Lists | Lead-in sentence |
-| Tips/Notes | Emoji prefix (>, ⚠️) |
+| Tips/Notes | Blockquote with a label (>, NOTE: or WARNING:) |
 | Warnings | Why it matters (1 sentence) |
 
 See also: [Configuration](/configuration.html), [Getting Started](/getting-started.html)

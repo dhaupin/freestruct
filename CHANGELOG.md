@@ -2,6 +2,148 @@
 
 All notable changes to freestruct will be documented here.
 
+## [0.6.0] - 2026-10-21
+
+Phase 2 of the v1.0.0 rehaul (PRD: labs/prd-freestruct.md) - the config
+contract becomes honest: schema-checked, diagnosed, opinionated defaults.
+
+### Changed
+- **Config name**: `docs/freestruct.config.yml` is the primary config name;
+  the legacy `docs/ssr-config.yml` is still read for back-compat (discovery
+  walks up looking for the new name first, then the old one).
+- **Config schema + diagnostics**: unknown top-level/nested keys, and flags
+  that exist but no longer do anything (`preserveExistingMeta`,
+  `cacheBusting.hash`), produce loud `[freestruct] config warning: ...`
+  lines. Nothing in a config file dies silently anymore.
+- **`search.json` is opt-in** (owner call, issue #13 policy): only generated
+  when `searchIndex: true`. Default runs no longer ship a competing search
+  index alongside whatever the site already uses.
+- **FAST_FAIL exit codes**: 1 config fatal, 2 template missing, 3 output dir
+  missing; new `--tolerant` flag downgrades fatal config errors to exit 0
+  (CI tolerance mode, opt-in).
+- **README config reference**: every key documented in one table (previous
+  state: flags like `minify`, `hashInCanonicalUrl`, `assetQueryParam`,
+  `runHooks` existed in code but nowhere in docs).
+
+### Fixed
+- **Sub-path installs (issue #3, crashtest class)**: `basePath` is now the
+  canonical-prefix contract - canonical/sitemap/feed/search URLs become
+  `site.url + basePath + relative slug`, never stripping the prefix and never
+  doubling it when the output tree nests the deploy directory.
+- **Snippet placeholders actually substitute (issue #10)**: custom snippets
+  (`inject-header.html`, `inject-body-start.html`, `inject-footer.html`) now
+  get `{{siteName}}`/`{{siteUrl}}`/`{{buildHash}}`/... replaced, matching what
+  the docs always claimed; comments still stripped before injection.
+- **Template comment drift (issue #10)**: `inject-footer.html` no longer
+  claims it is injected after `</body>` (code injects before).
+
+### Batteries
+- New pins: renamed-config discovery, legacy back-compat, diagnostics
+  warnings, `--tolerant`, exit codes, basePath one-prefix semantics (both
+  tree shapes), opt-in search.
+
+### Docs (Phase 3 frame port)
+- Single-source nav: `docs/_data/nav.yml` is now THE menu layer (top nav and
+  sidebar both render `site.data.nav`); `_plugins/nav_generator.rb` and the
+  `generateNav`/`nav_sections`/`nav_order` config knobs are deleted (the
+  retired-key diagnostics still catch stragglers).
+- Docs-audit gates ported from prestruct (`scripts/run-docs-audit.cjs`, wired
+  into test.yml CI): frontmatter, links, nav symmetry, style, and
+  truthfulness (docs-promised CLI flags and config keys must exist).
+- Real docs warts caught by the first audit run are fixed: a missing fence
+  closer in the config reference that had silently flipped parity for the
+  whole file, CDN purge examples that showed top-level `purge:` (invalid
+  nested shape), a `hash: true` example of a retired key, stale
+  `ssr-config.yml` references across guides renamed to
+  `freestruct.config.yml`, emoji in prose, untagged code fences, and a
+  broken layout link in the style guide.
+- README rewritten around a working quick start (install - config - build -
+  verify - flags), an honest opt-in search story, and a Releases section;
+  version pinned (0.6.0, frozen per owner call).
+
+## [0.5.0] - 2026-10-21
+
+Phase 1 of the v1.0.0 rehaul (PRD: labs/prd-freestruct.md) - runtime decision
+lands, the monolith dies, and the behavior-changing wart classes get fixed.
+
+### Changed
+- **ESM runtime**: package is now `"type": "module"`, engines `node >= 20`
+  (owner-ratified decision).
+- **Module decomposition**: the 577-line `inject.js` monolith is now eight
+  focused modules - `config.js`, `scan.js`, `seo.js`, `xmllike.js`,
+  `notfound.js`, `linkcheck.js`, `search.js`, `hooks.js` - with a single CLI
+  orchestrator (`docs/lib/inject.js`) that composes named steps.
+- **Root resolution**: the config is discovered by walking UP from the cwd
+  (running from a repo subdir works); templates/snippets resolve next to the
+  config file; the output dir defaults to `<configDir>/_site`.
+
+### Fixed
+- **XML correctness class (issue #9)**: sitemap/RSS values are XML-escaped
+  through one shared helper; sitemap entries carry a real per-page
+  `<lastmod>` (the page's own mtime, not the build time); RSS `pubDate` comes
+  from each page's mtime instead of one shared build stamp.
+- **noindex honored by default (issue #5, owner call)**: pages carrying a
+  noindex robots meta no longer ship into sitemap.xml, feed.xml, or
+  search.json. `--strict` retains a tripwire against future leak classes.
+- **404 pipeline (issue #11)**: generated 404s get the full SEO injection
+  (canonical, OG, JSON-LD, description) plus the noindex meta the CHANGELOG
+  has claimed since 0.2.2; user-supplied 404.html files get the same
+  treatment instead of a build-tag-only pass; 404 pages feed the late passes
+  (reading-time/last-modified/lazy-load) consistently; they remain excluded
+  from sitemap/feed/search.
+- **Plain description meta**: bare pages now actually receive the template's
+  `<meta name="description">` (0.4.x silently dropped it).
+- **Root page slugs**: the root `index.html` has canonical/og:url/sitemap loc
+  `/` (was the pageUrl precedence wart `/index`); search.json URLs are built
+  from scanned slugs, ending the `noindex.html` -> `/no` mangling.
+- **CLI/flag wiring**: `--strict` and the positional output-dir override no
+  longer collide (was `process.argv[2]` raw-flag capture).
+
+### Wart flips
+The battery's Phase 0 wart pins for the above behaviors were consciously
+flipped to their fixed expectations in the same change. Remaining wart pins
+(link-check report-only #4, snippet placeholder substitution #10, sitemap
+basePath handling #3) are Phase 2 work and are still pinned as-is.
+
+## [0.4.0] - 2026-10-21
+
+Phase 0 of the v1.0.0 rehaul (PRD: labs/prd-freestruct.md) - regression-proof
+the current behavior, make packaging truthful. **Default behavior is
+unchanged**; the battery pins it, warts included, so Phase 1 refactors cannot
+silently regress metadata.
+
+### Added
+- **Test battery**: `npm test` now runs a real asserting battery
+  (`test/run.js`, Node 20 built-in test runner) against a committed fixture
+  site - SEO injection, missing-only gating, sitemap/robots/feed/search.json,
+  the 404 pipeline (generated + custom), reading-time/last-modified/lazy-load,
+  link check, feature-flag-off run, error-path exits, and CLI flags. Known
+  bugs are pinned as WART assertions (see issues #4, #5, #9, #10, #11).
+- **`--version` flag**: prints the package.json version; works with no config
+  present (part of issue #2/#6 packaging truth).
+- **`--strict` flag**: opt-in strictness - broken internal links and noindex
+  pages leaking into sitemap/feed/search.json now exit 1 (issue #4 posture;
+  default runs stay report-only).
+- **Shebang** on `docs/lib/inject.js` so `npx freestruct` can work (issue #2).
+- **CI workflows**: test battery on every push/PR; dormant `publish.yml`
+  (npm Trusted Publisher on `v*` tags, per the prestruct runbook) and
+  `release.yml` (GitHub releases alongside npm publishes).
+- **Version truth gate**: the battery pins README == package.json == CHANGELOG
+  versions and parses the README config example as YAML (issues #7, #8).
+
+### Changed
+- Engines bumped to Node >= 20 (the pre-ESM step of the runtime decision).
+
+### Wart pins (current behavior, deliberate)
+- Root page canonical/og:url/sitemap loc keep a trailing `/index` slug
+  (`pageUrl` precedence bug).
+- Search index URLs mangle any page whose filename ends in `index.html`
+  (`noindex.html` -> `.../no`).
+- `noindex` pages ship into sitemap/feed/search.json (issue #5).
+- XML feeds/sitemaps are assembled without escaping (issue #9) - the
+  fixture's raw-ampersand title pins it.
+- Broken links report but exit 0 (issue #4); strict mode opts out.
+
 ## [0.3.2] - 2026-05-02
 
 ### Added
