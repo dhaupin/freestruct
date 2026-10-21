@@ -30,9 +30,8 @@ jobs:
         working-directory: docs
         run: bundle install
 
-      - name: Build Jekyll
-        working-directory: docs
-        run: bundle exec jekyll build
+      - name: Build Jekyll (inline cd: step-level working-directory as belt-and-suspenders)
+        run: cd docs && bundle exec jekyll build
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -42,14 +41,15 @@ jobs:
       - name: Install freestruct deps
         run: npm install
 
-      - name: Run freestruct
-        run: node docs/lib/inject.js
+      - name: Run freestruct (--strict: broken links fail the build; the #4 graduation)
+        run: node docs/lib/inject.js --strict
 
-      - name: Install Pagefind
-        run: npm install -g pagefind
+      - name: Install Pagefind (official npm dist, not the global install)
+        working-directory: docs
+        run: npm install --no-save pagefind
 
       - name: Index search
-        run: pagefind --site docs/_site
+        run: npx pagefind --site docs/_site
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

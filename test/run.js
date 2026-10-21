@@ -65,8 +65,11 @@ function runInject(dir, args = []) {
 }
 
 // Run the injector expecting a nonzero exit; returns {status, stdout, stderr}.
-function runInjectFailing(dir, args = []) {
-  const res = spawnSync(process.execPath, [INJECT, ...args], { cwd: dir, encoding: 'utf8' });
+// opts.env (optional) is merged over the process env for staged-only pins.
+function runInjectFailing(dir, args = [], env = {}) {
+  const res = spawnSync(process.execPath, [INJECT, ...args], {
+    cwd: dir, encoding: 'utf8', env: { ...process.env, ...env },
+  });
   assert.notStrictEqual(res.status, 0, 'expected nonzero exit, got 0');
   return res;
 }
@@ -97,7 +100,7 @@ test('package.json is ESM with node >= 20 and docs/ files whitelist', () => {
 
 // ---------- version truth (issue #7) ----------
 
-test('README, package.json and CHANGELOG agree on one version', () => {
+test('README, package.json and CHANGELOG agree on one version (frozen 0.6.0 pin)', () => {
   const pkg = JSON.parse(read('.', 'package.json'));
   const readme = read('.', 'README.md');
   const changelog = read('.', 'CHANGELOG.md');
@@ -107,6 +110,9 @@ test('README, package.json and CHANGELOG agree on one version', () => {
   assert.ok(changeVer, 'CHANGELOG must open with a "## [X.Y.Z]" version entry');
   assert.strictEqual(readmeVer, pkg.version, 'README version heading must equal package.json version');
   assert.strictEqual(changeVer, pkg.version, 'CHANGELOG top entry must equal package.json version');
+  // Owner call (labs/TASKS.md VERSION POLICY): the number is frozen on 0.6.0,
+  // so the pin enforces exactly 0.6.0 everywhere until the owner unfreezes.
+  assert.strictEqual(pkg.version, '0.6.0', 'version frozen at 0.6.0 by owner call - see the VERSION POLICY in labs/TASKS.md first');
 });
 
 test('README quickstart YAML example actually parses (issue #8)', () => {
@@ -513,12 +519,27 @@ test('config without a site section: exits 1', () => {
   } finally { rmDir(dir); }
 });
 
-test('missing template: exits 1 after config + outputDir validation', () => {
+test('missing template: exits 2 after config + outputDir validation (staged-only: fallback disabled)', () => {
   const dir = scenario('main');
   try {
     fs.rmSync(path.join(dir, 'docs/_freestruct'), { recursive: true, force: true });
-    const res = runInjectFailing(dir);
+    // FREESTRUCT_SKIP_PACKAGE_FALLBACK pins staged-only semantics; without it
+    // the fresh-install package fallback would legitimately rescue this run.
+    const res = runInjectFailing(dir, [], { FREESTRUCT_SKIP_PACKAGE_FALLBACK: '1' });
     assert.match((res.stdout || '') + (res.stderr || ''), /[Tt]emplate not found/);
+  } finally { rmDir(dir); }
+});
+
+test('fresh-install template fallback: package copy rescues a config dir without _freestruct', () => {
+  // No staged docs/_freestruct in the fixture: production installs ship the
+  // template inside node_modules/freestruct/docs/_freestruct, so a repo that
+  // only stages the config must still inject (tarball-e2e finding, pass 9).
+  const dir = scenario('main');
+  try {
+    fs.rmSync(path.join(dir, 'docs/_freestruct'), { recursive: true, force: true });
+    runInject(dir);
+    const html = read(dir, 'docs/_site/index.html');
+    assert.ok(html.includes('freestruct-build'), 'injection happened via the package-shipped template');
   } finally { rmDir(dir); }
 });
 
@@ -631,8 +652,11 @@ test('FAST_FAIL exit codes: template missing -> 2, outputDir missing -> 3', () =
   const dirA = scenario('main');
   try {
     fs.rmSync(path.join(dirA, 'docs/_freestruct'), { recursive: true, force: true });
-    assert.strictEqual(spawnSync(process.execPath, [INJECT], { cwd: dirA, encoding: 'utf8' }).status, 2,
-      'template missing exits 2');
+    assert.strictEqual(
+      spawnSync(process.execPath, [INJECT], {
+        cwd: dirA, encoding: 'utf8', env: { ...process.env, FREESTRUCT_SKIP_PACKAGE_FALLBACK: '1' },
+      }).status, 2,
+      'template missing exits 2 (staged-only pin; package fallback is off)');
   } finally { rmDir(dirA); }
 
   const dirB = scenario('main');

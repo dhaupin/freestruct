@@ -25,7 +25,8 @@
 # Rules (same as the prestruct runbook this mirrors):
 #   - Only publish from version tags, never from main directly.
 #   - No tag until the battery is green and the tarball is proven by a fresh
-#     install (tarball e2e comes later in the rehaul).
+#     install -- the tarball e2e (scripts/e2e-install.cjs) now runs as a hard
+#     gate below; a publish cannot pass without it.
 #
 # GitHub releases are cut alongside npm publishes -- see release.yml.
 
@@ -57,6 +58,12 @@ jobs:
 
       - name: Test
         run: npm test
+
+      - name: Docs audit
+        run: node scripts/run-docs-audit.cjs
+
+      - name: Tarball e2e (fresh-install quick start gates the publish)
+        run: node scripts/e2e-install.cjs
 
       - name: Publish
         run: npm publish

@@ -28,7 +28,7 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { pathToFileURL } from 'url';
+import { pathToFileURL, fileURLToPath } from 'url';
 
 import { loadConfig } from './config.js';
 import { getHtmlFiles, buildPages, htmlIsNoindex } from './scan.js';
@@ -86,9 +86,22 @@ export function runInject(options = {}) {
 
   if (!fs.existsSync(outputDir)) fail('Output directory not found: ' + outputDir, EXIT_OUTPUT);
 
-  const snippetDir = path.join(configDir, '_freestruct');
+  // Template resolution: user-staged first (docs/_freestruct next to the
+  // config), then the PACKAGE-shipped copy (npm install ships docs/_freestruct
+  // - repo-shaped runs always hit the staged one, fresh-machine installs fall
+  // back here; caught by the tarball e2e on a fresh install). The battery
+  // pins the staged-only exit-2 shape via FREESTRUCT_SKIP_PACKAGE_FALLBACK.
+  const packageTemplateDir = path.join(fileURLToPath(new URL('../_freestruct/', import.meta.url)));
+  let snippetDir = path.join(configDir, '_freestruct');
+  if (!fs.existsSync(path.join(snippetDir, 'inject-brand.html')) &&
+      process.env.FREESTRUCT_SKIP_PACKAGE_FALLBACK !== '1' &&
+      fs.existsSync(path.join(packageTemplateDir, 'inject-brand.html'))) {
+    snippetDir = packageTemplateDir;
+  }
   const templatePath = path.join(snippetDir, 'inject-brand.html');
-  if (!fs.existsSync(templatePath)) fail('Template not found: ' + templatePath, EXIT_TEMPLATE);
+  if (!fs.existsSync(templatePath)) {
+    fail('Template not found: ' + templatePath + ' (shipped copy also missing at ' + packageTemplateDir + ')', EXIT_TEMPLATE);
+  }
   const template = fs.readFileSync(templatePath, 'utf8');
 
   const buildHash = crypto.createHash('sha1')
@@ -173,5 +186,13 @@ export function runInject(options = {}) {
   console.log('freestruct: Done (' + buildHash + ')');
 }
 
-const invokedAsMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+// Main-module detection, symlink-safe: npm's .bin shim is a symlink, but
+// import.meta.url resolves the target's real path. Comparing only the raw
+// argv[1] made real installs run silently (exit 0, no work) - caught by the
+// tarball e2e. Resolve BOTH sides to their real paths before comparing.
+const argvReal = process.argv[1]
+  ? (() => { try { return fs.realpathSync(process.argv[1]); } catch (e) { return process.argv[1]; } })()
+  : '';
+const moduleReal = fileURLToPath(import.meta.url);
+const invokedAsMain = argvReal === moduleReal || import.meta.url === pathToFileURL(process.argv[1] || '').href;
 if (invokedAsMain) runInject();

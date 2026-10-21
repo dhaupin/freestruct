@@ -42,7 +42,7 @@ contract becomes honest: schema-checked, diagnosed, opinionated defaults.
   warnings, `--tolerant`, exit codes, basePath one-prefix semantics (both
   tree shapes), opt-in search.
 
-### Docs (Phase 3 frame port)
+### Docs (Phase 3 frame port + Phase 4 hardening)
 - Single-source nav: `docs/_data/nav.yml` is now THE menu layer (top nav and
   sidebar both render `site.data.nav`); `_plugins/nav_generator.rb` and the
   `generateNav`/`nav_sections`/`nav_order` config knobs are deleted (the
@@ -60,6 +60,22 @@ contract becomes honest: schema-checked, diagnosed, opinionated defaults.
 - README rewritten around a working quick start (install - config - build -
   verify - flags), an honest opt-in search story, and a Releases section;
   version pinned (0.6.0, frozen per owner call).
+- Pagefind indexing in the docs workflow moved to the official npm dist
+  (`npm install --no-save pagefind` + `npx pagefind`); the global install is
+  gone.
+- Link-check graduated: the docs CI now runs the injector with `--strict`,
+  so broken internal links fail the GitHub Pages build (report-only stayed
+  the default for consumers).
+- **Tarball e2e is a committed CI gate** (`scripts/e2e-install.cjs`, wired
+  into both test.yml and publish.yml): packs the real tarball, installs it
+  fresh, and drives the README quick start through the bin shim.
+- Two fresh-install bugs it caught (both invisible in repo-shape runs):
+  template resolution now falls back to the package-shipped `_freestruct/`
+  directory instead of exiting 2 on every consumer install, and the
+  main-module guard is symlink-safe so the npm-installed `freestruct`
+  command actually runs instead of exiting 0 silently.
+- The battery version pin now enforces exactly 0.6.0 (owner freeze) across
+  package.json, README, and CHANGELOG.
 
 ## [0.5.0] - 2026-10-21
 

@@ -100,6 +100,17 @@ possible). Behavior parity is asserted by the fixture battery each step.
   either implemented or removed from docs.
 - noindex: sitemap/search/feed honor it by default (owner call per #5).
 
+### Phase 4 - Release-truth hardening (on frozen 0.6.0; owner freeze per labs/TASKS.md)
+
+| Task | Notes |
+|------|-------|
+| 4.1 Tarball e2e in CI | scripts/e2e-install.cjs: pack real tarball -> install into throwaway project -> run the README quick start through the bin shim -> assert artifacts, injections, exit shapes. Wired into test.yml (every push) and publish.yml (hard gate before `npm publish`). DONE pass 9. |
+| 4.2 Link-check graduation | --strict adopted in the repo's own docs CI (docs.yml); broken links fail the GitHub Pages build. DONE pass 9. |
+| 4.3 Pagefind-npm swap | docs.yml uses official npm dist + npx pagefind; global install removed. DONE pass 9. |
+| 4.4 Version-freeze pin | Battery version-truth pin enforces exactly 0.6.0 across package.json/README/CHANGELOG until the owner unfreezes. DONE pass 9. |
+| 4.5 Bootstrap publish + Trusted Publisher | OWNER action (npmjs.com account; repo side ready and gated). Not scheduled. |
+| 4.6 First v* tag | OWNER action once 4.5 is done; the dormant publish workflow takes over. |
+
 ### Phase 3 - Docs frame + release story
 
 - Port the prestruct/vant docs setup: custom layout, `_data/nav.yml` as the
@@ -169,10 +180,13 @@ playbook, and its two owner-gate lessons transfer directly:
    workflow name). After it, every `v*` tag publishes with provenance
    automatically; the runbook also gates "no tag until the engine is
    proven by real installs."
-5. **Tarball e2e before the tag.** Fresh-machine install test (real npm
+5. **Tarball e2e before the tag.** ~~Fresh-machine install test (real npm
    pack/install morphology, not repo runs) is the honest proof the quick
-   start works - prestruct's e2e caught bugs repo-shape tests cannot see
-   (CLI flag pass-through, npm-pack disk state, node_modules leakage).
+   start works.~~ **DONE (Pass 9): scripts/e2e-install.cjs is committed and
+   CI-gated (test.yml + hard publish gate in publish.yml). Its first run
+   caught two real fresh-install bugs repo runs cannot see: missing
+   package-template fallback (exit 2 on every install) and the
+   symlink-unsafe main-module guard (silent no-op through npm's .bin shim).**
 6. **Dormant-by-default release posture.** Ship the publish workflow merged
    and inert (fires on v* tags only) so the owner-gate is a tag, not a
    merge. No publish without the Phase 2 contract being green in CI.

@@ -161,16 +161,47 @@
   heading — restored; pin enforces 0.6.0 everywhere per the freeze).
 - End-to-end: battery 36/36 green, docs audit 0 findings, tarball 0.6.0.
 
+### Pass 9 — GitHub push + follow-on items + Phase 4 start (in progress, on 0.6.0)
+- **Pushed everything:** 54-file rehaul commit landed on `main`
+  (66cc52f..759d0a4) via Freebuff's managed credential; includes Phase 1–3
+  code, TASKS log, and the refreshed stone.
+- **Pagefind-via-npm swap (§5.5 tidbit 1):** docs.yml now does
+  `npm install --no-save pagefind` + `npx pagefind --site docs/_site`; the
+  `npm install -g` global is gone.
+- **Link-check graduated (#4):** the `--strict` lever is adopted in our own
+  docs CI — broken internal links now FAIL the GitHub Pages build (semantics
+  verified in inject.js before adoption: noindex leak gate stays report-only).
+- **Tarball e2e made a committed, CI-gated proof (Phase 4 item):**
+  `scripts/e2e-install.cjs` packs the REAL tarball, installs it into a
+  throwaway project, runs the README quick start through the bin shim, and
+  asserts artifacts + injections + exit shapes. First CI-enabled run caught
+  TWO real fresh-install bugs repo runs hiding in the harness could never
+  see:
+  1. template resolution didn't fall back to the package-shipped
+     `docs/_freestruct/` (exit 2 on every fresh install) — fixed with the
+     user-staged-first/package-fallback chain + battery pins
+     (FREESTRUCT_SKIP_PACKAGE_FALLBACK seam for the staged-only pins);
+  2. the main-module guard compared raw argv paths, so npm's symlinked .bin
+     shim ran silently (exit 0, no work) — fixed with a realpath-vs-realpath
+     comparison; battery back to green (37 pins now).
+  Wired into test.yml (every push) and as a hard publish gate in
+  publish.yml (the runbook's own "no tag until the tarball is proven" rule).
+- **Version pin tightened to the freeze:** the battery's version-truth pin
+  now enforces exactly 0.6.0 in package.json + README + CHANGELOG until the
+  owner says otherwise.
+- **Jekyll-leg safety belt (§5.5 tidbit 2):** docs.yml build step inlines
+  `cd docs &&` instead of trusting step-level working-directory.
+
 ## Next up (open, unowned)
 
-- Refresh the stone (convention above) — this pass changed docs-frame truth;
-  the snapshot step is a vant command from a different checkout and was not
-  run this session.
-- Tarball e2e on a fresh machine (PRD §4.1 step 5) before any version-move
-  decision the owner may make later — the freeze (0.6.0) still stands.
-- Optional: swap `npm install -g pagefind` for `npx pagefind` in docs.yml
-  (recorded §5.5 tidbit; not done this pass — workflow untouched).
-- Decide link-check graduation timeline (#4; `--strict` is the graduate lever).
+- Phase 4 residual: refresh the stone at pass end (convention above) — not
+  run this turn (a vant-checkout command, deferred from Pass 8).
+- Phase 4 residual: npm bootstrap publish + Trusted Publisher entry (PRD
+  §4.1 steps 3–4) — owner actions on npmjs.com; everything on the repo side
+  is now gated and ready for the first `v*` tag whenever the owner makes it.
+- Phase 4 candidate items beyond that: harvesting the first real GitHub
+  Pages run for `--strict` results (CI is the verifier — no local Jekyll
+  here), and any owner-level decisions on the residual PRD items.
 
 **Reminder (recorded twice on purpose, hard to see, easy to violate):** DO
 NOT BUMP THE VERSION. Everything above ships under 0.6.0.
