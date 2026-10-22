@@ -76,6 +76,12 @@ contract becomes honest: schema-checked, diagnosed, opinionated defaults.
   command actually runs instead of exiting 0 silently.
 - The battery version pin now enforces exactly 0.6.0 (owner freeze) across
   package.json, README, and CHANGELOG.
+- First real `--strict` CI run harvested and green: `docs.yml` itself was
+  unparseable YAML (unquoted `cd:` / `--strict:` inside step names), which
+  had silently disabled the Pages verifier for two pushes - workflow files
+  are now battery-pinned to parse, and strict mode's first catch (three
+  production-404 links in the style guide, two of them pretty-permalink
+  `.html`-suffix mistakes, one pointing outside the built tree) is fixed.
 
 ### House structure (prestruct-pattern, owner-directed)
 - **`engine/`** is the shipped runtime (`engine/inject.js` + the eight lib

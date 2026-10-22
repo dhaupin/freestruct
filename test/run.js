@@ -131,6 +131,24 @@ test('README quickstart YAML example actually parses (issue #8)', () => {
   assert.ok(parsed.site.name && parsed.site.url, 'site.name and site.url present');
 });
 
+// ---------- CI workflow truth (pass 11: unquoted 'cd:' in a step name made
+// docs.yml unparseable and silently killed the Pages verifier for two pushes) ----------
+
+test('.github/workflows/*.yml are all parseable YAML (a dead SSG gate must never come from an unparsable workflow)', () => {
+  const wfDir = path.join(ROOT, '.github', 'workflows');
+  const files = fs.readdirSync(wfDir).filter(f => f.endsWith('.yml'));
+  assert.ok(files.length >= 3, `workflows present (${files.join(', ')})`);
+  for (const f of files) {
+    let parsed;
+    try {
+      parsed = yaml.load(fs.readFileSync(path.join(wfDir, f), 'utf8'));
+    } catch (e) {
+      assert.fail(`${f} is not valid YAML: ${e.message}`);
+    }
+    assert.ok(parsed && typeof parsed === 'object' && ('jobs' in parsed), `${f} parses to a jobs-bearing workflow`);
+  }
+});
+
 // ---------- main fixture run: defaults ON ----------
 
 test('default run: exit 0, stdout talks, build hash coherent across meta + assets', () => {

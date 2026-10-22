@@ -220,16 +220,40 @@
 - End-to-end: battery 37/37, sync-check lockstep, docs audit clean,
   tarball e2e proven (bin/engine/init all in the 0.6.0 tarball).
 
+### Pass 11 — strict harvest: docs workflow unbreak + 3 real 404s + stone (done, on 0.6.0)
+- **First real GitHub Pages `--strict` harvest (Phase 4 candidate, done):**
+  the last two pushes' docs runs were failing at 0s and nobody had looked:
+  docs.yml itself was UNPARSEABLE YAML — two step names carried unquoted
+  `cd:` / `--strict:` (plain-scalar `: ` kills the file), so the “0s
+  failure” was GitHub refusing the workflow, not a build failure. Classical
+  CI-verifier lesson: `test.yml` proved the engine green while the Pages
+  pipeline silently never ran. Annotations moved into step comments; all
+  four workflow files now battery-pinned to parse-check locally
+  (js-yaml in CI too, next push onward).
+- **Strict mode's first real catch (3 production 404s, all in
+  `contributing/style.md`):** two root-absolute `.html` links that pretty
+  permalinks make wrong (`/configuration.html`, `/getting-started.html` —
+  real URLs are `/configuration`, `/getting-started`), one relative link
+  into the source tree (`../ _layouts/default.html`) that does not exist in
+  the built output. Swept the docs tree: no other links in either broken
+  class. These were shipping 404s in production since the rehaul.
+- **Site truth note:** the docs site uses `permalink: pretty`; consumers
+  don't have this constraint (their SSG decides), but OUR dogfood links must
+  address the parked URLs the layout actually serves.
+- **Stone refreshed at pass end** (convention, deferred twice — now done):
+  vant snapshot re-run; horizon `horcrux/freestruct-p_v5frogstone2026.svg`
+  updated, sha256 `6dd67eca…d449ef` verified against the vant output.
+- Version freeze untouched: everything above ships under 0.6.0.
+
 ## Next up (open, unowned)
 
-- Phase 4 residual: refresh the stone at pass end (convention above) — not
-  run this turn (a vant-checkout command, deferred from Pass 8).
 - Phase 4 residual: npm bootstrap publish + Trusted Publisher entry (PRD
   §4.1 steps 3–4) — owner actions on npmjs.com; everything on the repo side
   is now gated and ready for the first `v*` tag whenever the owner makes it.
-- Phase 4 candidate items beyond that: harvesting the first real GitHub
-  Pages run for `--strict` results (CI is the verifier — no local Jekyll
-  here), and any owner-level decisions on the residual PRD items.
+- Beyond that, the open PRD items are owner-level calls, not build work:
+  any owner decisions on the residual questions in labs/prd-freestruct.md
+  §4 (the resolved-set is already in). No repo-side gate remains open on
+  the freestruct side.
 
 **Reminder (recorded twice on purpose, hard to see, easy to violate):** DO
 NOT BUMP THE VERSION. Everything above ships under 0.6.0.
