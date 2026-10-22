@@ -484,6 +484,28 @@ discipline). docs/AGENTS.md stays the rendered engineering-decisions page;
 - Battery 49/49 + lint:docs gates + tarball e2e clean; CI green and the live
   URL shapes curl-verified (200 stub / 301 / 200 new canonical).
 
+### Pass 20 - toolchain/CI bump + release validation + v1.0.0 draft (done, on 0.9.0)
+- **No width rule anywhere:** the suspected 72-char prose cap does not exist
+  in the freestruct gate family (checked style/language/audit scripts and
+  prestruct's) - nothing to remove.
+- **CI on Node-24-compatible action majors** (GitHub retired the Node 20
+  action runtime 2026-09-23): checkout v7, setup-node v7, cache v6,
+  upload-pages-artifact v5, deploy-pages v5; docs/test project node 20 -> 22.
+- **Docs stack:** Jekyll Gemfile 4.3 -> 4.4, Ruby 3.3 -> 3.4, Gemfile trimmed
+  of never-loaded jekyll-seo-tag/jekyll-sitemap; prismjs CDN 1.29 -> 1.30;
+  pagefind CI pin 1.5.0 -> 1.5.2 (cache key bumped).
+- **js-yaml 4 -> 5.5.0:** v5 dropped the default ESM export - imports moved
+  to named `load` (engine/config.js + test/run.js); battery-verified.
+- **Release wiring verified:** publish.yml (npm publish on v* tags, tarball
+  e2e gates the publish) + release.yml (GitHub Release from the same tag,
+  notes extracted from CHANGELOG.md, tag==package.json pin check). Both
+  dormant until the owner cuts the first tag after the npm bootstrap.
+- **Dry-run packaging validated:** npm tarball = exactly the 25-file files
+  whitelist; GitHub source tar mirrors the tracked tree (fixture built `_site`
+  present by design - it is the battery's input state).
+- **docs/discussions/announcing-v1.0.0.md** added, prestruct's announcement
+  frame: a copy-pasteable Discussions post draft for when v1.0.0 is cut.
+
 ## Next up (open, unowned)
 
 - Work the residual issue queue with receipts: #2-#14 are fixed in the

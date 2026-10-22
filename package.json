@@ -37,12 +37,22 @@
     "type": "git",
     "url": "https://github.com/dhaupin/freestruct.git"
   },
-  "keywords": ["seo", "ssg", "static-site-generator", "docs", "jekyll", "hugo", "docusaurus", "search", "sitemap"],
+  "keywords": [
+    "seo",
+    "ssg",
+    "static-site-generator",
+    "docs",
+    "jekyll",
+    "hugo",
+    "docusaurus",
+    "search",
+    "sitemap"
+  ],
   "license": "MIT",
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
-    "js-yaml": "^4.1.0"
+    "js-yaml": "^5.5.0"
   }
 }

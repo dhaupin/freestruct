@@ -6,7 +6,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import yaml from 'js-yaml';
+import { load as yamlLoad } from 'js-yaml';
 
 export class ConfigError extends Error {}
 
@@ -100,7 +100,7 @@ export function loadConfig(cwd = process.cwd()) {
 
   let parsed;
   try {
-    parsed = yaml.load(fs.readFileSync(configPath, 'utf8'));
+    parsed = yamlLoad(fs.readFileSync(configPath, 'utf8'));
   } catch (e) {
     throw new ConfigError('Config parse error: ' + e.message);
   }

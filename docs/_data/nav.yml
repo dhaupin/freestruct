@@ -46,7 +46,7 @@
     - title: CLI Reference
       url: /guides/cli
 
-- title: Contributing
+- title: Contributions
   items:
     - title: Voice & Style
       url: /contributing/style
@@ -54,3 +54,8 @@
       url: /contributing/issues
     - title: Engineering Decisions
       url: /engineering-decisions
+
+- title: Discussions
+  items:
+    - title: Announcements
+      url: /discussions/announcing-v1.0.0

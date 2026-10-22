@@ -19,7 +19,7 @@ import os from 'os';
 import path from 'path';
 import { spawnSync } from 'child_process';
 import { pathToFileURL } from 'url';
-import yaml from 'js-yaml';
+import { load as yamlLoad } from 'js-yaml';
 
 const ROOT = path.resolve(new URL('.', import.meta.url).pathname, '..');
 const INJECT = path.join(ROOT, 'engine', 'inject.js');
@@ -128,7 +128,7 @@ test('README quickstart YAML example actually parses (issue #8)', () => {
   const readme = read('.', 'README.md');
   const block = (readme.match(/```yaml\n([\s\S]*?)```/) || [])[1];
   assert.ok(block, 'README must include one ```yaml config example');
-  const parsed = yaml.load(block);
+  const parsed = yamlLoad(block);
   assert.ok(parsed && parsed.site, 'README YAML example must parse and contain a site section');
   assert.ok(parsed.site.name && parsed.site.url, 'site.name and site.url present');
 });
@@ -143,7 +143,7 @@ test('.github/workflows/*.yml are all parseable YAML (a dead SSG gate must never
   for (const f of files) {
     let parsed;
     try {
-      parsed = yaml.load(fs.readFileSync(path.join(wfDir, f), 'utf8'));
+      parsed = yamlLoad(fs.readFileSync(path.join(wfDir, f), 'utf8'));
     } catch (e) {
       assert.fail(`${f} is not valid YAML: ${e.message}`);
     }

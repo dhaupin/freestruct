@@ -18,11 +18,11 @@ jobs:
   battery:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version: "22"
           cache: npm
 
       - name: Install
@@ -45,7 +45,7 @@ jobs:
       # CRASHTEST_SHA bumped => new cache key => fresh install.
       - name: Restore crashtest (pack selftest installer cache)
         id: ct
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: node_modules/crashtest
           key: crashtest-dc80a7c7a42e58a532b8ad624b79de2742d1ccbb

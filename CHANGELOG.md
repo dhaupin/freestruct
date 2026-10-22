@@ -52,6 +52,23 @@ new behavior change - it is the promotion of the committed truth:
   to the injected structured data, gated by the same missing-only rule; a
   non-object entry is skipped with a loud config warning
 
+### Changed (toolchain + CI bump, rides the 0.9.0 number)
+
+- GitHub Actions on Node-24-compatible majors (GitHub removed the Node 20
+  action runtime on 2026-09-23): checkout v7, setup-node v7, cache v6,
+  upload-pages-artifact v5, deploy-pages v5; docs/test CI project node 20 -> 22
+- Jekyll 4.3 -> 4.4, Ruby 3.3 -> 3.4 in docs CI; Gemfile trimmed of
+  `jekyll-seo-tag` + `jekyll-sitemap` (listed but never loaded by config)
+- `js-yaml` 4 -> 5.5.0 (ESM named-import migration, battery-verified);
+  pagefind CI pin 1.5.0 -> 1.5.2 (installer cache key bumped); prismjs
+  CDN 1.29 -> 1.30
+- Release packaging validated dry: `npm pack` tarball is exactly the 25-file
+  files whitelist (bin + engine + init + LICENSE/README/package.json); the
+  GitHub release source tar mirrors the tracked tree (the battery fixture's
+  pre-built `_site` ships by design - it is the battery's input state)
+- `docs/discussions/announcing-v1.0.0.md` draft added (the prestruct-style
+  Discussions post, ready for the tag)
+
 ## [0.6.0] - 2026-10-21
 
 Phase 2 of the v1.0.0 rehaul (PRD: labs/prd-freestruct.md) - the config
