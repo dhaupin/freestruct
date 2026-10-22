@@ -30,7 +30,8 @@ jobs:
         working-directory: docs
         run: bundle install
 
-      - name: Build Jekyll (inline cd: step-level working-directory as belt-and-suspenders)
+      # Inline cd + step-level working-directory as belt-and-suspenders (jekyll-leg safety).
+      - name: Build Jekyll
         run: cd docs && bundle exec jekyll build
 
       - name: Setup Node
@@ -41,7 +42,8 @@ jobs:
       - name: Install freestruct deps
         run: npm install
 
-      - name: Run freestruct (--strict: broken links fail the build; the #4 graduation)
+      # --strict: broken links fail the build (the #4 graduation).
+      - name: Run freestruct strict
         run: node bin/freestruct.mjs --strict
 
       - name: Install Pagefind (official npm dist, not the global install)
