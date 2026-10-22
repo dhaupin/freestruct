@@ -292,6 +292,27 @@
   config that produced them, not in the tree.
 - Version freeze untouched: everything above ships under 0.6.0.
 
+### Pass 13 — issue sweep: the two live fixes + receipts closure of the queue (done, on 0.6.0)
+- **#15 FIXED** (f9fb526): the static `<script src>` pagefind preload was
+  dead code (doSearch() does the dynamic `await import` per query) and was
+  exactly what threw `import.meta outside a module` on every page under
+  pagefind 1.5.x. Removed, plus the dead `pfModule` stub; layout comment
+  records the contract (pagefind loads lazily, ESM only).
+- **#16 FIXED** (f9fb526) honestly: the flagged `--ink-light` token lives
+  in crashtest's vendored copy of the layout (already fixed there to
+  #94867a = 5.25:1) and ships NOWHERE in the freestruct tree — but the
+  same failure class did exist in OUR theme: the code-block language label
+  #888 on #1f2937 = 4.14:1 → now #9ca3af = 5.78:1 (WCAG 2.x luminance math,
+  computed, with the receipt in the CSS comment).
+- **Receipts sweep done: #2–#16 all CLOSED with per-issue receipts** —
+  battery pin numbers, CHANGELOG/PRD phase references, pack/wire guards
+  named, and the two CI-verified commits cited for #15/#16. The tracker
+  now matches the repo truth: freestruct's queue is EMPTY.
+- CI verification: test green + Pages deploy green on f9fb526 (the
+  first-run crashtest dogfood step is slower than the presets — future
+  pushes should stay near ~2min with npm's cache warm).
+- Version freeze untouched: everything ships under 0.6.0.
+
 ## Next up (open, unowned)
 
 - Work the residual issue queue with receipts: #2–#14 are fixed in the
