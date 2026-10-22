@@ -65,12 +65,18 @@ jobs:
       # BINARY at install and cost the runner 355s cold (measured); keyed on
       # the version, a cache hit skips that entirely (same pattern as the
       # crashtest installer cache).
+      # The runner's native binary lives in the SCOPED companion package
+      # (@pagefind/<platform>) - cache BOTH, or a cache hit ships a runner
+      # that can't find its binary (measured in CI: the npx fallback died
+      # with 'Failed to install either of [pagefind_extended, pagefind]').
       - name: Restore pagefind (indexer cache)
         id: pf
         uses: actions/cache@v4
         with:
-          path: node_modules/pagefind
-          key: pagefind-1.5.0
+          path: |
+            node_modules/pagefind
+            node_modules/@pagefind
+          key: pagefind-1.5.0-v2
       - name: Install Pagefind (cache misses only, pinned)
         if: ${{ steps.pf.outputs['cache-hit'] != 'true' }}
         run: npm install --no-save --no-audit --no-fund pagefind@1.5.0
