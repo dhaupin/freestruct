@@ -7,6 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import { injectPage } from './seo.js';
 import { pageUrlFor } from './urls.js';
+import { stripRobotsMeta } from './scan.js';
 
 /** Generate the fallback 404 page (search form + links), then run it through the SEO pipeline. */
 export function generate404(config, outputDir, buildHash, template, snippetDir) {
@@ -61,7 +62,8 @@ export function generate404(config, outputDir, buildHash, template, snippetDir) 
 export function pipeline404(page, context) {
   let html = fs.readFileSync(page.file, 'utf8');
   // drop any pre-existing robots meta so ours is the single source of truth
-  html = html.replace(/<meta[^>]*name=["']robots["'][^>]*>/i, '');
+  // (scan.js's stripper exists for exactly this - one regex, one owner)
+  html = stripRobotsMeta(html);
   html = html.replace(/<\/head>/i, '<meta name="robots" content="noindex, nofollow">\n</head>');
   fs.writeFileSync(page.file, html);
   page.html = html;

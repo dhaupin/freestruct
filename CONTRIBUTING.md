@@ -1,57 +1,68 @@
 # Contributing to freestruct
 
-## Concept
+Thanks for looking at freestruct. The contribution path is the same for
+humans and agents; this file is the short version, [AGENTS.md](AGENTS.md)
+carries the full house rules.
 
-freestruct is a framework-agnostic SEO layer for static doc sites. It should:
+## What freestruct is (scope discipline)
 
-- Work with any SSG (Jekyll, Hugo, Docusaurus, MkDocs, VitePress)
-- Have minimal dependencies (just Node)
-- Be configurable via a simple config file
-- Do one thing well (SEO layer) vs trying to be everything
+freestruct is a **post-build SEO layer for static doc sites**. It runs after
+any SSG (Jekyll, Hugo, Docusaurus MkDocs, VitePress, Astro, Eleventy) has
+built the output tree, reads the built HTML, and injects what pages still
+miss: SEO/OG/Twitter/JSON-LD metadata, `sitemap.xml`, `robots.txt`,
+`feed.xml`, a noindex `404.html`, cache-busted assets, and internal-link
+validation.
 
-## Core Principles
+**In scope:** anything that improves the built-tree pass (injection, artifact
+generation, link checking, hooks, config contract).
 
-1. **Adapter pattern** - Each SSG gets an adapter. freestruct doesn't care how pages are generated, just that it can read the output and enhance it.
+**Out of scope:** being an SSG, a build tool, or a dev server; bundling a
+claim-competing search index (bring your own indexer; `search.json` is
+opt-in); touching SSG source files instead of the built output.
 
-2. **Single responsibility** - SEO layer only. Don't try to build a doc theme or full SSG. Leave that to existing tools.
+Electrically honest design rules that PRs must keep:
 
-3. **CI-friendly** - Designed for GitHub Actions / CI pipelines. Not a dev server.
+- **Missing-only injection** - existing tags are never overwritten
+- **Config-first, no magic** - unknown/retired keys warn loudly; fatal errors
+  exit 1/2/3 by kind
+- **Escaped-or-fail XML** - generated XML either escapes everything or the
+  build refuses loudly
+- **basePath is one contract** - every generated URL (canonical, sitemap loc,
+  robots pointer, feed links, 404 home link) goes through `pageUrlFor`
+- **The version is frozen at 0.6.0** until the owner says otherwise
 
-## Architecture Thoughts
+Where to change things: the runtime lives in `engine/` (one orchestrator +
+eight modules; see the
+[engineering-decisions page](https://freestruct.creadev.org/engineering-decisions)),
+templates are canonical at `engine/_freestruct/`, and the consumer scaffold
+kit is `init/`. `docs/` is both the documented site and the worked example.
 
+## Before you open a PR
+
+CI runs the same commands locally, so test like CI:
+
+```bash
+npm install
+npm test                     # the battery (41 pins)
+npm run lint:docs            # docs audit: 7 gates incl. English-only prose
+npm run sync:check           # template copies in lockstep
+npm run e2e                  # tarball e2e (fresh-install quick start)
 ```
-freestruct/
-├── cli.js              # Entry point
-├── config.js           # Config loading + validation
-├── adapters/          # SSG-specific adapters
-│   ├── jekyll.js
-│   ├── hugo.js
-│   └── index.js
-├── plugins/           # SEO features
-│   ├── meta.js        # Inject meta tags
-│   ├── search.js      # Pagefind integration
-│   ├── sitemap.js     # Generate sitemap
-│   └── audit.js       # SEO audit tool
-└── utils/
-    ├── dom.js         # HTML parsing
-    └── path.js        # URL handling
-```
 
-## Questions to Answer
+`npm run packs:selftest` additionally proves the crashtest pack's teeth
+(needs a local dhaupin/crashtest checkout).
 
-- Config format: JS, YAML, or JSON?
-- Should it modify source files or output files?
-- Plugin system for extensibility?
-- CLI only or library API too?
-- Which SSG to target first?
+Docs prose rules are enforced, not suggested: English-only, hyphens (no
+em/en dashes), no emoji outside CODE, table rows end with pipes, and every
+engine source opens with `// engine/<file>.js - <purpose>`.
 
-## How to Help
+## Reporting issues
 
-Open an issue with:
-- Use cases you want to support
-- Pain points you've hit with doc SEO
-- Questions or concerns about the approach
+Open an issue with the actual behavior: the version, the config (redact
+URLs if needed), the exit code, and the artifact diffs you expected. If it
+only reproduces on a specific SSG, include the built HTML page (pre and post
+freestruct).
 
 ## License
 
-See [LICENSE](LICENSE)
+See [LICENSE](LICENSE).

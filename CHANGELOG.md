@@ -44,7 +44,12 @@ contract becomes honest: schema-checked, diagnosed, opinionated defaults.
 ### Batteries
 - New pins: renamed-config discovery, legacy back-compat, diagnostics
   warnings, `--tolerant`, exit codes, basePath one-prefix semantics (both
-  tree shapes), opt-in search.
+  tree shapes), opt-in search - plus (pass 16) the two purge-hook canaries
+  that gave the shell-command surface zero-trust coverage (disabled-by-
+  default proof + truthful substitution proof, battery now 41 pins), and
+  the basePath pin grew robots/feed/404-pointer assertions. `scan.js`'s
+  robots-meta stripper now has its one intended caller (the 404 pipeline
+  had been duplicating its regex).
 
 ### Docs (Phase 3 frame port + Phase 4 hardening)
 - Single-source nav: `docs/_data/nav.yml` is now THE menu layer (top nav and

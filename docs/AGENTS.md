@@ -288,10 +288,11 @@ Create or edit these files to add custom code. Files auto-load if they exist.
 
 ### Important quirks
 
-- 404.html files are skipped (no canonical injection)
+- 404.html files get the full pipeline now (canonical included), with an explicit `robots noindex` meta (issue #11 fix); generated AND custom 404s get the same treatment
 - JSON-LD in inject-brand.html is static (not per-page)
-- Purge hooks are commented out in inject.js (safety) - uncomment to enable
-- preserveExistingMeta default: true (only adds missing tags)
+- Purge hooks are REAL and wired (`engine/hooks.js`), but gated: they only execute when `runHooks: true` is set in config; configured-but-unenabled hooks just log the skipped command (battery-pinned both ways)
+- `preserveExistingMeta` is a RETIRED config key (missing-only injection is unconditional now); configuring it produces a named warning
+- Missing-only injection: existing tags are never overwritten
 
 ---
 

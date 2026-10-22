@@ -806,5 +806,56 @@ test('basePath set + tree nests the directory: no doubled prefix (nested wins)',
   } finally { rmDir(dir); }
 });
 
+// ---------- purge hooks (Phase 1.1 split; README Security section) ----------
+// The ONLY engine code that executes shell commands ran with zero pins - the
+// leakiest feature got the least attention. Two canaries:
+//   disabled-by-default: a configured purge NEVER executes without runHooks:true
+//   enablement: runHooks:true executes, with $SITE_URL/$BUILD_HASH/$OUTPUT_DIR
+//   substituted truthfully.
+
+const purgeConfig = (markerPath, extraKeys = '') => [
+  'site:',
+  '  name: Foo Docs',
+  '  url: https://docs.example.com',
+  '  description: A test docs site',
+  extraKeys,
+  'cacheBusting:',
+  '  purge:',
+  '    - name: canary',
+  `      command: node -e "require('fs').writeFileSync(process.argv[1], process.argv.slice(2).join('|'))" ${markerPath} "https://docs.example.com/$SITE_URL_PART" "$BUILD_HASH" "$OUTPUT_DIR"`,
+].filter(Boolean).join('\n') + '\n';
+
+test('purge hooks disabled by default: configured commands NEVER execute without runHooks', () => {
+  const dir = scenario('main');
+  try {
+    const marker = path.join(dir, 'purge-marker.txt');
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), purgeConfig(marker));
+    runInject(dir);
+    const out = fs.readFileSync(path.join(dir, 'docs/_site/index.html'), 'utf8');
+    assert.includes(out, 'freestruct-build', 'run completed normally');
+    assert.ok(
+      !fs.existsSync(marker),
+      'the purge canary EXECUTED anyway - the runHooks gate leaked (docs say disabled by default)',
+    );
+  } finally { rmDir(dir); }
+});
+
+test('purge hooks: runHooks: true executes the canary with truthful substitutions', () => {
+  const dir = scenario('main');
+  try {
+    const marker = path.join(dir, 'purge-marker.txt');
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), purgeConfig(marker, 'runHooks: true'));
+    const out = runInject(dir);
+    const hash = (out.match(/freestruct: Done \(([0-9a-f]{0,8})\)/) || [])[1];
+    assert.ok(hash, 'run reports its build hash');
+    assert.ok(fs.existsSync(marker), 'runHooks: true must actually execute the configured hook');
+    const parts = fs.readFileSync(marker, 'utf8').split('|');
+    assert.strictEqual(parts.length, 3, 'all three canary fields arrived');
+    assert.match(parts[0], /^https:\/\/docs\.example\.com\//, '$SITE_URL substituted');
+    assert.strictEqual(parts[1], hash, '$BUILD_HASH substituted with the printed build hash');
+    assert.ok(parts[2].endsWith(path.join('docs', '_site')), '$OUTPUT_DIR substituted');
+  } finally { rmDir(dir); }
+});
+
 // done
 console.log('[freestruct battery] complete');

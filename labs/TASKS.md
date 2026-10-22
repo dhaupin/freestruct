@@ -379,6 +379,44 @@ discipline). docs/AGENTS.md stays the rendered engineering-decisions page;
   files), battery 39/39, and the whole set rides the same CI.
 - Version freeze untouched: everything ships under 0.6.0.
 
+### Pass 16 - coverage gap audit + dead-code cleanup (done, on 0.6.0)
+- **Owner question:** missing tests/probes/gates? untested-but-should-be
+  parts? rogue/dead code? Audited against the pin wall rather than opinion.
+- **The gap was real and it was the worst possible one:** `engine/hooks.js`
+  - the only engine code that EXECUTES SHELL COMMANDS - had zero battery
+  coverage. Two canary pins added (39 -> 41): disabled-by-default (a
+  configured purge canary NEVER runs without runHooks; genuinely
+  executable proof), and runHooks:true executes with truthful
+  $SITE_URL/$BUILD_HASH/$OUTPUT_DIR substitution (the marker file content
+  is asserted field by field against the printed build hash). The
+  first draft of the pin pair caught paper-only helpers (FIXTURE_YAML_BASE)
+  before they shipped - the wall works.
+- **Dead-code verdict:** `scan.js::stripRobotsMeta` had NO caller, and
+  `notfound.js::pipeline404` carried the identical regex inline (a **
+  comment even said 'un-duplicated' while duplicating). Fixed by pointing
+  the pipeline at the scan.js helper - one regex, one owner, zero dead
+  exports. Everything else on the engine export surface proved live
+  (checked callers across engine/test/scripts/bin).
+- **Stale-claims cleanup, receipts-checked:** docs/AGENTS.md's Important
+  quirks said purge hooks were 'commented out in inject.js' (false since
+  Phase 1.1) and 'preserveExistingMeta default: true' (retired key) while
+  the battery proves 404s DO get canonicals now - all rewritten with the
+  current truth and pin references. CONTRIBUTING.md still sketched a
+  pre-rehaul architecture (adapters/ + plugins/ tree that never existed,
+  open questions all since answered) - rewritten honestly for the shipped
+  engine/ shape with the scope discipline and CI gates inlined. release.yml
+  example tag updated v0.4.0 -> v0.6.0 to match the current release era.
+- **What the audit found ALREADY covered:** every engine module's behavior
+  rides behavior pins (the module names do not appear in test/run.js, but
+  each module's contract is asserted by name through the workflow pins);
+  minify/hashInCanonical/assetQueryParam have pins (2 config-flag pins); --
+  strict link/noindex semantics pinned; bin shim covered by e2e + shebang
+  pin + library-API guard realpath comment. Remaining honest gap after this
+  pass: none load-bearing - future pins grow with features.
+- **End-to-end:** audit 7/7 gates clean, battery 41/41, sync lockstep,
+  tarball e2e proven, pack teeth proven, workflows parse.
+- Version freeze untouched: everything ships under 0.6.0.
+
 ## Next up (open, unowned)
 
 - Work the residual issue queue with receipts: #2–#14 are fixed in the
