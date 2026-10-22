@@ -38,21 +38,28 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: npm
 
       - name: Install freestruct deps
-        run: npm install
+        run: npm ci --no-audit --no-fund
 
       # --strict: broken links fail the build (the #4 graduation).
       - name: Run freestruct strict
         run: node bin/freestruct.mjs --strict
 
-      # Crashtest dogfood: drive the freestruct-docs-shapes pack
-      # (packs/public/) against the tree the Pages build just produced.
-      # EXPLOITED rows fail the Pages build - hardened output only.
+      # Cached by the pinned gate sha - the github install costs ~7m cold
+      # (measured), the campaign ~1s; a cache hit skips the minutes entirely.
+      - name: Restore crashtest (docs dogfood installer cache)
+        id: ct
+        uses: actions/cache@v4
+        with:
+          path: node_modules/crashtest
+          key: crashtest-dc80a7c7a42e58a532b8ad624b79de2742d1ccbb
+      - name: Install crashtest (cache misses only)
+        if: ${{ steps.ct.outputs['cache-hit'] != 'true' }}
+        run: npm install --no-save --no-audit --no-fund github:dhaupin/crashtest#dc80a7c7a42e58a532b8ad624b79de2742d1ccbb
       - name: Crashtest the built docs
-        run: |
-          npm install --no-save github:dhaupin/crashtest#dc80a7c7a42e58a532b8ad624b79de2742d1ccbb
-          npx crashtest run
+        run: node node_modules/crashtest/bin/crashtest.js run
 
       - name: Install Pagefind (official npm dist, not the global install)
         working-directory: docs

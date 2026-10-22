@@ -37,13 +37,23 @@ jobs:
       - name: Tarball e2e (fresh-install quick start, PRD §4.1 step 5)
         run: node scripts/e2e-install.cjs
 
-      # Crashtest pack teeth (pinned install - never a mutable latest):
-      # the two-sided selftest proves the freestruct-docs-shapes pack HOLDS
-      # a hardened freestruct build and TRIPS a deliberately regressed one.
+      # Crashtest pack teeth (pinned install - never a mutable latest).
+      # Cache the installed package by gate sha: the github-tarball install
+      # costs ~7m cold on runners (measured), the campaign itself ~1s - the
+      # cache is where the minutes live (vant predeploy lesson, pinned-sha
+      # edition). Same pinned sha as docs.yml.
+      # CRASHTEST_SHA bumped => new cache key => fresh install.
+      - name: Restore crashtest (pack selftest installer cache)
+        id: ct
+        uses: actions/cache@v4
+        with:
+          path: node_modules/crashtest
+          key: crashtest-dc80a7c7a42e58a532b8ad624b79de2742d1ccbb
+      - name: Install crashtest (cache misses only)
+        if: ${{ steps.ct.outputs['cache-hit'] != 'true' }}
+        run: npm install --no-save --no-audit --no-fund github:dhaupin/crashtest#dc80a7c7a42e58a532b8ad624b79de2742d1ccbb
       - name: Crashtest pack selftest (hardened holds / regressed trips)
-        run: |
-          npm install --no-save github:dhaupin/crashtest#dc80a7c7a42e58a532b8ad624b79de2742d1ccbb
-          CRASHTEST_BIN=node_modules/crashtest/bin/crashtest.js node scripts/packs-selftest.cjs
+        run: CRASHTEST_BIN=node_modules/crashtest/bin/crashtest.js node scripts/packs-selftest.cjs
 
       - name: Engine template sync check (canonical engine/_freestruct in lockstep)
         run: node scripts/sync-templates.mjs check
