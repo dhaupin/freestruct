@@ -13,10 +13,11 @@ nav_order: 0
         <span class="badge">one runtime dep</span>
     </div>
     <h1>Your docs deserve real SEO.<br> <em>One command</em> after the build.</h1>
-    <p class="sub">freestruct is a post-build layer for static doc sites. Your SSG (Jekyll, Hugo, Docusaurus, MkDocs, VitePress, Astro, Eleventy - any of them) does what it does. Then freestruct reads the built HTML and injects what every page still misses: complete meta, <span style="font-family: ui-monospace, monospace;">sitemap.xml</span> with real per-page dates, <span style="font-family: ui-monospace, monospace;">robots.txt</span>, an RSS feed, a noindex 404, cache-busted assets and validated links.</p>
+    <p class="sub">Run it after any SSG - Jekyll, Hugo, Astro, you name it. Your build stays untouched; freestruct reads the built HTML and finishes the SEO every page still needs: complete meta, a real <span style="font-family: ui-monospace, monospace;">sitemap.xml</span>, <span style="font-family: ui-monospace, monospace;">robots.txt</span>, an RSS feed, a noindex 404, cache-busted assets and validated links.</p>
     <div class="install">
-        <span class="p1">{ doc site }$</span>
-        <code>npm i -D freestruct &amp;&amp; npx freestruct</code>
+        <code>npm i -D freestruct</code>
+        <span class="amp">&amp;&amp;</span>
+        <code>npx freestruct</code>
     </div>
     <div class="cta-row">
         <a class="btn btn-primary" href="/getting-started">Get started in 5 minutes</a>
@@ -26,27 +27,27 @@ nav_order: 0
     <div class="pipeline">
         <div class="pipe"><b>Any SSG</b><span>your build, untouched</span></div>
         <div class="pipe"><b>Built tree</b><span>plain HTML files</span></div>
-        <div class="pipe hot"><b>freestruct</b><span><code style="font-size:11.5px;">npx freestruct</code> &middot; exit codes 1 / 2 / 3</span></div>
-        <div class="pipe"><b>SEO-grade tree</b><span>meta + artifacts fresh on every run</span></div>
+        <div class="pipe hot"><b>freestruct</b><span><code style="font-size:11.5px;">npx freestruct</code> - one command, zero plugins</span></div>
+        <div class="pipe"><b>SEO-grade tree</b><span>meta + artifacts, fresh on every run</span></div>
     </div>
 </div>
 
 <section class="center">
     <div class="wrap">
         <div class="kicker">What lands on every page</div>
-        <h2>Deploy a docs site that search engines<br>and link previews finish reading</h2>
-        <p class="lede">Everything below is injected missing-only: pages that already carry a tag keep it. Nothing is overwritten, nothing is guessed.</p>
+        <h2>Rank in search.<br>Look sharp in every link preview.</h2>
+        <p class="lede">Everything below is injected into your built pages missing-only: what you already set stays yours. Nothing overwritten, nothing guessed.</p>
 
         <div class="gets">
-            <div class="get"><h3>Meta + canonical</h3><p>title synthesis, description, a self canonical, and Open Graph, Twitter and JSON-LD blocks - absent tags only.</p></div>
-            <div class="get"><h3><code>sitemap.xml</code></h3><p>escaped; one entry per page with a real per-page <code>&lt;lastmod&gt;</code> from the page's own mtime - not a fake build-time stamp.</p></div>
-            <div class="get"><h3><code>robots.txt</code></h3><p><code>Allow: /</code> and a sitemap pointer that stays correct under sub-path installs.</p></div>
-            <div class="get"><h3>RSS feed</h3><p>escaped titles, per-page <code>pubDate</code>, honest dates - not one build stamp for every item.</p></div>
-            <div class="get"><h3>A noindex 404</h3><p>generated when missing, gets full SEO treatment even when you supply your own.</p></div>
-            <div class="get"><h3>Cache-busted assets</h3><p>every asset URL gets a per-build hash that CDNs must re-fetch; purge hooks can be wired in for the CDN, opt-in.</p></div>
-            <div class="get"><h3>basePath honest URLs</h3><p>canonical, sitemap, feed and 404 links all carry <code>siteurl + basePath</code> exactly once for any sub-path install.</p></div>
-            <div class="get"><h3>Link validation</h3><p>internal links checked every run; <code>--strict</code> makes broken ones exit nonzero for your pipeline.</p></div>
-            <div class="get"><h3>Nice diagnostics</h3><p>config errors and template or output problems have named exit codes (1 / 2 / 3); <code>--tolerant</code> for soft experiments.</p></div>
+            <div class="get"><h3>Meta + canonical</h3><p>Full search-engine armor: title, description, self canonical, plus Open Graph, Twitter and JSON-LD blocks - added only where a page is missing them, so your own settings always win.</p></div>
+            <div class="get"><h3><code>sitemap.xml</code></h3><p>Every page, one entry, real per-page <code>&lt;lastmod&gt;</code> dates crawlers can trust - properly escaped XML.</p></div>
+            <div class="get"><h3><code>robots.txt</code></h3><p>Waves crawlers in and hands them your sitemap - the pointer stays correct even on sub-path installs.</p></div>
+            <div class="get"><h3>RSS feed</h3><p>A feed readers actually subscribe to: escaped titles, per-page <code>pubDate</code>, honest per-page dates.</p></div>
+            <div class="get"><h3>A noindex 404</h3><p>Dead ends resolve to a helpful, styled 404 that search engines skip - generated if you lack one, respected if you have one.</p></div>
+            <div class="get"><h3>Cache-busted assets</h3><p>Every asset URL carries a fresh per-build hash, so CDNs always serve the latest version - with optional purge hooks for your CDN.</p></div>
+            <div class="get"><h3>Sub-path friendly URLs</h3><p>Canonical, sitemap, feed and 404 links carry <code>site.url + basePath</code> exactly once, so sub-path installs just work.</p></div>
+            <div class="get"><h3>Link validation</h3><p>Every internal link is checked on every run - and with <code>--strict</code> a broken one fails the build, so dead links never ship.</p></div>
+            <div class="get"><h3>Loud diagnostics</h3><p>When something is off you get the named cause and an exit code that says which step failed (1, 2 or 3), never a mystery crash. <code>--tolerant</code> keeps experiments soft.</p></div>
         </div>
     </div>
 </section>
@@ -54,7 +55,7 @@ nav_order: 0
 <div class="any-ssg">
     <div class="wrap">
         <div class="kicker" style="color: var(--accent-soft);">Any generator. No plugins.</div>
-        <h2 style="color: var(--ink); font-size: 24px;">Your SSG builds - freestruct finishes</h2>
+        <h2 style="color: var(--ink); font-size: 24px;">Build with anything. Finish with one command.</h2>
         <div class="row">
             <span class="ssg">Jekyll</span>
             <span class="ssg">Hugo</span>
