@@ -1,4 +1,4 @@
-# freestruct Deployment Guide
+# Freestruct Deployment Guide
 
 Everything release- and CI-shaped for this repo, in one place. Every claim is
 checked against the workflows in `.github/workflows/` - where something is an
@@ -16,7 +16,7 @@ CI recipe lives in the
 
 | Target | What it is | Runs on |
 |--------|-----------|---------|
-| GitHub Pages | This repo's own docs site (`docs/` is the dogfood: Jekyll + freestruct + Pagefind) | `.github/workflows/docs.yml`, every push to `main` |
+| GitHub Pages | This repo's own docs site (`docs/` is the dogfood: Jekyll + Freestruct + Pagefind) | `.github/workflows/docs.yml`, every push to `main` |
 | Test battery | Fixture battery + version pins + docs audit + tarball e2e + pack selftest | `.github/workflows/test.yml`, every push/PR |
 | npm release | Trusted Publisher (OIDC), dormant until the owner's bootstrap | `.github/workflows/publish.yml`, fires on `v*` tags ONLY |
 
@@ -71,7 +71,7 @@ Every push and pull request runs:
    project -> run the README quick start through the bin shim -> assert
    artifacts + injections + exit shapes.
 4. Crashtest pack selftest (`npm run packs:selftest`) - the pack must hold a
-   hardened freestruct build and trip a deliberately regressed one.
+   hardened Freestruct build and trip a deliberately regressed one.
 5. Template sync check (`npm run sync:check`) - engine/init/docs template
    copies byte-identical to the canonical pack.
 

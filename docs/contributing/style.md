@@ -2,20 +2,20 @@
 permalink: /contributing/style.html
 layout: default
 title: Voice & Style
-description: How freestruct docs are written - voice rules, formatting and fence conventions
+description: How Freestruct docs are written - voice rules, formatting and fence conventions
 nav_order: 21
 ---
 # Voice & Style
 
-Writing guidelines for freestruct content.
+Writing guidelines for Freestruct content.
 
 ## Casing
 
-freestruct uses Title Case for brand references. Use lowercase for CLI commands and code references.
+Freestruct uses Title Case for brand references. Use lowercase for CLI commands and code references.
 
 ### Rules
 
-- **Title Case**: freestruct (brand name)
+- **Title Case**: Freestruct (brand name)
 - **lowercase**: `freestruct` (CLI, code references, file paths)
 - **UPPERCASE**: Acronyms like SEO, API, URL acceptable but prefer Title Case unless defining explicitly
 
@@ -23,7 +23,7 @@ freestruct uses Title Case for brand references. Use lowercase for CLI commands 
 
 | Use | Casing | Example |
 |-----|--------|---------|
-| Brand name | Title Case | freestruct |
+| Brand name | Title Case | Freestruct |
 | CLI command | lowercase | `freestruct build` |
 | File path | lowercase | `freestruct.config.yml` |
 | Config option | lowercase | `outputDir`, `site.url` |
@@ -78,13 +78,13 @@ Just say what you mean.
 | Abstract | Specific |
 |------------|----------|
 | "This feature empowers users to do more" | "This feature generates sitemaps automatically" |
-| "freestruct unlocks seamless SEO" | "freestruct injects SEO meta tags post-build" |
+| "Freestruct unlocks seamless SEO" | "Freestruct injects SEO meta tags post-build" |
 
 ### 4. State Facts, Not Hype
 
 | Hype | Fact |
 |--------|-------|
-| "freestruct is a revolutionary SEO system" | "freestruct injects meta tags into static HTML files" |
+| "Freestruct is a revolutionary SEO system" | "Freestruct injects meta tags into static HTML files" |
 
 ### 5. Active Voice
 
@@ -132,7 +132,7 @@ Never use "This section covers..." as a section intro. Write actual content:
 | Placeholder | Real Content |
 |--------------|--------------|
 | "Track system events for debugging and compliance." | "Track system events for debugging and compliance." |
-| "This section covers setup." | "Configure freestruct with your freestruct.config.yml." |
+| "This section covers setup." | "Configure Freestruct with your freestruct.config.yml." |
 
 ### Code Blocks Need Briefs
 
@@ -157,8 +157,8 @@ Why: Docs can be rendered with Jekyll (syntax highlighting, navigation, search).
 ## Focus Areas
 
 **Include:**
-- How to use freestruct (clear steps)
-- What problems freestruct solves (specific)
+- How to use Freestruct (clear steps)
+- What problems Freestruct solves (specific)
 - Configuration options (accurate)
 - Integration examples (honest)
 
@@ -173,11 +173,11 @@ Show don't vs shouldn't.
 
 ### Before (Cliché)
 
-> "Discover the future of SEO with freestruct - the ultimate solution to unlock seamless meta tag injection across your static sites."
+> "Discover the future of SEO with Freestruct - the ultimate solution to unlock seamless meta tag injection across your static sites."
 
 ### After (Our Style)
 
-> "freestruct injects SEO meta tags into your static HTML after build. No plugins needed."
+> "Freestruct injects SEO meta tags into your static HTML after build. No plugins needed."
 
 ## Applying This Guide
 
@@ -201,7 +201,7 @@ For example, here's a properly documented section:
 
     ## Installation
 
-    Install freestruct locally or via Docker.
+    Install Freestruct locally or via Docker.
 
     ### Local Install
     For local development:

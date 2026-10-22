@@ -57,9 +57,9 @@ generator (`_plugins/nav_generator.rb`). It was removed:
 
 ## Using Your Own SSG Menu
 
-Jekyll builds this frame, but freestruct itself never touches your nav - the
+Jekyll builds this frame, but Freestruct itself never touches your nav - the
 injection layer only writes post-build SEO/URL/output artifacts into the
-rendered HTML. If you run freestruct over your own site, your existing menu
+rendered HTML. If you run Freestruct over your own site, your existing menu
 is untouched.
 
 ## Related

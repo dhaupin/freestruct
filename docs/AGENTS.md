@@ -1,19 +1,19 @@
 ---
 title: Engineering Decisions
-description: Technical details for freestruct
+description: Technical details for Freestruct
 nav_order: 5
 permalink: /engineering-decisions
 ---
 
 # AGENTS.md
 
-Engineering decisions and technical details for freestruct docs and the freestruct tool itself.
+Engineering decisions and technical details for Freestruct docs and the Freestruct tool itself.
 
 ---
 
 ## Project Overview
 
-**freestruct** is a framework-agnostic, post-build SEO layer for static doc sites. It runs *after* any SSG completes - no plugins, no dependencies on the SSG itself. It only reads the output HTML and injects SEO.
+**Freestruct** is a framework-agnostic, post-build SEO layer for static doc sites. It runs *after* any SSG completes - no plugins, no dependencies on the SSG itself. It only reads the output HTML and injects SEO.
 
 ### Core Philosophy
 
@@ -172,7 +172,7 @@ window.doSearch = async function(q, resultsEl) {
 
 ## Supported SSGs
 
-freestruct works with ANY static site generator. Just point it at the output folder.
+Freestruct works with ANY static site generator. Just point it at the output folder.
 
 | SSG | Output Folder | Command |
 |-----|--------------|---------|
@@ -203,7 +203,7 @@ No `_theme/` folder - not needed for this simple theme.
 
 ### How to Use
 
-freestruct is a *layer* - it runs AFTER your SSG builds.
+Freestruct is a *layer* - it runs AFTER your SSG builds.
 
 ```bash
 # 1. Build your site with your SSG
@@ -245,7 +245,7 @@ Default output folder: `docs/_site`
 
 ## Commands
 
-freestruct is a layer - use your SSG's commands, then run inject.js:
+Freestruct is a layer - use your SSG's commands, then run inject.js:
 
 ```bash
 # Build your site, then inject
@@ -259,7 +259,7 @@ node bin/freestruct.mjs
 
 ## Template Files
 
-freestruct templates live in `engine/_freestruct/` (canonical, packaged; `docs/_freestruct/` and `init/docs/_freestruct/` hold synced copies):
+Freestruct templates live in `engine/_freestruct/` (canonical, packaged; `docs/_freestruct/` and `init/docs/_freestruct/` hold synced copies):
 
 | File | Purpose |
 |------|---------|
@@ -299,4 +299,4 @@ Create or edit these files to add custom code. Files auto-load if they exist.
 ## Related
 
 - [prestruct](https://github.com/dhaupin/prestruct) - React SSG for Cloudflare Pages (sister project)
-- [PageFind](https://pagefind.app/) - Static search used by freestruct
+- [PageFind](https://pagefind.app/) - Static search used by Freestruct

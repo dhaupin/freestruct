@@ -13,7 +13,7 @@ Common issues and solutions.
 Error: Cannot find module 'js-yaml'
 ```
 
-**Fix:** freestruct runs through the freestruct npm package, which ships
+**Fix:** Freestruct runs through the Freestruct npm package, which ships
 `js-yaml` as its own dependency - install the package rather than the
 dependency by hand:
 

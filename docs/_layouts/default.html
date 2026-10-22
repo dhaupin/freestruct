@@ -622,7 +622,7 @@
     </style>
 </head>
 <body>
-    <!-- Header -->
+        <!-- Header -->
     <header class="header">
         <a href="{{ '/' | relative_url }}" class="header-brand">
             <svg viewBox="0 0 32 32" fill="none">
@@ -630,7 +630,7 @@
                 <path d="M8 12h4v4H8zM14 12h4v4h-4zM20 12h4v4h-4zM8 18h4v4H8zM14 18h4v4h-4zM20 18h4v4h-4z" fill="white" opacity="0.6"/>
                 <path d="M10 10h12v2H10zM14 14h4v2h-4z" fill="white"/>
             </svg>
-            Freestruct Docs
+            Freestruct
         </a>
         
         <div class="header-right">
@@ -681,6 +681,18 @@
             {% endif %}
           {% endfor %}
         {% endif %}
+        {% comment %}
+          Static project links - not part of site.data.nav because they
+          are external and always shown, regardless of section config.
+        {% endcomment %}
+        <div class="sidebar-section">
+            <div class="sidebar-title">Project</div>
+            <ul class="sidebar-nav">
+                <li><a href="https://www.npmjs.com/package/freestruct" target="_blank">npm: freestruct</a></li>
+                <li><a href="https://github.com/dhaupin/freestruct" target="_blank">GitHub</a></li>
+                <li><a href="https://creadev.org" target="_blank">Creadev.org</a></li>
+            </ul>
+        </div>
     </aside>
     
     <!-- Main content -->
@@ -690,10 +702,11 @@
         
         <!-- Footer -->
         <footer class="footer">
-            <p>Open source under <a href="https://github.com/dhaupin/freestruct/blob/main/LICENSE">MIT license</a>.</p>
+            <p>Open source under <a href="https://github.com/dhaupin/freestruct/blob/main/LICENSE">MIT license</a>. Made by <a href="https://creadev.org" target="_blank">Creadev.org</a>.</p>
             <p style="margin-top: 8px;">
-                <a href="https://github.com/dhaupin/freestruct">GitHub</a> · 
-                <a href="https://github.com/dhaupin/freestruct/releases">Releases</a> · 
+                <a href="https://www.npmjs.com/package/freestruct">npm</a> ·
+                <a href="https://github.com/dhaupin/freestruct">GitHub</a> ·
+                <a href="https://github.com/dhaupin/freestruct/releases">Releases</a> ·
                 <a href="https://github.com/dhaupin/freestruct/issues">Issues</a>
             </p>
         </footer>

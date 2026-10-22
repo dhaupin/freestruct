@@ -10,7 +10,7 @@ Freestruct integrates with any CI/CD. Here's how with GitHub Actions.
 
 Add to your existing workflow:
 
-<!-- TRUTH-KNOB: yaml below is a GitHub Actions workflow, not a freestruct config -->
+<!-- TRUTH-KNOB: yaml below is a GitHub Actions workflow, not a Freestruct config -->
 ```yaml
 name: Build and Deploy
 
@@ -42,7 +42,7 @@ jobs:
 
 ## Full Example
 
-<!-- TRUTH-KNOB: yaml below is a GitHub Actions workflow, not a freestruct config -->
+<!-- TRUTH-KNOB: yaml below is a GitHub Actions workflow, not a Freestruct config -->
 ```yaml
 name: Build
 
@@ -134,7 +134,7 @@ Add to `vercel.json`:
 
 ### GitLab CI
 
-<!-- TRUTH-KNOB: yaml below is a GitLab CI config, not a freestruct config -->
+<!-- TRUTH-KNOB: yaml below is a GitLab CI config, not a Freestruct config -->
 ```yaml
 build:
   script:
@@ -168,7 +168,7 @@ grep freestruct-build /tmp/test-build/index.html
 
 ### Missing js-yaml
 
-The freestruct npm package ships `js-yaml` as its own dependency, so a
+The Freestruct npm package ships `js-yaml` as its own dependency, so a
 package install never needs a manual entry. Only a repo checkout does:
 
 ```bash

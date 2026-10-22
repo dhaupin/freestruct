@@ -1,9 +1,9 @@
-# freestruct
+# Freestruct
 
 **The post-build SEO layer for static doc sites.**
 
 Build your docs with any SSG - Jekyll, Hugo, Docusaurus, MkDocs, VitePress, Astro, Eleventy.
-Then run freestruct over the output: complete SEO metadata (title, description, canonical,
+Then run Freestruct over the output: complete SEO metadata (title, description, canonical,
 Open Graph, Twitter, JSON-LD), `sitemap.xml` with real per-page `lastmod`, `robots.txt`
 with the right sitemap pointer, an RSS `feed.xml` with honest per-page dates, a `404.html`
 that carries noindex, cache-busted assets, and internal-link validation. One dependency
@@ -16,7 +16,7 @@ engineering conventions as its siblings (see Project family below).
 
 ## Quick start
 
-freestruct runs **after** your SSG, straight into the build output.
+Freestruct runs **after** your SSG, straight into the build output.
 
 ### 1. Install
 
@@ -79,7 +79,7 @@ grep -o 'freestruct-build' docs/_site/index.html
 ls docs/_site/{sitemap.xml,robots.txt,feed.xml,404.html}
 ```
 
-If any of those fail, freestruct tells you why: config errors, a missing
+If any of those fail, Freestruct tells you why: config errors, a missing
 template, and an empty output dir each fail loudly with their own exit code
 (`1` config, `2` template, `3` output dir; `--tolerant` downgrades fatals to
 exit 0 for CI tolerance).
@@ -202,7 +202,7 @@ Two shipped surfaces beyond the engine:
   template copies, and a README ("copy + go"). Version-stamped on
   `package.json`; `npx freestruct` resolves templates user-staged first,
   package fallback second.
-- **`packs/`** - freestruct's [crashtest](https://crashtest.creadev.org) pack
+- **`packs/`** - Freestruct's [crashtest](https://crashtest.creadev.org) pack
   surface: `freestruct-docs-shapes` attacks a built docs tree the way a
   static host serves it (traversal refusal, 404 noindex, noindex artifact
   leaks, canonical query poisoning, XML shape). See
@@ -248,17 +248,17 @@ freeze and released as one truthful number by owner call:
 
 ## Project family
 
-- [freestruct docs](https://freestruct.creadev.org) - the docs site built from
-  this repo (`docs/` is itself the worked example: Jekyll + freestruct + Pagefind)
+- [Freestruct docs](https://freestruct.creadev.org) - the docs site built from
+  this repo (`docs/` is itself the worked example: Jekyll + Freestruct + Pagefind)
 - [docs.creadev.org](https://docs.creadev.org) - the Creadev docs system hub
 - [prestruct](https://github.com/dhaupin/prestruct) /
   [prestruct.creadev.org](https://prestruct.creadev.org) - React SSG for
-  Cloudflare Pages (freestruct's docs-frame sibling)
+  Cloudflare Pages (Freestruct's docs-frame sibling)
 - [prestruct docs](https://docs.creadev.org/prestruct) - the prestruct docs
   layer on the shared system
 - [crashtest](https://crashtest.creadev.org) - adversarial QA for agent-built
-  apps; freestruct ships and CI-runs its own pack
-- [vant](https://github.com/dhaupin/vant) - the prototype freestruct was
+  apps; Freestruct ships and CI-runs its own pack
+- [vant](https://github.com/dhaupin/vant) - the prototype Freestruct was
   extracted from
 
 For agents: [AGENTS.md](AGENTS.md) is the orientation file (scope, house

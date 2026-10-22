@@ -4,7 +4,7 @@ description: Get Freestruct running in 5 minutes
 nav_order: 1
 ---
 
-This guide walks you through setting up freestruct. If you hit any snags, the [FAQ](/guides/cache-busting-faq) might help.
+This guide walks you through setting up Freestruct. If you hit any snags, the [FAQ](/guides/cache-busting-faq) might help.
 
 ## TL;DR
 
@@ -24,13 +24,13 @@ npx freestruct
 
 ## Prerequisites
 
-- **Node.js 20+** - Run `node --version` to check (freestruct is ESM and requires Node 20 or newer)
+- **Node.js 20+** - Run `node --version` to check (Freestruct is ESM and requires Node 20 or newer)
 - **A static site generator** - Jekyll, Hugo, Docusaurus, anything
 - **Terminal access** - Command line, not GUI
 
 Don't have Node? Install it from [nodejs.org](https://nodejs.org) or via homebrew: `brew install node`.
 
-## Step 1: Install freestruct
+## Step 1: Install Freestruct
 
 ```bash
 npm install --save-dev freestruct
@@ -69,7 +69,7 @@ og:
 
 **Don't skip the description** - it's what people see in Google results.
 
-## Step 3: Run freestruct
+## Step 3: Run Freestruct
 
 After your SSG builds:
 
@@ -141,7 +141,7 @@ Or add to your `package.json`:
 
 1. **Check the hash** - View page source, look for `freestruct-build`
 2. **Verify outputDir** - Does it match your SSG's output folder?
-3. **Check config** - Run `cat docs/freestruct.config.yml` and verify `site.name` and `site.url` on first run; freestruct prints `[freestruct] config warning` lines for any key it does not recognize
+3. **Check config** - Run `cat docs/freestruct.config.yml` and verify `site.name` and `site.url` on first run; Freestruct prints `[freestruct] config warning` lines for any key it does not recognize
 4. **See the [FAQ](/guides/cache-busting-faq)** - We documented every weird edge case
 
 ## Next Steps

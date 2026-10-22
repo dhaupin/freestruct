@@ -117,7 +117,7 @@ contract becomes honest: schema-checked, diagnosed, opinionated defaults.
   crashtest, the one-surface pack model, and links; adoption is one `packs:`   line) with the first pack: **`freestruct-docs-shapes` 0.1.1** (0.1.1:
    the noindex oracles tightened to true content-shape after a docs page
    that legitimately DISCUSSES noindex false-positived EXPLOITED in the
-   live dogfood - a shape lesson, recorded in the source) — five
+   live dogfood - a shape lesson, recorded in the source) - five
   zero-dependency, zero-socket attacks over a freestruct-built docs tree as
   served by any static host: hostile-traversal-404, gen404-noindex-canary
   (#11 contract), noindex-artifact-leak (#5 rule), canonical-query-poison,

@@ -65,7 +65,7 @@ Yes! This is actually why we built it:
 - GitHub's CDN can be slow to propagate
 - Custom domains via CloudFlare need manual purge
 
-With freestruct, every commit automatically busts caches. No manual purge needed.
+With Freestruct, every commit automatically busts caches. No manual purge needed.
 
 ## Does this work with Netlify/Vercel?
 
@@ -139,7 +139,7 @@ site:
 
 Each environment gets its own hash. Perfect for CI/CD pipelines with multiple environments.
 
-## What's the difference between freestruct's cache busting and asset hashing?
+## What's the difference between Freestruct's cache busting and asset hashing?
 
 SSGs often hash static assets (JS, CSS, images) with filenames like `app.a1b2c3d4.js`. This is great but:
 

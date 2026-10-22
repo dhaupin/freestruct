@@ -1,15 +1,15 @@
 ---
 layout: default
-title: freestruct - the post-build SEO layer for static doc sites
+title: Freestruct - the post-build SEO layer for static doc sites
 description: Run one command after any SSG builds and every page of your docs carries complete SEO meta, a real sitemap, an RSS feed, a noindex 404, cache-busted assets and validated links. No plugins, no template edits.
 nav_order: 0
 ---
 
 # Your docs deserve real SEO. One command after the build.
 
-freestruct is a post-build SEO layer for static doc sites. Run it after any
+Freestruct is a post-build SEO layer for static doc sites. Run it after any
 static site generator - Jekyll, Hugo, Astro, you name it - and your build
-stays untouched. freestruct reads the built HTML and finishes the SEO every
+stays untouched. Freestruct reads the built HTML and finishes the SEO every
 page still needs: complete meta, a real `sitemap.xml`, `robots.txt`, an RSS
 feed, a noindex `404.html`, cache-busted assets and validated links.
 No plugins, no template edits.
@@ -20,7 +20,7 @@ No plugins, no template edits.
 | --- | --- |
 | Any SSG | your build, untouched |
 | Built tree | plain HTML files |
-| freestruct | `npx freestruct` - one command, zero plugins |
+| Freestruct | `npx freestruct` - one command, zero plugins |
 | SEO-grade tree | meta + artifacts, fresh on every run |
 
 ## Install
@@ -60,7 +60,7 @@ yours. Nothing overwritten, nothing guessed.
 
 ## It generates HTML too
 
-freestruct does not stop at injecting tags into your pages. It also writes
+Freestruct does not stop at injecting tags into your pages. It also writes
 complete HTML and machine-readable output for you:
 
 - A noindex `404.html`, generated when your built tree lacks one. Your own
@@ -81,7 +81,7 @@ cp -r node_modules/freestruct/init/docs .
 
 ## Any generator. No plugins.
 
-Your SSG builds - freestruct finishes. Jekyll, Hugo, Docusaurus, MkDocs,
+Your SSG builds - Freestruct finishes. Jekyll, Hugo, Docusaurus, MkDocs,
 VitePress, Astro, Eleventy - or anything that emits HTML.
 
 ## Quick start
@@ -103,7 +103,7 @@ VitePress, Astro, Eleventy - or anything that emits HTML.
      url: https://example.com/docs
    ```
 
-3. **Run freestruct** - Config and output dir are discovered
+3. **Run Freestruct** - Config and output dir are discovered
    automatically; every page and artifact gets finished.
 
    ```bash
@@ -112,7 +112,7 @@ VitePress, Astro, Eleventy - or anything that emits HTML.
 
 ## For agents too
 
-freestruct is agent-hardened and CI-proven. The boring trust facts are
+Freestruct is agent-hardened and CI-proven. The boring trust facts are
 pinned by a 41-test battery and run on every push:
 
 - `exit 0` quietly means the tree finished; `1 / 2 / 3` name exactly which
@@ -125,9 +125,9 @@ pinned by a 41-test battery and run on every push:
 - `AGENTS.md` at the repo root orients a coding agent in one file
 - config semantics are battery-pinned before any doc claims them
 
-## With freestruct vs doing it by hand
+## With Freestruct vs doing it by hand
 
-| With freestruct | Doing it by hand |
+| With Freestruct | Doing it by hand |
 | --- | --- |
 | Write 4 lines of config once | Edit every page template |
 | Run one command after build | Maintain a plugin per SSG forever |

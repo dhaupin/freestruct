@@ -10,7 +10,7 @@ nav_order: 17
 
 Every page starts with YAML frontmatter:
 
-<!-- TRUTH-KNOB: yaml below is a Jekyll frontmatter sample, not a freestruct config -->
+<!-- TRUTH-KNOB: yaml below is a Jekyll frontmatter sample, not a Freestruct config -->
 ```yaml
 ---
 title: Page Title

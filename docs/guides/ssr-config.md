@@ -5,7 +5,7 @@ description: Complete reference for freestruct.config.yml options
 
 ## Overview
 
-`freestruct.config.yml` is the central configuration file for freestruct. It defines your site's SEO settings that get injected into every page.
+`freestruct.config.yml` is the central configuration file for Freestruct. It defines your site's SEO settings that get injected into every page.
 
 > NOTE: before v0.6.0 the file was named `ssr-config.yml`. Both names are read (the legacy name participates in the same upward search), but new installs should use `freestruct.config.yml`.
 

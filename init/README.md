@@ -1,8 +1,8 @@
-# freestruct init kit
+# Freestruct init kit
 
 This is the consumer scaffold kit (prestruct's `init/` pattern, sized to
-freestruct): the minimum a brand-new project copies in to be freestruct-ready
-in minutes. freestruct runs AFTER your static site generator builds, so the
+Freestruct): the minimum a brand-new project copies in to be Freestruct-ready
+in minutes. Freestruct runs AFTER your static site generator builds, so the
 kit is deliberately SSG-agnostic - your Jekyll/Hugo/Docusaurus/MkDocs setup
 stays untouched.
 

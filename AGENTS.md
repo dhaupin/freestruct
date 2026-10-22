@@ -1,4 +1,4 @@
-# AGENTS.md: freestruct
+# AGENTS.md: Freestruct
 
 Engineering history and the house rules, written for an AI agent (or human)
 picking this repo up cold. Read before touching anything. Every rule here was
@@ -15,7 +15,7 @@ warts, decisions); [labs/TASKS.md](labs/TASKS.md) is the pass log.
 
 ## What this repo is
 
-**freestruct** is a framework-agnostic post-build SEO layer for static doc
+**Freestruct** is a framework-agnostic post-build SEO layer for static doc
 sites. It runs AFTER any SSG finishes - no plugins, no coupling to the SSG.
 It reads the built output HTML and injects what every page still misses:
 SEO/OG/JSON-LD metadata, `sitemap.xml`, `robots.txt`, `feed.xml`, a noindex
@@ -40,7 +40,7 @@ SEO/OG/JSON-LD metadata, `sitemap.xml`, `robots.txt`, `feed.xml`, a noindex
 | `engine/_freestruct/` | Canonical packaged templates (the ONLY place to edit them)   |
 | `bin/freestruct.mjs`  | Thin CLI shim consumers install (`npm run build` style entry) |
 | `init/`     | Consumer scaffold kit (starter config + template copies, version-stamped) |
-| `docs/`     | The docs site, and the worked example itself: Jekyll + freestruct + Pagefind |
+| `docs/`     | The docs site, and the worked example itself: Jekyll + Freestruct + Pagefind |
 | `packs/`    | The crashtest extension surface (one pack: `freestruct-docs-shapes`)   |
 | `scripts/`  | CI/tooling: template sync, docs audit, tarball e2e, pack selftest, language gate |
 | `test/`     | `node test/run.js` - the fixture battery (39 pins) + version truth     |

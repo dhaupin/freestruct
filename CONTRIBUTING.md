@@ -1,12 +1,12 @@
-# Contributing to freestruct
+# Contributing to Freestruct
 
-Thanks for looking at freestruct. The contribution path is the same for
+Thanks for looking at Freestruct. The contribution path is the same for
 humans and agents; this file is the short version, [AGENTS.md](AGENTS.md)
 carries the full house rules.
 
-## What freestruct is (scope discipline)
+## What Freestruct is (scope discipline)
 
-freestruct is a **post-build SEO layer for static doc sites**. It runs after
+Freestruct is a **post-build SEO layer for static doc sites**. It runs after
 any SSG (Jekyll, Hugo, Docusaurus MkDocs, VitePress, Astro, Eleventy) has
 built the output tree, reads the built HTML, and injects what pages still
 miss: SEO/OG/Twitter/JSON-LD metadata, `sitemap.xml`, `robots.txt`,
@@ -62,7 +62,7 @@ engine source opens with `// engine/<file>.js - <purpose>`.
 Open an issue with the actual behavior: the version, the config (redact
 URLs if needed), the exit code, and the artifact diffs you expected. If it
 only reproduces on a specific SSG, include the built HTML page (pre and post
-freestruct).
+Freestruct).
 
 ## License
 

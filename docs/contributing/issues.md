@@ -11,11 +11,11 @@ nav_order: 22
 ### Problem
 - CDNs (CloudFlare, Fastly, CloudFront) cache aggressively
 - Basic Cache-Control meta tags are ignored by CDNs
-- SSG asset hashing only covers their own assets, not freestruct-injected content
-- Downstream CDNs don't know freestruct updated the build
+- SSG asset hashing only covers their own assets, not Freestruct-injected content
+- Downstream CDNs don't know Freestruct updated the build
 
 ### Solution (Implemented)
-freestruct now provides **two independent mechanisms**:
+Freestruct now provides **two independent mechanisms**:
 
 1. **Automatic Hash Injection** (always on):
    - SHA1 build hash generated per build from config + timestamp

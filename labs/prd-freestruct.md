@@ -1,6 +1,6 @@
 # PRD: Freestruct rehaul (stone handoff)
 
-**Status:** ~~Planning (pre-rehaul)~~ → **Phases 0–2 complete (see\nlabs/TASKS.md pass log). Phase 3 in progress**. Authored 2026-10-20 from a\nfull code read. Owner calls so far: ESM + node >= 20 (§4.2), config renamed\n`freestruct.config.yml` w/ back-compat (§4.3), search.json opt-in (§4.5),\nnoindex honored by default (§4.4). **Version frozen at 0.6.0 per owner — do\nnot bump; see labs/TASKS.md VERSION POLICY.**
+**Status:** ~~Planning (pre-rehaul)~~ → **Phases 0-2 complete (see\nlabs/TASKS.md pass log). Phase 3 in progress**. Authored 2026-10-20 from a\nfull code read. Owner calls so far: ESM + node >= 20 (§4.2), config renamed\n`freestruct.config.yml` w/ back-compat (§4.3), search.json opt-in (§4.5),\nnoindex honored by default (§4.4). **Version frozen at 0.6.0 per owner - do\nnot bump; see labs/TASKS.md VERSION POLICY.**
 **Authors:** prestruct agent session, on behalf of the owner.
 **Reads first:** freestruct README.md, CHANGELOG.md, issue tracker (#2-#8),
 docs/lib/inject.js, package.json.
@@ -121,13 +121,13 @@ possible). Behavior parity is asserted by the fixture battery each step.
 -  README rewritten around a WORKING quick start (install -> config scaffold ->
   build -> verify), stale claims culled (home.html `v0.2.0` badge), releases
   flow documented (tags publish, CHANGELOG is the changelog).
-- Decide search.json's fate (F12): **RESOLVED in Phase 2 — kept as opt-in
+- Decide search.json's fate (F12): **RESOLVED in Phase 2 - kept as opt-in
   (`searchIndex: true`), docs site stays Pagefind-only.**
 - **update (owner call, this pass): version stays 0.6.0 through this phase;
-  no v1.0.0 tag/bump is baked in — see labs/TASKS.md VERSION POLICY.**
+  no v1.0.0 tag/bump is baked in - see labs/TASKS.md VERSION POLICY.**
 - **update (this pass): the "home.html v0.2.0 badge" figure no longer exists
   in the tree (verified by read; no home.html/docs/home.html/docs/index.html
-  found) — the stale-claim sweep targets the live files instead.**
+  found) - the stale-claim sweep targets the live files instead.**
 
 ---
 
@@ -168,7 +168,7 @@ playbook, and its two owner-gate lessons transfer directly:
    number cannot make a monolith either of those.
 2. **Version truth in front, not behind:** ~~tag the rehaul release as
    `v1.0.0` the moment Phase 2 lands~~ **update (owner call, this pass): the
-   version is FROZEN at 0.6.0 — no bump now or at Phase 3's end; see
+   version is FROZEN at 0.6.0 - no bump now or at Phase 3's end; see
    labs/TASKS.md VERSION POLICY. The *aligned-by-CI-pin* idea stands, it just
    pins 0.6.0 everywhere instead of promoting to v1.0.0.**
 3. **First publish is manual, exactly once.** npm OIDC/Trusted Publisher
