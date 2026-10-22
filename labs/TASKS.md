@@ -519,9 +519,12 @@ closed. What remains is owner action plus one bookkeeping sweep.
   (`--ink-light` WCAG) is moot in the current tree - no `--ink` token exists
   in `docs/assets` or the layouts anymore (if it is ever reintroduced, the
   `#94867a` AA-passing shape is already proven in crashtest's copy).
-- Issue-queue close-out: #2-#14 are fixed in the rehaul (pin-referenced in
-  the battery/CHANGELOG) but still track as OPEN in the issue queue - the
-  receipt sweep that closes them is bookkeeping, not build work.
+- Issue queue is CLEAN (verified against the tracker, not the old ledger
+  text): #2-#16 are all CLOSED (the owner closed them on 2026-10-22; #1 was
+  never filed - it lived in the PRD's internal numbering only). This pass
+  attached the sweep receipts: each of #2-#14 now carries a closing comment
+  naming its fix (engine module / battery pin / CI gate) so the closure is
+  traceable, not vibes.
 - **Before the npm release, owner actions only (PRD 4.1 steps 3-4):**
   1. One-time manual bootstrap publish from a dev machine (`npm publish;
      OIDC cannot create a brand-new package; do not set
