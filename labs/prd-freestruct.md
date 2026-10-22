@@ -1,6 +1,6 @@
 # PRD: Freestruct rehaul (stone handoff)
 
-**Status:** ~~Planning (pre-rehaul)~~ → **Phases 0-2 complete (see\nlabs/TASKS.md pass log). Phase 3 in progress**. Authored 2026-10-20 from a\nfull code read. Owner calls so far: ESM + node >= 20 (§4.2), config renamed\n`freestruct.config.yml` w/ back-compat (§4.3), search.json opt-in (§4.5),\nnoindex honored by default (§4.4). **Version frozen at 0.6.0 per owner - do\nnot bump; see labs/TASKS.md VERSION POLICY.**
+**Status:** ~~Planning (pre-rehaul)~~ -> **Phases 0-2 complete (see\nlabs/TASKS.md pass log). Phase 3 in progress**. Authored 2026-10-20 from a\nfull code read. Owner calls so far: ESM + node >= 20 (section 4.2), config renamed\n`freestruct.config.yml` w/ back-compat (section 4.3), search.json opt-in (section 4.5),\nnoindex honored by default (section 4.4). **Version frozen at 0.6.0 per owner - do\nnot bump; see labs/TASKS.md VERSION POLICY.**
 **Authors:** prestruct agent session, on behalf of the owner.
 **Reads first:** freestruct README.md, CHANGELOG.md, issue tracker (#2-#8),
 docs/lib/inject.js, package.json.
@@ -211,7 +211,7 @@ Phase 3) rides along so the docs site passes the same gates at v1.0.0.
 
 ## 5.5 Docs-pipleline learnings from prestruct + vant (2026-10-21)
 
-Focused “absorb” pass over dhaupin/prestruct (full clone read) and
+Focused "absorb" pass over dhaupin/prestruct (full clone read) and
 dhaupin/vant docs pipeline, ahead of Phases 2-3.
 
 ### Ground truth: who actually consumes freestruct today

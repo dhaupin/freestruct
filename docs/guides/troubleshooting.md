@@ -81,11 +81,11 @@ preserveExistingMeta: false
 Use **spaces** (not tabs) in YAML:
 
 ```yaml
-# ✅ Correct
+# CORRECT
 site:
   name: My Site
 
-# ❌ Wrong
+# WRONG
 site:
 	name: My Site
 ```

@@ -210,10 +210,10 @@ Configure cache policies:
 ### Why This Works
 
 With Freestruct's asset query params:
-1. Build runs → assets get `?v=abc123`
-2. CDN sees new URL (`app.css?v=abc123`) → fetches from origin
+1. Build runs -> assets get `?v=abc123`
+2. CDN sees new URL (`app.css?v=abc123`) -> fetches from origin
 3. CDN caches `app.css?v=abc123` for 1 year
-4. Next deploy → assets get `?v=xyz789`
-5. CDN sees new URL → fetches fresh, caches new version
+4. Next deploy -> assets get `?v=xyz789`
+5. CDN sees new URL -> fetches fresh, caches new version
 
 The `?v=` makes each build a unique URL, so CDN always fetches once, then serves from cache.

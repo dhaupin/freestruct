@@ -61,7 +61,7 @@ Cold-start order:
 2. `labs/prd-freestruct.md` - phases and decisions. Work belongs to a phase.
 3. `labs/TASKS.md` - pass log. Record what you did and what the next pass picks up.
 4. Agents: the stone in `horcrux/` is the project-history snapshot (boot
-   convention documented in the PRD §4; the password lives in the filename).
+   convention documented in the PRD section 4; the password lives in the filename).
 5. Pull requests: same review posture as the docs guides describe
    ([contributing guide](https://freestruct.creadev.org/contributing/style)).
 

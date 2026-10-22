@@ -34,20 +34,20 @@ Engineering decisions and technical details for Freestruct docs and the Freestru
 
 ```text
 Your SSG Build (ANY - Jekyll/Hugo/Docusaurus/VitePress/MkDocs)
-         ↓
+         v
    [SSG output folder - _site/public/build/site]
-         ↓
+         v
    node bin/freestruct.mjs [output-folder]
-         ↓
+         v
    freestruct reads:
    - freestruct.config.yml (your site config)
    - inject-brand.html (SEO template)
-         ↓
+         v
    freestruct outputs (same folder):
    - Modified .html files with SEO injected
    - sitemap.xml (auto-generated)
    - 404.html (with SEO)
-         ↓
+         v
    CDN Purge Hooks (optional)
 ```
 
@@ -96,7 +96,7 @@ Two layers ensure content freshness:
 1. **`<meta name="freestruct-build" content="{hash}">`** - Debug tag in HTML head
 2. **Canonical URL with query param** - `<link rel="canonical" href="...?v={hash}">`
 
-CDNs see different HTML → must re-fetch → fresh content.
+CDNs see different HTML -> must re-fetch -> fresh content.
 
 ### Hash Generation
 
@@ -129,7 +129,7 @@ Available variables: `$SITE_URL`, `$BUILD_HASH`, `$OUTPUT_DIR`
 ## Search Implementation (PageFind)
 
 ### How it works
-- PageFind compiled at build time → outputs to `docs/pagefind/`
+- PageFind compiled at build time -> outputs to `docs/pagefind/`
 - Runtime: ES module dynamic import + `await pagefind.init()`
 - Custom modal UI (not PageFindUI widget)
 

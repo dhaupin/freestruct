@@ -53,7 +53,7 @@ Always use `-` instead of `—` or `–`.
 |--------|----------|
 | `"Git is memory - every commit is a checkpoint"` | `"Git is memory — every commit is a checkpoint"` |
 
-### 2. Avoid AI Clichés
+### 2. Avoid AI Cliches
 
 These phrases are overused:
 
@@ -171,7 +171,7 @@ Why: Docs can be rendered with Jekyll (syntax highlighting, navigation, search).
 
 Show don't vs shouldn't.
 
-### Before (Cliché)
+### Before (Cliche)
 
 > "Discover the future of SEO with Freestruct - the ultimate solution to unlock seamless meta tag injection across your static sites."
 
@@ -184,7 +184,7 @@ Show don't vs shouldn't.
 Check all content for:
 
 - [ ] Em dashes replaced with hyphens
-- [ ] Cliché phrases removed
+- [ ] Cliche phrases removed
 - [ ] Specific over abstract
 - [ ] Active voice
 

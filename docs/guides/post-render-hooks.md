@@ -11,8 +11,8 @@ Freestruct isn't just for SEO. It's a **build-time HTML processor** that runs af
 ## What Is Post-Render Processing?
 
 ```text
-Your SSG builds → Freestruct modifies → deploy
-                 ↑
+Your SSG builds -> Freestruct modifies -> deploy
+                 ^
            This is your hook
 ```
 

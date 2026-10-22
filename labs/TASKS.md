@@ -16,12 +16,12 @@
   - `/home/daytona/vant` - the **prototype freestruct was made from** (not a
     consumer - confirmed: no ssr-config.yml, no `_freestruct/`, no injector in
     their `/docs` build; it is pure Jekyll + Pagefind). Borrowed tidbits are
-    recorded in `labs/prd-freestruct.md` §5.5.
+    recorded in `labs/prd-freestruct.md` section 5.5.
 - **Test battery:** `node test/run.js` from the repo root (fixture site in
   `test/fixtures/main`). `npm test` is wired the same way.
 - **VERSION POLICY (owner call, this pass):** STAY ON 0.6.0. Do not bump the
   package/README/CHANGELOG version - no 0.7.0, no 1.0.0 bump. Work lands on
-  0.6.0 until the owner says otherwise. (The v1.0.0 *path* from the PRD §4.1
+  0.6.0 until the owner says otherwise. (The v1.0.0 *path* from the PRD section 4.1
   still applies as a plan; the version NUMBER itself is frozen.)
 - **Verification convention:** a failure triggered rechecking process-state,
   auth intact, retry/identical output checks, and expandability probes; source
@@ -47,7 +47,7 @@
 - Audited the rigging; warts classed by crash impact (issues #1-#14 in the
   PRD, "verified, not vibes").
 - Wrote `labs/prd-freestruct.md`: 4 phases (0-3), owner-decision list
-  (§4), the v1.0.0 path (§4.1), success criteria (§5).
+  (section 4), the v1.0.0 path (section 4.1), success criteria (section 5).
 - Owner picked the stone password (`v5frogstone2026`); stone minted in the
   prestruct repo (temporary home until freestruct repo owns `horcrux/`).
 
@@ -96,7 +96,7 @@
 - Deep-dive of `github.com/dhaupin/vant` done BEFORE its status was clear;
   truth-check: vant does **not** consume freestruct - it is the prototype
   freestruct was extracted from (owner confirmed).
-- Adopt-worthy tidbits (recorded in PRD §5.5): Pagefind-via-official-npm dist
+- Adopt-worthy tidbits (recorded in PRD section 5.5): Pagefind-via-official-npm dist
   (`npm i --no-save pagefind` + `npx pagefind --site _site`, replaces the old
   curl-scrape dance), inline `cd docs && jekyll build` safety belt, and the
   single-source nav + no-theme docs frame (the Phase 3 port item).
@@ -134,7 +134,7 @@
 
 ### Pass 8 - Phase 3: docs frame + audit gates + release story (done, on 0.6.0)
 - **Version freeze honored throughout:** every edit landed on 0.6.0; the
-  PRD's v1.0.0 tagging steps (§3 Phase 3 endpoint, §4.1 step 2) are annotated
+  PRD's v1.0.0 tagging steps (section 3 Phase 3 endpoint, section 4.1 step 2) are annotated
   as superseded by the owner call. Tarball re-verified (17 files).
 - **Nav layer resolved (PRD option: delete the generator):** new
   `docs/_data/nav.yml` single-source menu (prestruct shape, `site.data.nav`
@@ -153,8 +153,8 @@
   mentions kept deliberately); emoji in prose; untagged fences; a broken
   layout link; `description` missing in two frontmatters. All fixed; gates
   clean.
-- **README rewritten:** working quick start (install → config scaffold →
-  build → verify → flags), honest opt-in search story, Releases section
+- **README rewritten:** working quick start (install -> config scaffold ->
+  build -> verify -> flags), honest opt-in search story, Releases section
   (CHANGELOG is the changelog, tags are the release story, CI version pin
   stays), and the stale-claim culls (hero badge de-versioned in the layout;
   the battery's version-truth pin caught the rewrite dropping the `## v0.6.0`
@@ -165,7 +165,7 @@
 - **Pushed everything:** 54-file rehaul commit landed on `main`
   (66cc52f..759d0a4) via Freebuff's managed credential; includes Phase 1-3
   code, TASKS log, and the refreshed stone.
-- **Pagefind-via-npm swap (§5.5 tidbit 1):** docs.yml now does
+- **Pagefind-via-npm swap (section 5.5 tidbit 1):** docs.yml now does
   `npm install --no-save pagefind` + `npx pagefind --site docs/_site`; the
   `npm install -g` global is gone.
 - **Link-check graduated (#4):** the `--strict` lever is adopted in our own
@@ -189,7 +189,7 @@
 - **Version pin tightened to the freeze:** the battery's version-truth pin
   now enforces exactly 0.6.0 in package.json + README + CHANGELOG until the
   owner says otherwise.
-- **Jekyll-leg safety belt (§5.5 tidbit 2):** docs.yml build step inlines
+- **Jekyll-leg safety belt (section 5.5 tidbit 2):** docs.yml build step inlines
   `cd docs &&` instead of trusting step-level working-directory.
 
 ### Pass 10 - prestruct-shaped house structure: engine/ + init/ + bin/ (done, on 0.6.0)
@@ -198,8 +198,8 @@
   shipped in `files`), `example/` (dogfood site), `bin/cli.mjs` (thin CLI),
   and syncs engine-vs-kit copies in CI (the W1 engine-drift lesson, which
   bit their published qc.test, encoded as a `sync:check` CI step).
-- Mapping executed: `docs/lib/*.js` → **`engine/`** (8 modules + orchestrator,
-  `main`/`exports` point there); canonical packaged templates →
+- Mapping executed: `docs/lib/*.js` -> **`engine/`** (8 modules + orchestrator,
+  `main`/`exports` point there); canonical packaged templates ->
   **`engine/_freestruct/`** (fixed a `'../_freestruct/'` vs `'./_freestruct/'`
   sibling-path bug the battery's fallback pin caught immediately);
   **`/docs` stays the example** (staged template copies restored via sync,
@@ -224,8 +224,8 @@
 - **First real GitHub Pages `--strict` harvest (Phase 4 candidate, done):**
   the last two pushes' docs runs were failing at 0s and nobody had looked:
   docs.yml itself was UNPARSEABLE YAML - two step names carried unquoted
-  `cd:` / `--strict:` (plain-scalar `: ` kills the file), so the “0s
-  failure” was GitHub refusing the workflow, not a build failure. Classical
+  `cd:` / `--strict:` (plain-scalar `: ` kills the file), so the "0s
+  failure" was GitHub refusing the workflow, not a build failure. Classical
   CI-verifier lesson: `test.yml` proved the engine green while the Pages
   pipeline silently never ran. Annotations moved into step comments; all
   four workflow files now battery-pinned to parse-check locally
@@ -242,7 +242,7 @@
   address the parked URLs the layout actually serves.
 - **Stone refreshed at pass end** (convention, deferred twice - now done):
   vant snapshot re-run; horizon `horcrux/freestruct-p_v5frogstone2026.svg`
-  updated, sha256 `6dd67eca…d449ef` verified against the vant output.
+  updated, sha256 `6dd67eca...d449ef` verified against the vant output.
 - Version freeze untouched: everything above ships under 0.6.0.
 
 ### Pass 12 - crashtest pack surface: packs/ + freestruct-docs-shapes + dogfood (done, on 0.6.0)
@@ -302,7 +302,7 @@
   in crashtest's vendored copy of the layout (already fixed there to
   #94867a = 5.25:1) and ships NOWHERE in the freestruct tree - but the
   same failure class did exist in OUR theme: the code-block language label
-  #888 on #1f2937 = 4.14:1 → now #9ca3af = 5.78:1 (WCAG 2.x luminance math,
+  #888 on #1f2937 = 4.14:1 -> now #9ca3af = 5.78:1 (WCAG 2.x luminance math,
   computed, with the receipt in the CSS comment).
 - **Receipts sweep done: #2-#16 all CLOSED with per-issue receipts** -
   battery pin numbers, CHANGELOG/PRD phase references, pack/wire guards
@@ -316,7 +316,7 @@
 ### Pass 14 - CI tempo: measured, then cached (done, on 0.6.0)
 - **Q from the owner: does freestruct actually work? Speed up the CI?
   Answered with run-step telemetry, not vibes.** The tmp-install proof is
-  scripts/e2e-install.cjs - real `npm pack` → throwaway install →
+  scripts/e2e-install.cjs - real `npm pack` -> throwaway install ->
   README quick start through the bin shim - CI-gated on EVERY push (and
   hard-gated in publish.yml); it caught two real fresh-install bugs and
   is green on the current commits.
@@ -454,11 +454,11 @@ discipline). docs/AGENTS.md stays the rendered engineering-decisions page;
   and #16 (docs theme `--ink-light` fails WCAG AA; fix shape
   `#94867a` already proven in crashtest's copy).
 - Phase 4 residual: npm bootstrap publish + Trusted Publisher entry (PRD
-  §4.1 steps 3-4) - owner actions on npmjs.com; everything on the repo side
+  section 4.1 steps 3-4) - owner actions on npmjs.com; everything on the repo side
   is now gated and ready for the first `v*` tag whenever the owner makes it.
 - Beyond that, the open PRD items are owner-level calls, not build work:
   any owner decisions on the residual questions in labs/prd-freestruct.md
-  §4 (the resolved-set is already in). No repo-side gate remains open on
+  section 4 (the resolved-set is already in). No repo-side gate remains open on
   the freestruct side.
 
 **Reminder (recorded twice on purpose, hard to see, easy to violate):** DO

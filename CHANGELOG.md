@@ -313,12 +313,12 @@ silently regress metadata.
 - **404.html regeneration**: Now properly removes old freestruct-build meta tags when regenerating 404.html.
 
 ### Testing Verified
-- ✅ Build hash updates correctly on each run (different hash each build)
-- ✅ Assets get same hash as meta tag (consistent across page)
-- ✅ Old `?v=` params properly stripped (even `?v=old` gets replaced)
-- ✅ Canonical URL replaced correctly (no duplicates)
-- ✅ sitemap.xml generates correctly
-- ✅ 404.html gets fresh hash with search form
+- [x] Build hash updates correctly on each run (different hash each build)
+- [x] Assets get same hash as meta tag (consistent across page)
+- [x] Old `?v=` params properly stripped (even `?v=old` gets replaced)
+- [x] Canonical URL replaced correctly (no duplicates)
+- [x] sitemap.xml generates correctly
+- [x] 404.html gets fresh hash with search form
 
 ## [0.2.3] - 2026-04-25
 
