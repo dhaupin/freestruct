@@ -232,15 +232,16 @@ Two shipped surfaces beyond the engine:
   README/CHANGELOG truth. Single source, no drift.
 - `CHANGELOG.md` is the changelog; releases are tagged (`v*`) and
   CHANGELOG-truthful or they don't ship.
-- Current release: **0.9.0** (the owner's version call, 2026-10-22; see
-  `labs/TASKS.md` for the version policy).
+- Current release: **1.0.0** (the owner's version call, 2026-10-22 - the
+  first stable release; see `labs/TASKS.md` for the version policy).
 - Deployment truth lives in [DEPLOY.md](DEPLOY.md): the GitHub Pages pipeline
   (this repo's own docs site deploys through it) and the npm release runbook.
 
-## v0.9.0
+## v1.0.0
 
-This number carries the full rehaul-era stack, accumulated under the 0.6.0
-freeze and released as one truthful number by owner call:
+First stable release. It carries the full rehaul-era stack (accumulated
+under the 0.6.0 freeze, promoted truthfully as 0.9.0), the prestruct port
+wave, and the toolchain maturity landed on 2026-10-22:
 
 - Config renamed to `freestruct.config.yml` with legacy read; schema-checked
   with loud diagnostics; FAST_FAIL exit codes + `--tolerant`
@@ -258,6 +259,12 @@ freeze and released as one truthful number by owner call:
 - Release truth: tarball e2e CI gate + hard publish gate; version pinned
 - crashtest pack surface (`packs/public/freestruct-docs-shapes`) with CI
   teeth on every push and the Pages build
+- Port wave from prestruct: attribute-escaped injection, og/twitter image
+  parity, `author` + JSON-LD founder, per-page override comments, custom
+  `jsonLd`, deterministic build hash, CLI subcommands (`validate`/`init`/
+  `help`), `FREESTRUCT_URL` env override
+- Toolchain: Node-24-compatible GH action majors, Jekyll 4.4 + Ruby 3.4,
+  js-yaml 5.5, packaging validated dry (npm tarball + GitHub source tar)
 
 ---
 

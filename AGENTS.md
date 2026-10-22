@@ -86,10 +86,11 @@ npm run e2e                  # tarball e2e: fresh install quick start through th
 
 ## Working rules the gates pin down
 
-- **Version pin:** everything ships under **0.9.0** (owner call,
-  2026-10-22, superseding the earlier 0.6.0 freeze; `labs/TASKS.md` VERSION
-  POLICY has the trail; the battery pin enforces one number everywhere).
-  No tags were cut yet; npm publish is owner-gated - the whole
+- **Version pin:** everything ships under **1.0.0** (owner call,
+  2026-10-22, first stable, superseding the earlier 0.6.0 freeze and the
+  0.9.0 pin; `labs/TASKS.md` VERSION POLICY has the trail; the battery pin
+  enforces one number everywhere).
+  The manual npm bootstrap is done; tags are still owner-gated - the whole
   runbook is in [DEPLOY.md](DEPLOY.md).
 - **Engine changes go in `engine/` only.** The templates move via
   `npm run sync`; guide-facing CLI truth moves via the battery's

@@ -506,6 +506,22 @@ discipline). docs/AGENTS.md stays the rendered engineering-decisions page;
 - **docs/discussions/announcing-v1.0.0.md** added, prestruct's announcement
   frame: a copy-pasteable Discussions post draft for when v1.0.0 is cut.
 
+### Pass 21 - version sweep to 1.0.0 (owner call, done on 1.0.0)
+- The owner completed the one-time manual npm bootstrap; the package is on
+  npm. Per owner call the version truth moves 0.9.0 -> 1.0.0 across the
+  four agreement spots (package.json, README release line + `## v1.0.0`
+  heading, CHANGELOG top entry, `init/VERSION`) plus the runbook example
+  tag (release.yml), DEPLOY/CONTRIBUTING/AGENTS pin wording, the v1.0.0
+  section intro (first stable - carries the rehaul stack, the port wave
+  and the toolchain pass), and the TASKS reminder.
+- Announcement draft at docs/discussions/announcing-v1.0.0.md updated: the
+  bootstrap is done, only the tag remains before the post goes into
+  Discussions.
+- **NO TAG cut by instruction** - the owner gates it; publish.yml +
+  release.yml fire from v1.0.0 when it lands.
+- Battery version pin green at 1.0.0; sync:check, lint:docs and the tarball
+  e2e clean before the push.
+
 ## Next up (open, unowned)
 
 State of this list as of Pass 20 (truth-up over the stale entries below it
@@ -539,5 +555,6 @@ closed. What remains is owner action plus one bookkeeping sweep.
   docs audit (7 gates), template sync, tarball e2e, crashtest pack selftest
   + docs dogfood and the version-truth pin are all CI-green on main.
 
-**Reminder (current truth, supersedes the freeze):** the pin wall enforces
-0.9.0 everywhere until the owner promotes to the release tag.
+**Reminder (current truth):** the pin wall enforces 1.0.0 everywhere - the
+first stable release, owner sweep applied 2026-10-22. The manual npm
+bootstrap is done; the tag is the only remaining owner gate.

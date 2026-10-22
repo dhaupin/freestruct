@@ -108,7 +108,7 @@ test('package.json is ESM, node >= 20, and ships the house structure (bin + engi
 
 // ---------- version truth (issue #7) ----------
 
-test('README, package.json and CHANGELOG agree on one version (frozen 0.9.0 pin)', () => {
+test('README, package.json and CHANGELOG agree on one version (1.0.0 owner pin)', () => {
   const pkg = JSON.parse(read('.', 'package.json'));
   const readme = read('.', 'README.md');
   const changelog = read('.', 'CHANGELOG.md');
@@ -118,10 +118,10 @@ test('README, package.json and CHANGELOG agree on one version (frozen 0.9.0 pin)
   assert.ok(changeVer, 'CHANGELOG must open with a "## [X.Y.Z]" version entry');
   assert.strictEqual(readmeVer, pkg.version, 'README version heading must equal package.json version');
   assert.strictEqual(changeVer, pkg.version, 'CHANGELOG top entry must equal package.json version');
-  // Owner call (labs/TASKS.md VERSION POLICY, updated 2026-10-22): the
-  // number is pinned on 0.9.0 - the pin enforces exactly 0.9.0 everywhere
-  // until the owner moves it again.
-  assert.strictEqual(pkg.version, '0.9.0', 'version pinned at 0.9.0 by owner call - see the VERSION POLICY in labs/TASKS.md first');
+  // Owner call (2026-10-22): the pin moved to 1.0.0 - the first stable
+  // release. The manual npm bootstrap is done; only the tag remains
+  // owner-gated (see labs/TASKS.md VERSION POLICY).
+  assert.strictEqual(pkg.version, '1.0.0', 'version pinned at 1.0.0 by owner call - see the VERSION POLICY in labs/TASKS.md first');
 });
 
 test('README quickstart YAML example actually parses (issue #8)', () => {

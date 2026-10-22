@@ -12,7 +12,8 @@ nav_order: 21
 
 _The draft announcement post for Discussions. Technical, changelog-style.
 Copy the code block below into the community announcement category when
-v1.0.0 is cut (version truth today: 0.9.0; the tag owner-gates the release).
+v1.0.0 is cut (version truth today: 1.0.0 - the manual npm bootstrap is
+already done; the tag is all that owner-gates the release).
 Prose follows the repo content-style contract: direct, dry, no em dashes, no
 marketing language._
 

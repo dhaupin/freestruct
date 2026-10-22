@@ -2,6 +2,22 @@
 
 All notable changes to freestruct will be documented here.
 
+## [1.0.0] - 2026-10-22
+
+First stable release. The manual npm bootstrap put the package on npm; from
+here on, every release publishes from a version tag with provenance
+(`.github/workflows/publish.yml` + the Trusted Publisher entry). One truth
+number: `1.0.0` agrees across package.json, README, this changelog and
+`init/VERSION`, battery-pinned.
+
+This release carries the rehaul-era stack promoted as [0.9.0] plus the
+prestruct SEO port wave (attribute escaping, og/twitter card parity,
+`author` -> JSON-LD founder, per-page override comments, custom `jsonLd`,
+deterministic content hash, the `validate`/`init`/`help` CLI subcommands,
+the `FREESTRUCT_URL` env override) and the CI/toolchain bump
+(Node-24-compatible action majors, Jekyll 4.4, Ruby 3.4, js-yaml 5.5,
+pagefind 1.5.2, prismjs 1.30). Full detail in the entries below.
+
 ## [0.9.0] - 2026-10-22
 
 Owner version call: 0.9.0 is the release-truth number for the rehaul-era

@@ -61,9 +61,9 @@ configured for the repository; the CNAME is `freestruct.creadev.org`
 
 Every push and pull request runs:
 
-1. `npm test` - the fixture battery (41 pins), including the version-truth
+1. `npm test` - the fixture battery (49 pins), including the version-truth
    pin that enforces the triple agreement (README / package.json /
-   CHANGELOG) and the pinned **0.9.0** (owner call, 2026-10-22).
+   CHANGELOG) and the pinned **1.0.0** (owner call, 2026-10-22).
 2. Docs audit (`npm run lint:docs`) - frontmatter, links, nav symmetry,
    style, truthfulness, English-only language gate, and the engine-header
    comment format gate.
@@ -111,8 +111,9 @@ npm publish
 
 The version truth is enforced in CI: the battery pin refuses any README /
 package.json / CHANGELOG triplet that disagrees. Everything currently ships
-under one number, `0.9.0` (owner call, 2026-10-22, superseding the earlier
-0.6.0 freeze; `labs/TASKS.md` VERSION POLICY has the trail) - a future bump
+under one number, `1.0.0` (owner call, 2026-10-22, first stable; the trail:
+the 0.6.0 freeze was lifted to 0.9.0, then promoted on;
+`labs/TASKS.md` VERSION POLICY has the trail) - a future bump
 is one edit in those three places plus `init/VERSION`, then the pin keeps
 them honest.
 
