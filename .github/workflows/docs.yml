@@ -61,12 +61,21 @@ jobs:
       - name: Crashtest the built docs
         run: node node_modules/crashtest/bin/crashtest.js run
 
-      - name: Install Pagefind (official npm dist, not the global install)
-        working-directory: docs
-        run: npm install --no-save pagefind
-
+      # Pinned + cached: the pagefind npm package resolves a platform
+      # BINARY at install and cost the runner 355s cold (measured); keyed on
+      # the version, a cache hit skips that entirely (same pattern as the
+      # crashtest installer cache).
+      - name: Restore pagefind (indexer cache)
+        id: pf
+        uses: actions/cache@v4
+        with:
+          path: node_modules/pagefind
+          key: pagefind-1.5.0
+      - name: Install Pagefind (cache misses only, pinned)
+        if: ${{ steps.pf.outputs['cache-hit'] != 'true' }}
+        run: npm install --no-save --no-audit --no-fund pagefind@1.5.0
       - name: Index search
-        run: npx pagefind --site docs/_site
+        run: node node_modules/pagefind/lib/runner/bin.cjs --site docs/_site
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

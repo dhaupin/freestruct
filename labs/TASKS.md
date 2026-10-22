@@ -313,6 +313,30 @@
   pushes should stay near ~2min with npm's cache warm).
 - Version freeze untouched: everything ships under 0.6.0.
 
+### Pass 14 — CI tempo: measured, then cached (done, on 0.6.0)
+- **Q from the owner: does freestruct actually work? Speed up the CI?
+  Answered with run-step telemetry, not vibes.** The tmp-install proof is
+  scripts/e2e-install.cjs — real `npm pack` → throwaway install →
+  README quick start through the bin shim — CI-gated on EVERY push (and
+  hard-gated in publish.yml); it caught two real fresh-install bugs and
+  is green on the current commits.
+- **The bottleneck was never pagefind** (1s install + 1s index in the
+  previous run's telemetry): step timings showed `Crashtest the built
+  docs` at 422s and `Install freestruct deps` at 301s. Log line that
+  named the cause: `npm install github:crashtest#<sha>` = "added 1
+  package in 7m" cold on a runner, while the campaign itself ran in ~1s
+  (353 requests).
+- **Fixes (9717caf + this pass):** crashtest's github install is now
+  cached `node_modules/crashtest` keyed by the pinned gate sha in BOTH
+  workflows (misses-only install; direct bin call, no npx dependency on
+  .bin state); docs.yml gained `npm ci` + setup-node `cache: npm` (was
+  a plain `npm install`); and pagefind — which became the new 355s sink
+  (its npm package resolves a platform binary cold) — got the same
+  treatment: `pagefind@1.5.0` pinned, cached by version, bin called
+  directly. Bump a pin = new cache key = fresh install, honestly.
+- CI runs after the change: test + Deploy Docs green on the pushed head.
+- Version freeze untouched: everything ships under 0.6.0.
+
 ## Next up (open, unowned)
 
 - Work the residual issue queue with receipts: #2–#14 are fixed in the

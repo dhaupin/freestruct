@@ -62,7 +62,8 @@ contract becomes honest: schema-checked, diagnosed, opinionated defaults.
   version pinned (0.6.0, frozen per owner call).
 - Pagefind indexing in the docs workflow moved to the official npm dist
   (`npm install --no-save pagefind` + `npx pagefind`); the global install is
-  gone.
+  gone. (Now pinned `pagefind@1.5.0` and cache-guarded by version after
+  step telemetry showed a 355s cold binary resolution on runners.)
 - Link-check graduated: the docs CI now runs the injector with `--strict`,
   so broken internal links fail the GitHub Pages build (report-only stayed
   the default for consumers).
