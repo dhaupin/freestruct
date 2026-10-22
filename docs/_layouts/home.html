@@ -7,7 +7,7 @@
     <meta name="description" content="{{ page.description | default: 'Post-build SEO layer for static doc sites' }}">
     <link rel="canonical" href="{{ page.url | absolute_url }}">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='4' y='4' width='24' height='24' rx='4' fill='%232563eb'/><path d='M8 12h4v4H8zM14 12h4v4h-4zM20 12h4v4h-4zM8 18h4v4H8zM14 18h4v4h-4zM20 18h4v4h-4z' fill='white' opacity='0.6'/><path d='M10 10h12v2H10zM14 14h4v2h-4z' fill='white'/></svg>">
-    <meta name="theme-color" content="#0b0e18">
+    <meta name="theme-color" content="#0f0f12">
     <script>
         /* Theme before first paint: saved choice wins, then OS preference,
            then the lander's designed dark default. */
@@ -23,37 +23,40 @@
         /* Lander design system: dark-first, blue accent, no framework.
            freestruct itself injects the og/twitter/JSON-LD tags that carry
            this page - missing-only, so the head stays out of the way. */
+        /* Palette: the exact docs-site tokens (default.html :root dark-set,
+           mapped to one name each), so the toggle paints the SAME theme on
+           the lander and on every docs page. The toggle state was already
+           shared via localStorage('theme') + data-theme; only the paint
+           differed. */
         :root {
-            --bg: #0b0e18;
-            --bg-raised: #111527;
-            --bg-card: #131833;
-            --line: #232945;
-            --ink: #e8ecf8;
-            --ink-soft: #b6bfd6;
-            --ink-mute: #8b95b3;
+            --bg: #0f0f12;
+            --bg-raised: #18181c;
+            --bg-card: #18181c;
+            --line: #2a2a32;
+            --ink: #e8e8e8;
+            --ink-soft: #a0a0a0;
+            --ink-mute: #707070;
             --accent: #2563eb;
-            --accent-soft: #6d97ff;
+            --accent-soft: #3b82f6;
             --ok: #34d399;
             --radius: 14px;
         }
-        /* Light theme: same family, same blue - toggled from the header.
-           The choice persists in localStorage and falls back to the OS
-           preference; dark stays the designed default. */
+        /* Light theme: same tokens as the docs pages' [data-theme=light] set. */
         html[data-theme=light] {
-            --bg: #fafbfd;
+            --bg: #fafafa;
             --bg-raised: #ffffff;
             --bg-card: #ffffff;
-            --line: #e2e6f0;
-            --ink: #17203a;
-            --ink-soft: #47536e;
-            --ink-mute: #6b7590;
+            --line: #e0e0e0;
+            --ink: #222222;
+            --ink-soft: #666666;
+            --ink-mute: #888888;
             --accent: #2563eb;
-            --accent-soft: #2563eb;
+            --accent-soft: #1d4ed8;
             --ok: #15803d;
         }
-        html[data-theme=light] .nav { background: rgba(250,251,253,0.88); }
-        html[data-theme=light] a:hover { color: #1d4fd8; }
-        html[data-theme=light] .agents { background: linear-gradient(180deg, rgba(37,99,235,0.08), #ffffff); }
+        html[data-theme=light] .nav { background: rgba(250,250,250,0.88); }
+        html[data-theme=light] a:hover { color: #1d4ed8; }
+        html[data-theme=light] .search-modal { background: rgba(34,34,34,0.3); }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
         body {
@@ -61,6 +64,7 @@
             background: var(--bg);
             color: var(--ink);
             line-height: 1.6;
+            transition: background 0.3s, color 0.3s;
             -webkit-font-smoothing: antialiased;
         }
         a { color: var(--accent-soft); text-decoration: none; }
@@ -108,7 +112,6 @@
         /* Search modal: same Pagefind index the docs shell uses */
         .search-modal { display: none; position: fixed; inset: 0; z-index: 60; background: rgba(4,6,12,0.62); }
         .search-modal.open { display: flex; align-items: flex-start; justify-content: center; padding: 12vh 20px 0; }
-        html[data-theme=light] .search-modal { background: rgba(23,32,58,0.32); }
         .search-box { width: 100%; max-width: 560px; background: var(--bg-raised); border: 1px solid var(--line);
             border-radius: 14px; overflow: hidden; box-shadow: 0 24px 64px rgba(0,0,0,0.5); }
         .search-box input { width: 100%; padding: 15px 18px; background: none; border: none; outline: none;
@@ -207,7 +210,7 @@
 
         /* Agent lane */
         .agents { border: 1px solid rgba(37,99,235,0.4); border-radius: 18px; padding: 30px 28px;
-                  background: linear-gradient(180deg, rgba(37,99,235,0.10), rgba(17,21,39,0.9)); }
+                  background: linear-gradient(180deg, rgba(37,99,235,0.10), transparent), var(--bg-card); }
         .agents ul { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 26px; margin-top: 20px; }
         .agents li { font-size: 14px; color: var(--ink-soft); padding-left: 24px; position: relative; }
         .agents li::before { content: '\2713'; position: absolute; left: 0; color: var(--ok); font-weight: 700; }
