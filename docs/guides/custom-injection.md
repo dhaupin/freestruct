@@ -1,7 +1,7 @@
 ---
 title: Custom Injection
 description: Add custom code via injection hooks
-nav_order: 14
+nav_order: 7
 ---
 
 # Custom Injection
@@ -56,7 +56,9 @@ All hooks support these placeholders:
 
 The files are loaded only if they exist - no config needed.
 
-## See also
+## Related
 
+- [Template](/guides/template) - Frontmatter and page conventions
 - [Cache Busting](/guides/cache-busting) - Understanding the hash
 - [Post-Render Hooks](/guides/post-render-hooks) - Beyond SEO
+- [Freestruct.config Reference](/guides/ssr-config) - Configuration reference

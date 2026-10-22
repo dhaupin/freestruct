@@ -1,7 +1,7 @@
 ---
 title: Feature Roadmap
 description: Planned features and open issues
-nav_order: 22
+nav_order: 13
 ---
 
 ## Cache Busting Feature
@@ -49,3 +49,8 @@ Freestruct now provides **two independent mechanisms**:
 ### Future Enhancements
 - Could add built-in Fastly/CloudFront providers (but shell hooks cover it)
 - Could add cache headers to HTTP responses (server-specific)
+
+## Related
+
+- [Voice & Style](/contributing/style) - How Freestruct docs are written
+- [Engineering Decisions](/engineering-decisions) - Where shipped decisions land

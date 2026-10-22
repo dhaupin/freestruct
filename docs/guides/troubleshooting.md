@@ -1,7 +1,7 @@
 ---
 title: Troubleshooting
 description: Common issues and how to fix them
-nav_order: 18
+nav_order: 10
 ---
 Common issues and solutions.
 
@@ -153,3 +153,9 @@ No built-in debug mode yet. To debug:
   - Error message
   - Your config (redact secrets)
   - SSG you're using
+
+## Related
+
+- [Cache Busting FAQ](/guides/cache-busting-faq) - URL freshness errors covered there
+- [CI/CD](/guides/cicd) - Pipeline-specific failures
+- [Getting Started](/getting-started) - Restart from the basics

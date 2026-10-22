@@ -144,8 +144,10 @@ Or add to your `package.json`:
 3. **Check config** - Run `cat docs/freestruct.config.yml` and verify `site.name` and `site.url` on first run; Freestruct prints `[freestruct] config warning` lines for any key it does not recognize
 4. **See the [FAQ](/guides/cache-busting-faq)** - We documented every weird edge case
 
-## Next Steps
+## Related
 
 - [Configuration](/configuration) - All available options
 - [Cache Busting Guide](/guides/cache-busting) - Why the hash matters
 - [FAQ](/guides/cache-busting-faq) - Pain points and solutions
+- [CI/CD Recipes](/guides/cicd) - Automating the deploy pipeline
+- [Troubleshooting](/guides/troubleshooting) - When a step fails

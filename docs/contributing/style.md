@@ -3,7 +3,7 @@ permalink: /contributing/style.html
 layout: default
 title: Voice & Style
 description: How Freestruct docs are written - voice rules, formatting and fence conventions
-nav_order: 21
+nav_order: 12
 ---
 # Voice & Style
 
@@ -235,4 +235,9 @@ Preview checks happen through `_layouts/default.html` (its includes live under `
 | Tips/Notes | Blockquote with a label (>, NOTE: or WARNING:) |
 | Warnings | Why it matters (1 sentence) |
 
-See also: [Configuration](/configuration), [Getting Started](/getting-started)
+## Related
+
+- [Feature Roadmap](/contributing/issues) - What is in flight right now
+- [Template](/guides/template) - The page template showing these rules applied
+- [Configuration](/configuration) - Doc-worthy surface to write about
+- [Getting Started](/getting-started) - Installed and running

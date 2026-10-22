@@ -1,6 +1,7 @@
 ---
 title: Cache Busting
 description: Ensure your content is always fresh with Freestruct's cache busting system
+nav_order: 4
 ---
 
 Freestruct provides a built-in cache busting system that ensures your content is always fresh, regardless of which CDN or caching layer sits in front of your site. It works **agnostic of your SSG** - just runs post-build on your output HTML.
@@ -217,3 +218,9 @@ With Freestruct's asset query params:
 5. CDN sees new URL -> fetches fresh, caches new version
 
 The `?v=` makes each build a unique URL, so CDN always fetches once, then serves from cache.
+
+## Related
+
+- [Cache Busting FAQ](/guides/cache-busting-faq) - Answers to the common freshness questions
+- [Post-Render Hooks](/guides/post-render-hooks) - Post-build processing beyond SEO
+- [Freestruct.config Reference](/guides/ssr-config) - cacheBusting options in full

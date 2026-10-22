@@ -1,6 +1,7 @@
 ---
 title: Freestruct.config.yml Reference
 description: Complete reference for freestruct.config.yml options
+nav_order: 11
 ---
 
 ## Overview
@@ -278,5 +279,6 @@ FREESTRUCT_URL=https://staging.example.com npx freestruct
 
 ## Related
 
-- [Getting Started](/getting-started)
-- [Configuration](/configuration)
+- [Getting Started](/getting-started) - First-run installation and quick start
+- [Configuration](/configuration) - The high-level overview of every feature
+- [Troubleshooting](/guides/troubleshooting) - When a config key misbehaves

@@ -1,7 +1,7 @@
 ---
 title: CI/CD
 description: Deploy Freestruct with GitHub Actions
-nav_order: 13
+nav_order: 6
 ---
 
 Freestruct integrates with any CI/CD. Here's how with GitHub Actions.
@@ -195,3 +195,9 @@ npx freestruct public
 # Docusaurus
 npx freestruct build
 ```
+
+## Related
+
+- [Cache Busting FAQ](/guides/cache-busting-faq) - CDN freshness questions that show up in pipelines
+- [Troubleshooting](/guides/troubleshooting) - When a step fails, start here
+- [Freestruct.config Reference](/guides/ssr-config) - outputDir and purge hook options

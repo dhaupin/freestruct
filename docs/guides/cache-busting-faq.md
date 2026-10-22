@@ -1,7 +1,7 @@
 ---
 title: Cache Busting FAQ
 description: Common questions about Freestruct's cache busting system
-nav_order: 10
+nav_order: 5
 ---
 
 ## Why do I need this? My site is already built.
@@ -183,3 +183,9 @@ You'll see the hash change every single deploy.
 ## Still have questions?
 
 This is a pain we've all felt. If your specific scenario isn't covered, open an issue. We built this because we were tired of "why isn't my docs updating" at 2am.
+
+## Related
+
+- [Cache Busting](/guides/cache-busting) - How the hash system works
+- [CI/CD Recipes](/guides/cicd) - Purge hooks in pipelines
+- [Troubleshooting](/guides/troubleshooting) - Errors outside this FAQ

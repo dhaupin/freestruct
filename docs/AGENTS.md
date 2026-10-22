@@ -1,7 +1,7 @@
 ---
 title: Engineering Decisions
 description: Technical details for Freestruct
-nav_order: 5
+nav_order: 14
 permalink: /engineering-decisions
 ---
 
