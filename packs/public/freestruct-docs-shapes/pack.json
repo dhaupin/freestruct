@@ -2,6 +2,6 @@
   "schemaVersion": 1,
   "name": "freestruct-docs-shapes",
   "description": "Static-host wire truths for freestruct-built docs trees: hostile-traversal refusal, generated-404 noindex, noindex artifact (sitemap/search/feed) leaks, query-independent canonicals, XML artifact shape. Zero dependencies, zero sockets.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "entry": "index.js"
 }

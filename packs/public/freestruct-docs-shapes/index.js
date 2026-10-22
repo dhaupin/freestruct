@@ -101,6 +101,19 @@ function locPath(loc) {
 /** RAW unescaped ampersand: any & not opening a legal XML entity. */
 const RAW_AMP = /&(?!amp;|lt;|gt;|quot;|apos;|#\d+;|#x[0-9A-Fa-f]+;)/;
 
+/**
+ * Content-SHAPE noindex oracle. The doctrine says content-shape, and the
+ * first release violated it: the oracle searched page BODIES for the word
+ * 'noindex', so a docs page that legitimately DISCUSSES noindex
+ * (docs/AGENTS.md's quirk list) false-positived EXPLOITED in CI. A page is
+ * noindex only when it CARRIES a robots meta that declares it:
+ *   <meta name="robots" content="... noindex ...">  (attribute order free)
+ */
+function pageIsNoindex(html) {
+  const metas = String(html).match(/<meta[^>]*name=["']robots["'][^>]*>/gi) || [];
+  return metas.some((m) => /noindex/i.test(m));
+}
+
 export default {
   name: 'freestruct-docs-shapes',
   description: 'static-host wire truths for freestruct-built docs trees: traversal refusal, generated-404 noindex, noindex artifact leaks, query-independent canonicals, XML artifact shape (zero dependencies, zero sockets)',
@@ -177,12 +190,12 @@ export default {
         if (rec.status !== 404) {
           return refused(`missing path answered ${rec.status} (not 200, not 404) - host posture note; freestruct contract not provable at this wire`, { status: rec.status });
         }
-        if (!/\bnoindex\b/i.test(rec.text)) {
+        if (!pageIsNoindex(rec.text)) {
           return exhausted(
-            `404 body for "${probe}" carries no noindex - the generated-404 contract (issue #11) regressed on this host's error page`,
+            `404 body for "${probe}" ships no robots-noindex meta - the generated-404 contract (issue #11) regressed on this host's error page`,
           );
         }
-        return refused(`404 canary held: clean 404 status + noindex meta present on the error body (issue #11 contract held)`, { status: 404 });
+        return refused(`404 canary held: clean 404 status + robots-noindex meta present on the error body (issue #11 contract held)`, { status: 404 });
       },
     },
 
@@ -204,7 +217,7 @@ export default {
           const path = locPath(loc);
           const page = await get(harness, route, path);
           if (page.threw) continue;
-          if (page.text && /\bnoindex\b/i.test(page.text)) noindexed.push(path);
+          if (page.text && pageIsNoindex(page.text)) noindexed.push(path);
         }
         if (!noindexed.length) {
           return refused(`${locs.length} sitemap URL(s) wired; none carries a noindex meta - no artifact can leak`);

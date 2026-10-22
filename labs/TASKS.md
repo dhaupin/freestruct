@@ -415,6 +415,16 @@ discipline). docs/AGENTS.md stays the rendered engineering-decisions page;
   pass: none load-bearing - future pins grow with features.
 - **End-to-end:** audit 7/7 gates clean, battery 41/41, sync lockstep,
   tarball e2e proven, pack teeth proven, workflows parse.
+- **The CI dogfood found one more - and it was OURS, twice over:** the live
+  Pages build went red with `noindex-artifact-leak: EXPLOITED` on
+  /engineering-decisions. Truth chain: no noindex exists anywhere on that
+  page (frontmatter clean, layout emits none) - the pack's noindex
+  oracles searched page BODIES for the WORD, and docs/AGENTS.md
+  legitimately discusses noindex, so the oracle false-positived. Broke
+  the pack's own content-shape doctrine (0.1.0 -> 0.1.1): both oracles now
+  require the robots META that declares noindex (attribute order free);
+  documented in-source with the failure story. Selftest teeth re-proven
+  both ways; battery unchanged (fixture pages genuinely noindex).
 - Version freeze untouched: everything ships under 0.6.0.
 
 ## Next up (open, unowned)
