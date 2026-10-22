@@ -9,8 +9,8 @@ This guide walks you through setting up freestruct. If you hit any snags, the [F
 ## TL;DR
 
 ```bash
-# 1. Install
-npm install
+# 1. Install (the freestruct npm package)
+npm install --save-dev freestruct
 
 # 2. Build your site (your SSG, any flavor)
 jekyll build   # or hugo, docusaurus build, etc
@@ -24,20 +24,22 @@ npx freestruct
 
 ## Prerequisites
 
-- **Node.js 18+** - Run `node --version` to check
+- **Node.js 20+** - Run `node --version` to check (freestruct is ESM and requires Node 20 or newer)
 - **A static site generator** - Jekyll, Hugo, Docusaurus, anything
 - **Terminal access** - Command line, not GUI
 
 Don't have Node? Install it from [nodejs.org](https://nodejs.org) or via homebrew: `brew install node`.
 
-## Step 1: Install Dependencies
+## Step 1: Install freestruct
 
 ```bash
-cd your-docs-folder
-npm install js-yaml
+npm install --save-dev freestruct
 ```
 
-That's it. Freestruct has zero runtime dependencies. `js-yaml` is the only thing it needs.
+That's it. The npm package ships everything it needs at runtime,
+including its one dependency (`js-yaml`) - npm installs it automatically
+with the package. You only install dependencies by hand when running the
+engine from a repo checkout.
 
 ## Step 2: Create Your Config
 
@@ -116,8 +118,8 @@ Add this to your GitHub Actions workflow:
   with:
     node-version: '20'
 
-- name: Install dependencies
-  run: npm install js-yaml
+- name: Install freestruct
+  run: npm install --save-dev freestruct
 
 - name: Build site + inject SEO
   run: |

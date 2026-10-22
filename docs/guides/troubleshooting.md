@@ -13,13 +13,18 @@ Common issues and solutions.
 Error: Cannot find module 'js-yaml'
 ```
 
-**Fix:** Install the dependency:
+**Fix:** freestruct runs through the freestruct npm package, which ships
+`js-yaml` as its own dependency - install the package rather than the
+dependency by hand:
 
 ```bash
-npm install js-yaml
+npm install --save-dev freestruct
 # or
-yarn add js-yaml
+yarn add -D freestruct
 ```
+
+Running the engine from a repo checkout instead? Install `js-yaml` there
+(`npm install js-yaml`) - that is the only case where it is a manual step.
 
 ---
 

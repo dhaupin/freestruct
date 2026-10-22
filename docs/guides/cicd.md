@@ -22,8 +22,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install deps
-        run: npm install
+      - name: Install freestruct
+        run: npm install --save-dev freestruct
 
       - name: Build docs
         run: npm run docs  # your SSG build command
@@ -138,7 +138,7 @@ Add to `vercel.json`:
 ```yaml
 build:
   script:
-    - npm install
+    - npm install --save-dev freestruct
     - your-ssg-build
     - npx freestruct docs/_site
   artifacts:
@@ -168,10 +168,18 @@ grep freestruct-build /tmp/test-build/index.html
 
 ### Missing js-yaml
 
+The freestruct npm package ships `js-yaml` as its own dependency, so a
+package install never needs a manual entry. Only a repo checkout does:
+
 ```bash
-# Ensure package.json has:
-"js-yaml": "^4.0.0"
+# repo checkout only:
+# ensure package.json has:
+"js-yaml": "^4.1.0"
 ```
+
+Using `npx freestruct` without a local install? npx fetches the package
+with its dependency the first time (`npx --yes freestruct` skips the
+prompt).
 
 ### Wrong output path
 
