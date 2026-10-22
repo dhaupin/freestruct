@@ -87,4 +87,4 @@ Use markdown tables for structured data:
 ## Related
 
 - [Voice & Style Guide](/contributing/style) - Writing conventions
-- [Freestruct.config.yml Reference](/guides/ssr-config) - Configuration options
+- [Freestruct.config.yml Reference](/guides/freestruct-config) - Configuration options

@@ -94,7 +94,7 @@ correctly; real content changes always flip it. See
 
 ## Related
 
-- [Freestruct.config Reference](/guides/ssr-config) - every config key the
+- [Freestruct.config Reference](/guides/freestruct-config) - every config key the
   default run consumes
 - [CI/CD](/guides/cicd) - wiring `npx freestruct` into Pages, Actions,
   Netlify, Cloudflare and Vercel

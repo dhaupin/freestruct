@@ -64,5 +64,5 @@ is untouched.
 
 ## Related
 
-- [Freestruct.config Reference](/guides/ssr-config)
+- [Freestruct.config Reference](/guides/freestruct-config)
 - [Template](/guides/template)

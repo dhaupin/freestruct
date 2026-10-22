@@ -148,7 +148,7 @@ layered tools:
    lines in the run output - nothing dies silently
 3. `npx freestruct --tolerant` reports fatal errors with exit `0` for CI
    tolerance runs
-4. Verify config keys against the [Freestruct.config Reference](/guides/ssr-config)
+4. Verify config keys against the [Freestruct.config Reference](/guides/freestruct-config)
    and the [CLI Reference](/guides/cli)
 
 ---

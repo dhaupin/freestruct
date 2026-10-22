@@ -200,4 +200,4 @@ npx freestruct build
 
 - [Cache Busting FAQ](/guides/cache-busting-faq) - CDN freshness questions that show up in pipelines
 - [Troubleshooting](/guides/troubleshooting) - When a step fails, start here
-- [Freestruct.config Reference](/guides/ssr-config) - outputDir and purge hook options
+- [Freestruct.config Reference](/guides/freestruct-config) - outputDir and purge hook options

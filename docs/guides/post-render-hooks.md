@@ -166,4 +166,4 @@ When processing HTML at build time:
 
 - [Cache Busting](/guides/cache-busting) - Built-in hash system
 - [Template](/guides/template) - How inject-brand.html works
-- [Freestruct.config.yml Reference](/guides/ssr-config) - Configuration reference
+- [Freestruct.config.yml Reference](/guides/freestruct-config) - Configuration reference

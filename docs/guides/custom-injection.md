@@ -63,4 +63,4 @@ The files are loaded only if they exist - no config needed.
 - [Template](/guides/template) - Frontmatter and page conventions
 - [Cache Busting](/guides/cache-busting) - Understanding the hash
 - [Post-Render Hooks](/guides/post-render-hooks) - Beyond SEO
-- [Freestruct.config Reference](/guides/ssr-config) - Configuration reference
+- [Freestruct.config Reference](/guides/freestruct-config) - Configuration reference

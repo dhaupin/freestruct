@@ -222,4 +222,4 @@ The `?v=` makes each build a unique URL, so CDN always fetches once, then serves
 
 - [Cache Busting FAQ](/guides/cache-busting-faq) - Answers to the common freshness questions
 - [Post-Render Hooks](/guides/post-render-hooks) - Post-build processing beyond SEO
-- [Freestruct.config Reference](/guides/ssr-config) - cacheBusting options in full
+- [Freestruct.config Reference](/guides/freestruct-config) - cacheBusting options in full

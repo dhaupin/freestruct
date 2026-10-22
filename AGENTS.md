@@ -132,6 +132,6 @@ npm run e2e                  # tarball e2e: fresh install quick start through th
 
 - [README.md](README.md) - the product story: install, config, features
 - [DEPLOY.md](DEPLOY.md) - publishing truth: Pages pipeline + npm runbook
-- [the config guides](https://freestruct.creadev.org/guides/ssr-config) - the config contract, consumer-facing
+- [the config guides](https://freestruct.creadev.org/guides/freestruct-config) - the config contract, consumer-facing
 - [packs/README.md](packs/README.md) - the crashtest pack surface
 - [docs/AGENTS.md](docs/AGENTS.md) - the engineering-decisions page as a docs site page

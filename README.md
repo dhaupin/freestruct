@@ -43,7 +43,7 @@ og:
 
 `site.name` and `site.url` are required; everything else has a working default
 (the full reference is the [Configuration](#configuration) table below, and the
-[config guide](https://freestruct.creadev.org/guides/ssr-config) goes key by key).
+[config guide](https://freestruct.creadev.org/guides/freestruct-config) goes key by key).
 
 ### 3. Build, then inject
 
@@ -181,7 +181,7 @@ Full key list (unknown or retired keys produce warnings, not silence):
 | `cacheBusting.purge`                   | *(unset)*      | Purge hook list (name + command); disabled without `runHooks: true`                                   |
 
 The docs ([freestruct.creadev.org](https://freestruct.creadev.org)) carry the
-key-by-key guides: the [config reference](https://freestruct.creadev.org/guides/ssr-config),
+key-by-key guides: the [config reference](https://freestruct.creadev.org/guides/freestruct-config),
 [cache busting](https://freestruct.creadev.org/guides/cache-busting), [custom
 injection](https://freestruct.creadev.org/guides/custom-injection),
 [CLI reference](https://freestruct.creadev.org/guides/cli),

@@ -137,6 +137,6 @@ pinned by a 41-test battery and run on every push:
 ## Explore
 
 - [Getting started](/getting-started)
-- [Config guide](/guides/ssr-config)
+- [Config guide](/guides/freestruct-config)
 - [CI/CD recipes](/guides/cicd)
 - [Troubleshooting](/guides/troubleshooting)

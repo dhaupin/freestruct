@@ -278,7 +278,7 @@ Create or edit these files to add custom code. Files auto-load if they exist.
 
 1. Add placeholders to `inject-brand.html`
 2. Handle replacement in `inject.js::injectFile()`
-3. Document in `docs/guides/ssr-config.md` (the Freestruct.config.yml Reference page)
+3. Document in `docs/guides/freestruct-config.md` (the Freestruct.config.yml Reference page)
 
 ### Testing locally
 

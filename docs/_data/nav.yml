@@ -42,7 +42,7 @@
     - title: Troubleshooting
       url: /guides/troubleshooting
     - title: Freestruct.config Reference
-      url: /guides/ssr-config
+      url: /guides/freestruct-config
     - title: CLI Reference
       url: /guides/cli
 

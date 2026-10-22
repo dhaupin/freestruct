@@ -6,7 +6,7 @@ nav_order: 2
 
 ## Configure
 
-See the [Freestruct.config.yml Reference](/guides/ssr-config) for complete options.
+See the [Freestruct.config.yml Reference](/guides/freestruct-config) for complete options.
 
 ## Quick Example
 
@@ -39,4 +39,4 @@ og:
 ## Related
 
 - [Getting Started](/getting-started) - Install and set up Freestruct
-- [Freestruct.config.yml Reference](/guides/ssr-config) - All available options
+- [Freestruct.config.yml Reference](/guides/freestruct-config) - All available options
