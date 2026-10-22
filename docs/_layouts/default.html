@@ -440,7 +440,9 @@
             top: 8px;
             left: 16px;
             font-size: 0.75rem;
-            color: #888;
+            /* was #888 (4.14:1 on the #1f2937 pre background - below the 4.5:1 AA
+               floor for small text, the #16 failure class); #9ca3af = 5.78:1 */
+            color: #9ca3af;
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
@@ -813,7 +815,9 @@
         <button class="search-close" id="searchClose" aria-label="Close search">×</button>
     </div>
     
-    <script src="{{ 'pagefind/pagefind.js' | relative_url }}"></script>
+    <!-- Pagefind loads as a dynamic ESM import inside doSearch() below;
+         a static <script src> of the 1.5.x ESM bundle throws
+         'import.meta outside a module' (issue #15) - so no preload. -->
     <script>
         // Search functionality using Pagefind (matching prestruct approach)
         var searchTrigger = document.getElementById('searchTrigger');
@@ -821,7 +825,6 @@
         var searchInput = document.getElementById('searchInput');
         var searchResults = document.getElementById('searchResults');
         var searchClose = document.getElementById('searchClose');
-        var pfModule = null;
 
         async function doSearch(q) {
             if (q.length < 2) {
