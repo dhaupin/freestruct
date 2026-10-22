@@ -28,8 +28,9 @@ npx freestruct docs/_site
 
 ## Side Commands
 
-`validate` and `init` mirror the prestruct CLI surface (preload checks and
-scaffolding). They exit before any output tree is touched.
+`validate` and `init` mirror the CLI surface of [prestruct](https://github.com/dhaupin/prestruct),
+the separate, complimentary sibling Creadev project whose shape we borrow.
+They exit before any output tree is touched.
 
 ### validate
 

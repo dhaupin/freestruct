@@ -471,6 +471,19 @@ discipline). docs/AGENTS.md stays the rendered engineering-decisions page;
 - Battery 36 -> 49 green; sync:check, lint:docs (all 7 gates) and the
   tarball e2e all clean.
 
+### Pass 19 - config reference rename with a live redirect (done, on 0.9.0)
+- The Freestruct.config.yml Reference page dropped its legacy ssr-config
+  slug: `docs/guides/ssr-config.md` -> `docs/guides/freestruct-config.md`,
+  nav entry and every crosslink swept (docs pages, nav.yml, README, AGENTS);
+  no remaining `guides/ssr-config` references.
+- Old URL keeps resolving: a noindex redirect stub at
+  `docs/guides/ssr-config/index.html` (meta refresh + JS fallback to the new
+  URL, canonical pointed at the new location, noindex so the engine filters
+  the stub out of sitemap/feed - verified through the real engine). GH
+  Pages 301s the no-slash variant into the stub.
+- Battery 49/49 + lint:docs gates + tarball e2e clean; CI green and the live
+  URL shapes curl-verified (200 stub / 301 / 200 new canonical).
+
 ## Next up (open, unowned)
 
 - Work the residual issue queue with receipts: #2-#14 are fixed in the

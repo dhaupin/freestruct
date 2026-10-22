@@ -263,12 +263,18 @@ freeze and released as one truthful number by owner call:
 
 ## Project family
 
+Freestruct is one member of the Creadev doc-system family. The family shares
+conventions and a docs frame, but each project is separate and
+complimentary - freestruct imports nothing from its siblings.
+
 - [Freestruct docs](https://freestruct.creadev.org) - the docs site built from
   this repo (`docs/` is itself the worked example: Jekyll + Freestruct + Pagefind)
 - [docs.creadev.org](https://docs.creadev.org) - the Creadev docs system hub
 - [prestruct](https://github.com/dhaupin/prestruct) /
-  [prestruct.creadev.org](https://prestruct.creadev.org) - React SSG for
-  Cloudflare Pages (Freestruct's docs-frame sibling)
+  [prestruct.creadev.org](https://prestruct.creadev.org) - a separate,
+  complimentary project: a React SSG for Cloudflare Pages that shares the
+  docs frame and conventions (and some gates' patterns) with freestruct, but
+  installs, builds and ships nothing together with it
 - [prestruct docs](https://docs.creadev.org/prestruct) - the prestruct docs
   layer on the shared system
 - [crashtest](https://crashtest.creadev.org) - adversarial QA for agent-built

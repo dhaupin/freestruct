@@ -298,5 +298,5 @@ Create or edit these files to add custom code. Files auto-load if they exist.
 
 ## Related
 
-- [prestruct](https://github.com/dhaupin/prestruct) - React SSG for Cloudflare Pages (sister project)
+- [prestruct](https://github.com/dhaupin/prestruct) - React SSG for Cloudflare Pages; a separate, complimentary sibling project (shared conventions, zero code dependency)
 - [PageFind](https://pagefind.app/) - Static search used by Freestruct
