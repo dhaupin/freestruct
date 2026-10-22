@@ -1,242 +1,142 @@
 ---
 layout: default
-title: Freestruct
-description: Post-build SEO and search layer for static doc sites.
+title: freestruct - the post-build SEO layer for static doc sites
+description: Run one command after any SSG builds and every page of your docs carries complete SEO meta, a real sitemap, an RSS feed, a noindex 404, cache-busted assets and validated links. No plugins, no template edits.
 nav_order: 0
 ---
 
-<h1>Freestruct</h1>
+# Your docs deserve real SEO. One command after the build.
 
-<section class="intro">
-  <p>Freestruct adds SEO tags and search to your static docs after build. It works with any SSG - Jekyll, Hugo, Docusaurus, MkDocs, VitePress. Run it once, and every page gets proper meta tags, Open Graph cards, Twitter meta, a sitemap, and cache-busting hashes.</p>
-</section>
+freestruct is a post-build SEO layer for static doc sites. Run it after any
+static site generator - Jekyll, Hugo, Astro, you name it - and your build
+stays untouched. freestruct reads the built HTML and finishes the SEO every
+page still needs: complete meta, a real `sitemap.xml`, `robots.txt`, an RSS
+feed, a noindex `404.html`, cache-busted assets and validated links.
+No plugins, no template edits.
 
-<section class="how-it-works">
-  <h2>How it works</h2>
+## The pipeline
 
-  <p class="section-intro">Freestruct runs after your SSG builds your site. It scans your output folder, reads a simple config, and injects SEO into every HTML file.</p>
+| Stage | What happens |
+| --- | --- |
+| Any SSG | your build, untouched |
+| Built tree | plain HTML files |
+| freestruct | `npx freestruct` - one command, zero plugins |
+| SEO-grade tree | meta + artifacts, fresh on every run |
 
-  <div class="steps">
-    <div class="step">
-      <div class="step-content">
-        <h3>1. Build your docs</h3>
-        <p>Run your SSG like you always do. Jekyll, Hugo, Docusaurus, MkDocs - Freestruct doesn't care what you use. It only looks at the HTML files after they're built.</p>
-      </div>
-    </div>
+## Install
 
-    <div class="step">
-      <div class="step-content">
-        <h3>2. Run Freestruct</h3>
-        <p>A single command that reads your config, scans your output folder, and injects SEO into every HTML file.</p>
-        <pre><code>npx freestruct</code></pre>
-      </div>
-    </div>
+```bash
+npm i -D freestruct && npx freestruct
+```
 
-    <div class="step">
-      <div class="step-content">
-        <h3>3. Deploy</h3>
-        <p>Done. Your docs now have Open Graph tags, Twitter Cards, canonical URLs, sitemap.xml, and a unique hash that forces CDNs to fetch fresh content. No plugins, no template changes.</p>
-      </div>
-    </div>
-  </div>
-</section>
+## What lands on every page
 
-<section class="features-grid">
-  <h2>What you get</h2>
+Rank in search. Look sharp in every link preview. Everything below is
+injected into your built pages missing-only: what you already set stays
+yours. Nothing overwritten, nothing guessed.
 
-  <p class="section-intro">Freestruct handles all the SEO boilerplate so you don't have to. Configure once, and it injects everything.</p>
+- **Meta + canonical** - Full search-engine armor: title, description, a
+  self canonical, plus Open Graph, Twitter and JSON-LD blocks - added only
+  where a page is missing them, so your own settings always win.
+- **`sitemap.xml`** - Every page, one entry, real per-page `<lastmod>` dates
+  crawlers can trust - properly escaped XML.
+- **`robots.txt`** - Waves crawlers in and hands them your sitemap. The
+  pointer stays correct even on sub-path installs.
+- **RSS feed** - A feed readers actually subscribe to: escaped titles,
+  per-page `pubDate`, honest per-page dates.
+- **A noindex 404** - Dead ends resolve to a 404 that search engines skip.
+  Generated when your tree lacks one; a 404 you ship is finished, not
+  overwritten.
+- **Cache-busted assets** - Every asset URL carries a fresh per-build hash,
+  so CDNs always serve the latest version - with optional purge hooks for
+  your CDN.
+- **Sub-path friendly URLs** - Canonical, sitemap, feed and 404 links carry
+  `site.url + basePath` exactly once, so sub-path installs just work.
+- **Link validation** - Every internal link is checked on every run - and
+  with `--strict` a broken one fails the build, so dead links never ship.
+- **Loud diagnostics** - When something is off you get the named cause and
+  an exit code that says which step failed (1, 2 or 3), never a mystery
+  crash. `--tolerant` keeps experiments soft.
 
-  <div class="features">
-    <div class="feature">
-      <h3>Open Graph + Twitter Cards</h3>
-      <p>Every page gets proper meta tags for social previews. LinkedIn, Twitter, Slack - your docs look good everywhere. Configure your site name and image once, and Freestruct applies it everywhere.</p>
-    </div>
+## It generates HTML too
 
-    <div class="feature">
-      <h3>Canonical URLs</h3>
-      <p>Proper canonical tags on every page. Search engines index the right URL, not duplicates. Each page gets a canonical pointing to itself with a cache-busting query param.</p>
-    </div>
+freestruct does not stop at injecting tags into your pages. It also writes
+complete HTML and machine-readable output for you:
 
-    <div class="feature">
-      <h3>Cache-busting Hash</h3>
-      <p>Each build gets a unique hash injected into the HTML. The hash appears in a meta tag and in asset URLs (CSS, JS, images, fonts). When CDNs see a new URL with a fresh hash, they fetch fresh content. No manual purge needed.</p>
-    </div>
+- A noindex `404.html`, generated when your built tree lacks one. Your own
+  404 is respected and finished - never overwritten.
+- `sitemap.xml`, `robots.txt` and `feed.xml` written as real artifacts your
+  host can serve as-is.
+- Packaged SEO templates - the meta/canonical block, Open Graph, Twitter
+  and JSON-LD segments - ready to use as-is or as starting points. Stage a
+  copy in `docs/_freestruct/` and it always wins over the package-shipped
+  template.
+- The `init/` scaffold kit: a commented starter config plus template
+  copies, version-stamped to your install. Copy + go:
 
-    <div class="feature">
-      <h3>Auto Sitemap</h3>
-      <p>Freestruct generates sitemap.xml with all your pages. Search engines can crawl everything without help. The sitemap updates automatically on every build.</p>
-    </div>
+```bash
+npm install --save-dev freestruct
+cp -r node_modules/freestruct/init/docs .
+```
 
-    <div class="feature">
-      <h3>Custom Code Hooks</h3>
-      <p>Add custom code to every page via hooks. Header, body-start, and footer templates let you inject fonts, analytics, skip links - no template changes needed.</p>
-      <p><a href="guides/custom-injection">- Custom Hooks Guide</a></p>
-    </div>
+## Any generator. No plugins.
 
-    <div class="feature">
-      <h3>CDN Purge Hooks</h3>
-      <p>Configure CloudFlare, Fastly, or CloudFront to purge automatically after each build. Add a purge command to your config, and Freestruct runs it. Your docs stay fresh.</p>
-    </div>
+Your SSG builds - freestruct finishes. Jekyll, Hugo, Docusaurus, MkDocs,
+VitePress, Astro, Eleventy - or anything that emits HTML.
 
+## Quick start
 
-  <p><a href="configuration">- Full configuration reference</a></p>
-</section>
+1. **Build like always** - Your SSG stays untouched; whatever it emits is
+   the input.
 
-<section class="quickstart">
-  <h2>Quick setup</h2>
+   ```bash
+   jekyll build   # or hugo, mkdocs build, ...
+   ```
 
-  <p>Install the only dependency, create a config, run Freestruct:</p>
+2. **Add one config** - Site name + URL; options are optional. Unknown or
+   retired keys warn loudly, they never die silently.
 
-  <pre><code>npm install js-yaml
+   ```yaml
+   # docs/freestruct.config.yml
+   site:
+     name: My Docs
+     url: https://example.com/docs
+   ```
 
-# Create docs/freestruct.config.yml with your site info
+3. **Run freestruct** - Config and output dir are discovered
+   automatically; every page and artifact gets finished.
 
-npx freestruct</code></pre>
+   ```bash
+   npx freestruct
+   ```
 
-  <p>That's it. See <a href="getting-started">Getting Started</a> for the full guide.</p>
-</section>
+## For agents too
 
-<section class="why-Freestruct">
-  <h2>Why Freestruct?</h2>
+freestruct is agent-hardened and CI-proven. The boring trust facts are
+pinned by a 41-test battery and run on every push:
 
-  <p class="section-intro">Every static doc site needs the same SEO work. Freestruct does it for you automatically - so you can focus on writing docs.</p>
+- `exit 0` quietly means the tree finished; `1 / 2 / 3` name exactly which
+  step failed
+- fresh-install behavior is proven by the tarball e2e: real pack, real
+  install, real quick start
+- an adversarial crashtest pack attacks our own built docs in CI on every
+  push
+- broken-links-as-failures is how our own Pages deploy runs
+- `AGENTS.md` at the repo root orients a coding agent in one file
+- config semantics are battery-pinned before any doc claims them
 
-  <div class="features">
-    <div class="feature">
-      <h3>SSG Agnostic</h3>
-      <p>Works with whatever SSG you already use. Jekyll, Hugo, Docusaurus, MkDocs, VitePress - Freestruct just needs a folder of HTML files. It doesn't care how the HTML was generated.</p>
-    </div>
+## With freestruct vs doing it by hand
 
-    <div class="feature">
-      <h3>Zero Template Changes</h3>
-      <p>Don't edit your templates. Don't add plugins to your SSG. Freestruct works on the output files after your SSG is done. Your SSG configuration stays untouched - no lock-in.</p>
-    </div>
+| With freestruct | Doing it by hand |
+| --- | --- |
+| Write 4 lines of config once | Edit every page template |
+| Run one command after build | Maintain a plugin per SSG forever |
+| Switch SSGs without changing the SEO plan | Re-implement meta + sitemap each time |
+| Trust a CI that attacks its own output | Hope nothing regresses |
 
-    <div class="feature">
-      <h3>Configure Once</h3>
-      <p>One config file has your site name, URL, social handles, and image. Apply it to every page automatically. No repeating yourself across every page template.</p>
-    </div>
+## Explore
 
-    <div class="feature">
-      <h3>CI/CD Ready</h3>
-      <p>Add Freestruct to your GitHub Actions workflow. It runs after your SSG builds. Every deploy gets SEO automatically - no forgetting to update meta tags, no broken social previews.</p>
-    </div>
-  </div>
-</section>
-
-<section class="concepts">
-  <h2>The concept: post-build SEO</h2>
-
-  <p class="section-intro">Most SEO tools require template changes or SSG plugins. Freestruct takes a different approach - it runs after your site is built.</p>
-
-  <div class="features">
-    <div class="feature">
-      <h3>Post-build injection</h3>
-      <p>Your SSG builds your site as usual. Then Freestruct reads the HTML files and adds meta tags. This means your SSG doesn't need to know about SEO at all - Freestruct handles it separately.</p>
-    </div>
-
-    <div class="feature">
-      <h3>SSG independence</h3>
-      <p>Because Freestruct works on the output, it works with any SSG. Switch from Jekyll to Hugo? Just keep running Freestruct - your config stays the same.</p>
-    </div>
-
-    <div class="feature">
-      <h3>Single source of truth</h3>
-      <p>Your SEO config lives in one place - freestruct.config.yml. Change your site name once, and Freestruct updates every page. No hunting through templates.</p>
-    </div>
-
-    <div class="feature">
-      <h3>Works with CI/CD</h3>
-      <p>Since Freestruct runs after your build, it fits naturally into any CI/CD pipeline. GitHub Actions, GitLab CI, Netlify, Vercel - just add one command to your build script.</p>
-    </div>
-  </div>
-</section>
-
-<section class="guides-grid">
-  <h2>Guides</h2>
-
-  <div class="guides">
-    <a href="getting-started" class="guide">
-      <h3>Getting Started</h3>
-      <p>Full setup in 5 minutes</p>
-    </a>
-
-    <a href="guides/ssr-config" class="guide">
-      <h3>Configuration</h3>
-      <p>All available options</p>
-    </a>
-
-    <a href="guides/cache-busting" class="guide">
-      <h3>Cache Busting</h3>
-      <p>How the hash works</p>
-    </a>
-
-    <a href="guides/custom-injection" class="guide">
-      <h3>Custom Hooks</h3>
-      <p>Inject any code</p>
-    </a>
-
-    <a href="guides/troubleshooting" class="guide">
-      <h3>Troubleshooting</h3>
-      <p>Common issues</p>
-    </a>
-
-    <a href="guides/cicd" class="guide">
-      <h3>CI/CD</h3>
-      <p>GitHub Actions</p>
-    </a>
-
-    <a href="guides/post-render-hooks" class="guide">
-      <h3>Post-Render Hooks</h3>
-      <p>Beyond SEO</p>
-    </a>
-  </div>
-</section>
-
-<section class="comparison">
-  <h2>Freestruct vs manual setup</h2>
-
-  <p class="section-intro">Setting up SEO manually works, but you have to do it for every page. Freestruct automates it.</p>
-
-  <table>
-    <thead>
-      <tr>
-        <th></th>
-        <th>Freestruct</th>
-        <th>Manual</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Works with any SSG</td>
-        <td class="check">Yes</td>
-        <td class="check">Yes</td>
-      </tr>
-      <tr>
-        <td>Configure once</td>
-        <td class="check">Yes</td>
-        <td class="x">No</td>
-      </tr>
-      <tr>
-        <td>Cache busting</td>
-        <td class="check">Yes</td>
-        <td class="x">No</td>
-      </tr>
-      <tr>
-        <td>No template changes</td>
-        <td class="check">Yes</td>
-        <td class="x">No</td>
-      </tr>
-      <tr>
-        <td>Auto sitemap</td>
-        <td class="check">Yes</td>
-        <td class="x">No</td>
-      </tr>
-      <tr>
-        <td>Search included</td>
-        <td class="check">Yes</td>
-        <td class="x">No</td>
-      </tr>
-    </tbody>
-  </table>
-</section>
+- [Getting started](/getting-started)
+- [Config guide](/guides/ssr-config)
+- [CI/CD recipes](/guides/cicd)
+- [Troubleshooting](/guides/troubleshooting)
