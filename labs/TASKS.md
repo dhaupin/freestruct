@@ -273,12 +273,17 @@
   traversal escapes). First draft earned two honest fixes: the leak
   oracle now treats sitemap listing itself as the leak, and the ledger
   reader keys attacks by row id (no `attack` field — receipt-driven).
-- **CI dogfood:** docs.yml runs `npx crashtest run` (install from
-  `github:dhaupin/crashtest`) after the strict step, against the tree the
-  Pages build produced — EXPLOITED rows now fail the Pages build. The
-  CRASHTET CI rehearsal ran the exact command shape locally first: pack
-  inventories (`crashtest packs`: public 0.1.0, 5 attacks) and the full
-  campaign is green on a real freestruct build.
+- **CI dogfood + testing hook (follow-up same pass):** docs.yml runs
+  `npx crashtest run` after the strict step (EXPLOITED rows fail the Pages
+  build), and test.yml gained the pack selftest as a HARD gate on every
+  push/PR — teeth proven both ways in CI, no crashtest checkout needed
+  (`CRASHTEST_BIN=node_modules/crashtest/bin/crashtest.js`). Both
+  workflows pin the install to the crashtest main sha `dc80a7c7...` —
+  never a mutable latest (the vant predeploy lesson). Rehearsed locally
+  via the exact command shape first; one honest fix on the way: the
+  selftest resolves CRASHTEST_BIN against the CALLING cwd (a relative
+  path vanished once the campaign spawned from a temp cwd). `npm run
+  packs:selftest` is the local entrypoint.
 - **Battery pin:** the pack surface is battery-pinned (packs/README ships,
   manifest schemaVersion 1 + name/dir match, entry importable and
   scenario-contract-shaped) — 39/39 now.
