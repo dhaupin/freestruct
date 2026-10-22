@@ -109,9 +109,12 @@ npm publish
 #    npm version <bump> && git push --tags
 ```
 
-The version freeze is enforced in CI: the battery pin refuses any README /
-package.json / CHANGELOG triplet that disagrees, and refuses anything that is
-not exactly `0.6.0` until the owner unfreezes (`labs/TASKS.md` VERSION POLICY).
+The version truth is enforced in CI: the battery pin refuses any README /
+package.json / CHANGELOG triplet that disagrees. Everything currently ships
+under one number, `0.9.0` (owner call, 2026-10-22, superseding the earlier
+0.6.0 freeze; `labs/TASKS.md` VERSION POLICY has the trail) - a future bump
+is one edit in those three places plus `init/VERSION`, then the pin keeps
+them honest.
 
 ---
 
