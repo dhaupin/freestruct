@@ -18,6 +18,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { spawnSync } from 'child_process';
+import { pathToFileURL } from 'url';
 import yaml from 'js-yaml';
 
 const ROOT = path.resolve(new URL('.', import.meta.url).pathname, '..');
@@ -147,6 +148,46 @@ test('.github/workflows/*.yml are all parseable YAML (a dead SSG gate must never
     }
     assert.ok(parsed && typeof parsed === 'object' && ('jobs' in parsed), `${f} parses to a jobs-bearing workflow`);
   }
+});
+
+// ---------- crashtest pack surface (packs/, the one-surface extension model) ----------
+
+test('packs/ surface: a README ships, every public pack.json is schemaVersion 1, and each entry satisfies the scenario contract (name/description/attacks)', async () => {
+  const packsDir = path.join(ROOT, 'packs');
+  assert.ok(fs.existsSync(path.join(packsDir, 'README.md')), 'packs/README.md exists (what crashtest is, what packs are, links, pack list)');
+  const pub = path.join(packsDir, 'public');
+  const packs = fs.readdirSync(pub).filter((d) => fs.statSync(path.join(pub, d)).isDirectory() && fs.existsSync(path.join(pub, d, 'pack.json')));
+  assert.ok(packs.includes('freestruct-docs-shapes'), 'the freestruct-docs-shapes pack ships');
+  for (const pack of packs) {
+    const dir = path.join(pub, pack);
+    let manifest;
+    try {
+      manifest = JSON.parse(fs.readFileSync(path.join(dir, 'pack.json'), 'utf8'));
+    } catch (e) {
+      assert.fail(`${pack}/pack.json is unreadable JSON: ${e.message}`);
+    }
+    assert.strictEqual(manifest.schemaVersion, 1, `${pack}: schemaVersion 1`);
+    assert.match(manifest.name, /^[a-z0-9][a-z0-9-]*$/, `${pack}: kebab-case manifest name`);
+    assert.strictEqual(manifest.name, pack, `${pack}: manifest name matches its directory`);
+    assert.ok(typeof manifest.description === 'string' && manifest.description.length > 0, `${pack}: one-line description present`);
+    const entry = path.join(dir, manifest.entry ?? 'index.js');
+    assert.ok(fs.existsSync(entry), `${pack}: entry ${manifest.entry ?? 'index.js'} exists in the pack dir`);
+    // The scenario module contract (crashtest src/scenarios/contract.js shape,
+    // self-checked here so the pin runs without a crashtest checkout):
+    const mod = (await import(pathToFileURL(entry).href)).default;
+    assert.ok(mod && typeof mod === 'object', `${pack}: entry default-exports an object`);
+    assert.strictEqual(mod.name, pack, `${pack}: module name matches the manifest name`);
+    assert.ok(typeof mod.description === 'string' && mod.description.length > 0, `${pack}: module description present`);
+    assert.ok(Array.isArray(mod.attacks) && mod.attacks.length > 0, `${pack}: non-empty attacks array`);
+    const seen = new Set();
+    for (const a of mod.attacks) {
+      assert.match(a.name, /^[a-z][a-z0-9-]*$/, `${pack}: attack name kebab-case (${a.name})`);
+      assert.ok(!seen.has(a.name), `${pack}: unique attack name (${a.name})`);
+      seen.add(a.name);
+      assert.strictEqual(typeof a.run, 'function', `${pack}: attack ${a.name} has run(harness, ctx)`);
+    }
+  }
+  assert.ok(fs.existsSync(path.join(ROOT, 'scripts', 'packs-selftest.cjs')), 'the teeth-proof script ships too (hardened holds / regressed trips)');
 });
 
 // ---------- main fixture run: defaults ON ----------

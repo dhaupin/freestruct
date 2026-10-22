@@ -46,6 +46,14 @@ jobs:
       - name: Run freestruct strict
         run: node bin/freestruct.mjs --strict
 
+      # Crashtest dogfood: drive the freestruct-docs-shapes pack
+      # (packs/public/) against the tree the Pages build just produced.
+      # EXPLOITED rows fail the Pages build - hardened output only.
+      - name: Crashtest the built docs
+        run: |
+          npm install --no-save github:dhaupin/crashtest
+          npx crashtest run
+
       - name: Install Pagefind (official npm dist, not the global install)
         working-directory: docs
         run: npm install --no-save pagefind

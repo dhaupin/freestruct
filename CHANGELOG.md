@@ -83,6 +83,22 @@ contract becomes honest: schema-checked, diagnosed, opinionated defaults.
   production-404 links in the style guide, two of them pretty-permalink
   `.html`-suffix mistakes, one pointing outside the built tree) is fixed.
 
+### Crashtest pack surface (owner-directed)
+- **`packs/` is now a shipped repo surface** (`packs/README.md` covers
+  crashtest, the one-surface pack model, and links; adoption is one `packs:`
+  line) with the first pack: **`freestruct-docs-shapes` 0.1.0** — five
+  zero-dependency, zero-socket attacks over a freestruct-built docs tree as
+  served by any static host: hostile-traversal-404, gen404-noindex-canary
+  (#11 contract), noindex-artifact-leak (#5 rule), canonical-query-poison,
+  sitemap-xml-shape-canary (#9 escape class).
+- Dogfood wiring: `labs/static-site-target.js` (GitHub Pages-class static
+  host double) + root `crashtest.config.js` (`SITE_ROOT`, default
+  `docs/_site`); docs CI runs the campaign against the built tree after
+  the strict step (EXPLOITED rows fail the Pages build).
+- `scripts/packs-selftest.cjs` proves the teeth both ways: the hardened
+  build holds every attack as REFUSED, a deliberately regressed tree trips
+  every planted oracle. The pack surface is battery-pinned (39/39).
+
 ### House structure (prestruct-pattern, owner-directed)
 - **`engine/`** is the shipped runtime (`engine/inject.js` + the eight lib
   modules, previously `docs/lib/`); `main`/`exports` point at it; the CLI is

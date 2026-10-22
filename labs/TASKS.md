@@ -245,8 +245,57 @@
   updated, sha256 `6dd67eca…d449ef` verified against the vant output.
 - Version freeze untouched: everything above ships under 0.6.0.
 
+### Pass 12 — crashtest pack surface: packs/ + freestruct-docs-shapes + dogfood (done, on 0.6.0)
+- **Owner-directed:** a `packs/` folder in the freestruct repo, a README
+  explaining crashtest + packs (crashtest.creadev.org, docs.creadev.org/
+  crashtest, creadev.org), the pack list, then the pack itself — and a real
+  run against freestruct to see what falls out.
+- **`packs/README.md`** covers crashtest (in-process adversarial QA, honest
+  verdicts), the one-surface pack model (`packs/public/<name>/pack.json` +
+  scenario-contract entry; adoption = one `packs:` line), and the house
+  rule (pack manifests carry their own semver).
+- **`packs/public/freestruct-docs-shapes/`** (0.1.0, five attacks, zero
+  deps, zero sockets): hostile-traversal-404 (traversal shapes + artifact
+  query-independence), gen404-noindex-canary (issue #11 contract),
+  noindex-artifact-leak (issue #5: a noindex page listed by sitemap IS the
+  leak; search.json/feed.xml too), canonical-query-poison, and
+  sitemap-xml-shape-canary (issue #9 escape class). Cross-repo doctrine
+  honored: no crashtest imports, inline verdict helpers, honest skips
+  (prestruct-proxy precedent).
+- **Run root:** `labs/static-site-target.js` models the GitHub Pages class
+  of static host (pretty-permalink/.html/dir resolution, 404 + generated
+  body, containment refusal); `crashtest.config.js` at the repo root wires
+  it with `SITE_ROOT` (default `docs/_site`) and adopts our packs.
+- **Teeth proof (`scripts/packs-selftest.cjs`):** commits the two-sided
+  proof — the hardened build holds (5/5 REFUSED, 35/35 with the library
+  skips) and a deliberately regressed tree trips every planted oracle
+  (404-noindex loss, sitemap/feed/search noindex leak, raw ampersand,
+  traversal escapes). First draft earned two honest fixes: the leak
+  oracle now treats sitemap listing itself as the leak, and the ledger
+  reader keys attacks by row id (no `attack` field — receipt-driven).
+- **CI dogfood:** docs.yml runs `npx crashtest run` (install from
+  `github:dhaupin/crashtest`) after the strict step, against the tree the
+  Pages build produced — EXPLOITED rows now fail the Pages build. The
+  CRASHTET CI rehearsal ran the exact command shape locally first: pack
+  inventories (`crashtest packs`: public 0.1.0, 5 attacks) and the full
+  campaign is green on a real freestruct build.
+- **Battery pin:** the pack surface is battery-pinned (packs/README ships,
+  manifest schemaVersion 1 + name/dir match, entry importable and
+  scenario-contract-shaped) — 39/39 now.
+- Run artifacts are gitignored everywhere (`labs/crashledger.json`,
+  `hardening.md`, `run-meta.json`) — campaign ledgers belong beside the
+  config that produced them, not in the tree.
+- Version freeze untouched: everything above ships under 0.6.0.
+
 ## Next up (open, unowned)
 
+- Work the residual issue queue with receipts: #2–#14 are fixed in the
+  rehaul (pin-referenced in the battery/CHANGELOG) but still track as
+  OPEN — a sweep with per-issue receipts is the honest close-out.
+- The two live findings are queued fixes: #15 (pagefind 1.5.x needs
+  `<script type="module">`, the static preload throws on every docs page)
+  and #16 (docs theme `--ink-light` fails WCAG AA; fix shape
+  `#94867a` already proven in crashtest's copy).
 - Phase 4 residual: npm bootstrap publish + Trusted Publisher entry (PRD
   §4.1 steps 3–4) — owner actions on npmjs.com; everything on the repo side
   is now gated and ready for the first `v*` tag whenever the owner makes it.

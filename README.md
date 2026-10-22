@@ -180,3 +180,4 @@ Use only trusted commands. Disabled by default.
 
 - [prestruct](https://github.com/dhaupin/prestruct) - React SSG for Cloudflare Pages (freestruct's docs frame sibling)
 - [vant](https://github.com/dhaupin/vant) - the prototype freestruct was extracted from
+- [crashtest](https://crashtest.creadev.org) - adversarial QA for agent-built apps; freestruct ships its own pack (see `packs/README.md`)
