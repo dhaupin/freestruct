@@ -29,7 +29,11 @@ contract becomes honest: schema-checked, diagnosed, opinionated defaults.
 - **Sub-path installs (issue #3, crashtest class)**: `basePath` is now the
   canonical-prefix contract - canonical/sitemap/feed/search URLs become
   `site.url + basePath + relative slug`, never stripping the prefix and never
-  doubling it when the output tree nests the deploy directory.
+  doubling it when the output tree nests the deploy directory. A follow-on
+  audit pass found the same class hiding in three more spots now also under
+  the contract: the `robots.txt` sitemap pointer, the RSS channel link and
+  `atom:link` self-reference, and the generated 404's home link (its old
+  hard-coded text/`links` guess never resolves on any layout).
 - **Snippet placeholders actually substitute (issue #10)**: custom snippets
   (`inject-header.html`, `inject-body-start.html`, `inject-footer.html`) now
   get `{{siteName}}`/`{{siteUrl}}`/`{{buildHash}}`/... replaced, matching what
@@ -99,6 +103,25 @@ contract becomes honest: schema-checked, diagnosed, opinionated defaults.
 - `scripts/packs-selftest.cjs` proves the teeth both ways: the hardened
   build holds every attack as REFUSED, a deliberately regressed tree trips
   every planted oracle. The pack surface is battery-pinned (39/39).
+
+### Docs + repo surface (owner-directed)
+- **README completely rewritten** around the verified quick start, with the
+  full crosslink surface: the docs site (freestruct.creadev.org), the
+  Creadev docs system, the family sites (prestruct.creadev.org,
+  docs.creadev.org/prestruct, crashtest), and the agent/ops meta files.
+- **AGENTS.md + DEPLOY.md added at the repo root**, crosslinked with each
+  other and the README: house rules, gates, phase discipline (AGENTS) and
+  the Pages pipeline + npm release runbook + cache discipline (DEPLOY).
+- **Docs-audit gates extended (cherry-picked from the vant/prestruct gate
+  family):** the English-only language gate (`scripts/check-language.cjs`,
+  longest-Unicode-script-run detection with URL/import exemption) and the
+  vant voice/style checks (no em/en dashes in prose with CHANGELOG exempt,
+  tabs, table-row shape, inline-code-as-data posture). A new codefmt gate
+  pins every engine source header to `// engine/<file>.js - <purpose>` so
+  comments tell the reader where they are after any move.
+- **Repo hygiene:** `.gitignore` modernized (build outputs, env files, tool
+  caches, crashtest run artifacts, editor noise) and `.ignore` added so
+  search-space stays clean beyond git's own interest.
 
 ### House structure (prestruct-pattern, owner-directed)
 - **`engine/`** is the shipped runtime (`engine/inject.js` + the eight lib

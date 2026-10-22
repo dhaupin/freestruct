@@ -1,4 +1,4 @@
-// freestruct lib/hooks.js - purge hooks (Phase 1.1 split)
+// engine/hooks.js - purge hooks (Phase 1.1 split)
 // Same security posture as 0.4.x: hooks run only with runHooks: true.
 
 import { execSync } from 'child_process';

@@ -764,6 +764,19 @@ test('basePath set: canonical/sitemap/feed/search URLs get exactly one prefix', 
 
     const feed = read(dir, 'docs/_site/feed.xml');
     assert.includes(feed, '<link>https://docs.example.com/help/guide/</link>');
+    // The feed's own pointers followed the pageUrlFor contract too (they used
+    // to be raw site.url guesses - the robots/self-link 404 class).
+    assert.includes(feed, '<link>https://docs.example.com/help/</link>', 'channel link is the basePath home');
+    assert.includes(feed, 'href="https://docs.example.com/help/feed.xml" rel="self"', 'atom self-link carries the prefix exactly once');
+    assert.ok(!feed.includes('/help/help'), 'no doubled basePath in the feed');
+
+    // robots.txt sitemap pointer + generated 404 home link: same contract
+    const robots = read(dir, 'docs/_site/robots.txt');
+    assert.includes(robots, 'Sitemap: https://docs.example.com/help/sitemap.xml', 'robots sitemap pointer is basePath-aware');
+    assert.ok(!robots.includes('/help/help'), 'no doubled basePath in robots.txt');
+    const nf404 = read(dir, 'docs/_site/404.html');
+    assert.includes(nf404, 'href="https://docs.example.com/help/"', 'generated 404 home link is basePath-aware');
+    assert.ok(!nf404.includes('/docs/'), 'no guessy /docs/ link in the generated 404');
 
     const search = JSON.parse(read(dir, 'docs/_site/search.json'));
     assert.ok(search.some(e => e.url === 'https://docs.example.com/help/'), 'root entry carries the prefix');

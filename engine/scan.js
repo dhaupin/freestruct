@@ -1,4 +1,4 @@
-// freestruct lib/scan.js - output tree walk + page model (Phase 1.1)
+// engine/scan.js - output tree walk + page model (Phase 1.1)
 // Every page freestruct touches is modeled once here: file path, alias-relative
 // slug, 404 flag, and the pre-injection HTML snapshot the SEO gate needs.
 

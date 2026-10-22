@@ -1,4 +1,4 @@
-// freestruct lib/seo.js - meta/OG/Twitter/JSON-LD injection + late passes (Phase 1.1)
+// engine/seo.js - meta/OG/Twitter/JSON-LD injection + late passes (Phase 1.1)
 // Same observable behavior as 0.4.x with one deliberate fix:
 //  - the template's plain <meta name="description"> is now actually injected
 //    for pages without one (it was silently dropped in 0.4.x).

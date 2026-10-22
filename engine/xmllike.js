@@ -1,4 +1,4 @@
-// freestruct lib/xmllike.js - escaping + sitemap + robots + RSS (Phase 1.3)
+// engine/xmllike.js - escaping + sitemap + robots + RSS (Phase 1.3)
 // THE XML CORRECTNESS CLASS FIX (freestruct issue #9):
 //  - every generated XML value goes through escXml
 //  - sitemap gains a real <lastmod> per page (pre-injection mtime, i.e. the
@@ -60,11 +60,13 @@ export function generateSitemap(pages, config, outputDir) {
 }
 
 /**
- * robots.txt with a sitemap pointer (unchanged from 0.4.x).
+ * robots.txt with a sitemap pointer. The pointer is basePath-aware
+ * ('sitemap' artifacts follow the pageUrlFor contract - a raw site.url +
+ * '/sitemap.xml' points at a 404 on sub-path installs, the #3 bug class).
  */
 export function generateRobots(config, outputDir) {
-  const siteUrl = config.site.url || 'https://example.com';
-  const robots = '# Robots.txt\nUser-agent: *\nAllow: /\n\nSitemap: ' + siteUrl + '/sitemap.xml\n';
+  const sitemapUrl = pageUrlFor(config, 'sitemap.xml');
+  const robots = '# Robots.txt\nUser-agent: *\nAllow: /\n\nSitemap: ' + sitemapUrl + '\n';
   fs.writeFileSync(path.join(outputDir, 'robots.txt'), robots);
   console.log('robots.txt generated');
 }
@@ -74,9 +76,10 @@ export function generateRobots(config, outputDir) {
  * pre-injection mtime). channel.lastBuildDate stays the run stamp.
  */
 export function generateFeed(pages, config, outputDir) {
-  const siteUrl = (config.site.url || 'https://example.com').replace(/\/$/, '');
+  const siteUrl = pageUrlFor(config, '/');
   const siteName = config.site.name || 'Site';
   const description = config.site.description || 'RSS Feed';
+  const feedUrl = pageUrlFor(config, 'feed.xml');
   const now = new Date().toUTCString();
 
   let items = '';
@@ -105,7 +108,7 @@ export function generateFeed(pages, config, outputDir) {
     + `  <description>${assertXmlSafe(description, 'feed channel description')}</description>\n`
     + `  <language>en-us</language>\n`
     + `  <lastBuildDate>${assertXmlSafe(now, 'feed lastBuildDate')}</lastBuildDate>\n`
-    + `  <atom:link href="${assertXmlSafe(siteUrl + '/feed.xml', 'feed atom link')}" rel="self" type="application/rss+xml"/>\n`
+    + `  <atom:link href="${assertXmlSafe(feedUrl, 'feed atom link')}" rel="self" type="application/rss+xml"/>\n`
     + `${items}\n`
     + `</channel>\n`
     + `</rss>`;

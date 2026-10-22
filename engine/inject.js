@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// freestruct - post-build SEO layer for static doc sites (Phase 1, ESM)
+// engine/inject.js - post-build SEO layer for static doc sites (Phase 1, ESM)
 // Module map (was a 577-LOC single file, PRD 1.1):
 //   config.js    config discovery + validation
 //   scan.js      tree walk + page model (slugs, mtimes, noindex detection)

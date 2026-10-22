@@ -1,14 +1,22 @@
 # freestruct
 
-**Post-build SEO layer for static doc sites.**
+**The post-build SEO layer for static doc sites.**
 
-Build your docs with any SSG - Jekyll, Hugo, Docusaurus, MkDocs, VitePress. Run freestruct after build for full SEO coverage: meta, canonical, sitemap, feed, 404, cache busting, and validated internal links.
+Build your docs with any SSG - Jekyll, Hugo, Docusaurus, MkDocs, VitePress, Astro, Eleventy.
+Then run freestruct over the output: complete SEO metadata (title, description, canonical,
+Open Graph, Twitter, JSON-LD), `sitemap.xml` with real per-page `lastmod`, `robots.txt`
+with the right sitemap pointer, an RSS `feed.xml` with honest per-page dates, a `404.html`
+that carries noindex, cache-busted assets, and internal-link validation. One dependency
+(`js-yaml`), no SSG plugin, no template edits.
+
+Part of the [Creadev](https://creadev.org) doc-system family - the same docs frame and
+engineering conventions as its siblings (see Project family below).
 
 ---
 
-## Quick Start
+## Quick start
 
-freestruct runs **after** your static site generator, straight into the build output. One dependency (`js-yaml`). No SSG plugin, no template edits.
+freestruct runs **after** your SSG, straight into the build output.
 
 ### 1. Install
 
@@ -18,7 +26,7 @@ npm install --save-dev freestruct
 
 ### 2. Create the config
 
-`docs/freestruct.config.yml` next to your docs folder (legacy name
+Create `docs/freestruct.config.yml` next to your docs folder (the legacy name
 `docs/ssr-config.yml` is still read; discovery walks upward from your cwd):
 
 ```yaml
@@ -33,7 +41,9 @@ og:
   image: /og-default.png
 ```
 
-`site.name` and `site.url` are required; everything else has a working default (see the Configuration table below).
+`site.name` and `site.url` are required; everything else has a working default
+(the full reference is the [Configuration](#configuration) table below, and the
+[config guide](https://freestruct.creadev.org/guides/ssr-config) goes key by key).
 
 ### 3. Build, then inject
 
@@ -89,18 +99,28 @@ npx freestruct path/to/output   # explicit output dir override
 
 ### SEO
 
-- Injects missing title, description, canonical, Open Graph, Twitter cards, and JSON-LD (missing-only: existing tags are left alone)
-- Honest canonical URLs including sub-path (basePath) installs
+- Injects missing title, description, canonical, Open Graph, Twitter cards, and
+  JSON-LD (missing-only: existing tags are left alone)
+- Honest canonical URLs including sub-path (`basePath`) installs - the same
+  contract holds for the `sitemap.xml` locs, `robots.txt` sitemap pointer, the
+  RSS channel/self links, and the generated 404's home link
 - Tagged with a `freestruct-build` marker comment
 
 ### Search
 
-- **Opt-in** `search.json` (set `searchIndex: true`) for client-side search; default runs generate nothing - bring your own Pagefind/index
+- **Opt-in** `search.json` (set `searchIndex: true`); default runs generate
+  nothing - bring your own indexer (Pagefind/Algolia), the search guide covers
+  the wiring
 
-### Sitemap & more
+### Sitemap, robots, feed & 404
 
-- Auto-generated `sitemap.xml` (real per-file `lastmod`), `robots.txt`, `feed.xml` (RSS)
-- Auto-generated `404.html` with noindex + full SEO treatment when missing
+- `sitemap.xml`: encoded URLs, real per-file `lastmod` (page mtime, not build
+  time), noindex pages excluded
+- `robots.txt`: `User-agent: *` + `Allow: /` + a basePath-aware sitemap pointer
+- `feed.xml` (RSS): escaped titles/descriptions, per-page `pubDate` from each
+  page's own mtime, basePath-aware channel/self links
+- `404.html`: generated when missing, gets the full SEO pipeline + explicit
+  noindex; a user-supplied 404 gets the same treatment
 
 ### Performance
 
@@ -109,9 +129,12 @@ npx freestruct path/to/output   # explicit output dir override
 
 ### DX
 
-- Config schema with loud `[freestruct] config warning` diagnostics; unknown and retired keys never die silently
-- Link validation (report-only by default, `--strict` to make fatal)
-- Signature-style post-render HTML hooks (guide: Post-Render Hooks)
+- Config schema with loud `[freestruct] config warning` diagnostics; unknown
+  and retired keys never die silently
+- Link validation (report-only by default, `--strict` to make fatal - our own
+  docs CI runs `--strict` and it has already caught three production 404s)
+- Post-render hooks with purge-command safety (disabled by default; see
+  [Security](#security))
 
 ---
 
@@ -119,27 +142,35 @@ npx freestruct path/to/output   # explicit output dir override
 
 Full key list (unknown or retired keys produce warnings, not silence):
 
-| Key | Default | Meaning |
-|-----|---------|---------|
-| `site.name` | - (required) | Site name; composes page titles |
-| `site.url` | - (required) | Canonical origin; URLs build from this |
-| `site.description` | - | Fallback description for pages without one |
-| `basePath` | *(unset)* | URL path prefix the output tree is served under; canonical/sitemap/feed/search URLs get exactly this prefix (no doubling if the tree nests it) |
-| `outputDir` | `docs/_site` | Build output directory (or pass it as a CLI arg) |
-| `generateSitemap` | `true` | Generate `sitemap.xml` |
-| `generateRobots` | `true` | Generate `robots.txt` |
-| `generateFeed` | `true` | Generate `feed.xml` (RSS) |
-| `generate404` | `true` | Generate `404.html` when missing |
-| `readingTime` | `true` | Inject `<meta name="reading-time">` |
-| `lastModified` | `true` | Inject `<meta name="last-modified">` |
-| `lazyLoad` | `true` | Add `loading="lazy"` to images |
-| `linkCheck` | `true` | Validate internal links (report-only; `--strict` makes them fatal) |
-| `searchIndex` | `false` | **Opt-in**: generate `search.json` for client-side search |
-| `minify` | `false` | Experimental HTML minifier (preserves `pre`/`script`/`style`/`textarea`) |
-| `runHooks` | `false` | Gateway: only `true` lets `cacheBusting.purge` commands execute |
-| `cacheBusting.assetQueryParam` | `true` | Append `?v={buildHash}` to linked assets |
-| `cacheBusting.hashInCanonicalUrl` | `false` | Append `?v={buildHash}` to canonical URLs |
-| `cacheBusting.purge` | *(unset)* | Purge hook list (name + command); disabled without `runHooks: true` |
+| Key                                    | Default        | Meaning                                                                                              |
+|----------------------------------------|----------------|------------------------------------------------------------------------------------------------------|
+| `site.name`                            | - (required)   | Site name; composes page titles                                                                       |
+| `site.url`                             | - (required)   | Canonical origin; URLs build from this                                                                |
+| `site.description`                     | -              | Fallback description for pages without one                                                            |
+| `basePath`                             | *(unset)*      | URL path prefix the output tree is served under; all generated URLs get exactly this prefix           |
+| `outputDir`                            | `docs/_site`   | Build output directory (or pass it as a CLI arg)                                                      |
+| `generateSitemap`                      | `true`         | Generate `sitemap.xml`                                                                               |
+| `generateRobots`                       | `true`         | Generate `robots.txt`                                                                                |
+| `generateFeed`                         | `true`         | Generate `feed.xml` (RSS)                                                                            |
+| `generate404`                          | `true`         | Generate `404.html` when missing                                                                     |
+| `readingTime`                          | `true`         | Inject `<meta name="reading-time">`                                                                  |
+| `lastModified`                         | `true`         | Inject `<meta name="last-modified">`                                                                 |
+| `lazyLoad`                             | `true`         | Add `loading="lazy"` to images                                                                        |
+| `linkCheck`                            | `true`         | Validate internal links (report-only; `--strict` makes them fatal)                                    |
+| `searchIndex`                          | `false`        | **Opt-in**: generate `search.json` for client-side search                                             |
+| `minify`                               | `false`        | Experimental HTML minifier (preserves `pre`/`script`/`style`/`textarea`)                              |
+| `runHooks`                             | `false`        | Gateway: only `true` lets `cacheBusting.purge` commands execute                                       |
+| `cacheBusting.assetQueryParam`         | `true`         | Append `?v={buildHash}` to linked assets                                                              |
+| `cacheBusting.hashInCanonicalUrl`      | `false`        | Append `?v={buildHash}` to canonical URLs                                                             |
+| `cacheBusting.purge`                   | *(unset)*      | Purge hook list (name + command); disabled without `runHooks: true`                                   |
+
+The docs ([freestruct.creadev.org](https://freestruct.creadev.org)) carry the
+key-by-key guides: the [config reference](https://freestruct.creadev.org/guides/ssr-config),
+[cache busting](https://freestruct.creadev.org/guides/cache-busting), [custom
+injection](https://freestruct.creadev.org/guides/custom-injection),
+[post-render hooks](https://freestruct.creadev.org/guides/post-render-hooks),
+[CI/CD](https://freestruct.creadev.org/guides/cicd) and
+[troubleshooting](https://freestruct.creadev.org/guides/troubleshooting).
 
 ---
 
@@ -156,7 +187,25 @@ cacheBusting:
       command: "cf-cli purge $SITE_URL"
 ```
 
-Use only trusted commands. Disabled by default.
+Use only trusted commands. Disabled by default. Available variables:
+`$SITE_URL`, `$BUILD_HASH`, `$OUTPUT_DIR`.
+
+---
+
+## Scaffolding + the crashtest pack
+
+Two shipped surfaces beyond the engine:
+
+- **`init/`** - the consumer scaffold kit: a commented starter config,
+  template copies, and a README ("copy + go"). Version-stamped on
+  `package.json`; `npx freestruct` resolves templates user-staged first,
+  package fallback second.
+- **`packs/`** - freestruct's [crashtest](https://crashtest.creadev.org) pack
+  surface: `freestruct-docs-shapes` attacks a built docs tree the way a
+  static host serves it (traversal refusal, 404 noindex, noindex artifact
+  leaks, canonical query poisoning, XML shape). See
+  [packs/README.md](packs/README.md). The docs CI runs it against every
+  Pages build.
 
 ---
 
@@ -164,20 +213,48 @@ Use only trusted commands. Disabled by default.
 
 - Versions live in one place: `package.json`, pinned in CI against the
   README/CHANGELOG truth. Single source, no drift.
-- CHANGELOG.md is the changelog; releases are tagged (`v*`) and CHANGELOG-truthful or they don't ship.
-- Current release: **0.6.0** (version frozen on this number).
-- See CHANGELOG.md for the full history.
+- `CHANGELOG.md` is the changelog; releases are tagged (`v*`) and
+  CHANGELOG-truthful or they don't ship.
+- Current release: **0.6.0** (version frozen on this number; see
+  `labs/TASKS.md` for the version policy).
+- Deployment truth lives in [DEPLOY.md](DEPLOY.md): the GitHub Pages pipeline
+  (this repo's own docs site deploys through it) and the npm release runbook.
 
 ## v0.6.0
 
-- Config renamed to `freestruct.config.yml` with legacy read; schema-checked with loud diagnostics
-- `searchIndex` opt-in; FAST_FAIL exit codes + `--tolerant`; snippet placeholder substitution; basePath contract for sub-path installs
-- Docs: full config reference table, single-source nav (`_data/nav.yml`), docs-audit gates in CI, quick start verified end to end
+- Config renamed to `freestruct.config.yml` with legacy read; schema-checked
+  with loud diagnostics; FAST_FAIL exit codes + `--tolerant`
+- Module decomposition: the engine is `engine/` (one orchestrator + eight
+  modules) with `bin/` shim and shipped templates; `init/` is the consumer
+  scaffold kit; template copies provably in sync via CI
+- `searchIndex` opt-in; noindex honored across sitemap/feed/search/404;
+  basePath contract across every generated URL (canonical, sitemap, feed,
+  robots pointer, 404 home link)
+- Honest XML: escaped values, per-page `lastmod`, per-page RSS dates;
+  escaped-or-fail on un-escapable content
+- Docs: single-source nav, audit gates wired to CI (style, truthfulness,
+  English-only language gate, engine comment format), the docs CI itself
+  runs `--strict` plus the crashtest pack dogfood
+- Release truth: tarball e2e CI gate + hard publish gate; version pinned
+  and frozen
 
 ---
 
-## Related
+## Project family
 
-- [prestruct](https://github.com/dhaupin/prestruct) - React SSG for Cloudflare Pages (freestruct's docs frame sibling)
-- [vant](https://github.com/dhaupin/vant) - the prototype freestruct was extracted from
-- [crashtest](https://crashtest.creadev.org) - adversarial QA for agent-built apps; freestruct ships its own pack (see `packs/README.md`)
+- [freestruct docs](https://freestruct.creadev.org) - the docs site built from
+  this repo (`docs/` is itself the worked example: Jekyll + freestruct + Pagefind)
+- [docs.creadev.org](https://docs.creadev.org) - the Creadev docs system hub
+- [prestruct](https://github.com/dhaupin/prestruct) /
+  [prestruct.creadev.org](https://prestruct.creadev.org) - React SSG for
+  Cloudflare Pages (freestruct's docs-frame sibling)
+- [prestruct docs](https://docs.creadev.org/prestruct) - the prestruct docs
+  layer on the shared system
+- [crashtest](https://crashtest.creadev.org) - adversarial QA for agent-built
+  apps; freestruct ships and CI-runs its own pack
+- [vant](https://github.com/dhaupin/vant) - the prototype freestruct was
+  extracted from
+
+For agents: [AGENTS.md](AGENTS.md) is the orientation file (scope, house
+rules, gates). Humans and agents are welcome equally - see
+[CONTRIBUTING.md](CONTRIBUTING.md).

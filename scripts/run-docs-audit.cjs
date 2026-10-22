@@ -197,9 +197,62 @@ function gateNav() {
 }
 
 // ---------------------------------------------------------------------------
-// Gate: style
+// Gate: language (English-only prose; ported from dhaupin/vant)
+//
+// The standalone checker owns the logic (scripts/check-language.cjs); the
+// gate shells out to it so the single audit command covers every gate.
 // ---------------------------------------------------------------------------
 
+function gateLanguage() {
+  const { execFileSync } = require('child_process');
+  try {
+    execFileSync(process.execPath, [path.join(ROOT, 'scripts', 'check-language.cjs')], {
+      cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'],
+    });
+  } catch (err) {
+    for (const line of String(err.stdout || '').trim().split('\n').filter(Boolean)) findings.push(line);
+    if (!err.stdout) findings.push(`language: checker failed to run: ${err.message}`);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Gate: codefmt (comment-format truth: engine headers name their own path)
+//
+// One mechanical format every engine source carries: line 1 is
+//   // engine/<file>.js - <one-line purpose in English>
+// so a reader grepping ANY comment always lands on a file that states where
+// it is. The path check is what keeps the truth after moves (the rehaul left
+// six headers behind saying 'docs/lib/...' for a week).
+// ---------------------------------------------------------------------------
+
+function gateCodeFormat() {
+  const dir = path.join(ROOT, 'engine');
+  for (const f of fs.readdirSync(dir).sort()) {
+    if (!f.endsWith('.js')) continue;
+    const rel = `engine/${f}`;
+    const raw = fs.readFileSync(path.join(dir, f), 'utf8');
+    const lines = raw.split('\n');
+    // A shebang (needed when a source file is invoked directly) counts as
+    // line 0: the header lands on line 2. Header comment must start
+    //   // engine/<file>.js - <one-line purpose in English>
+    // so a reader grepping any comment lands on a file that says where it
+    // is. The path check is what keeps truth after moves (the house
+    // rehaul left six headers behind saying 'docs/lib/...' for a week).
+    const offset = raw.startsWith('#!') ? 1 : 0;
+    const rel2 = `${rel}:${offset + 1}`;
+    const first = lines[offset];
+    if (!first || !first.startsWith(`// ${rel} - `)) {
+      findings.push(`${rel2}: header comment must start "// ${rel} - <purpose>" (got: ${String(first).slice(0, 60)})`);
+    }
+    if (first && /[\u4E00-\u9FFF\u3040-\u30FF]/u.test(first)) {
+      findings.push(`${rel2}: header comment must be English (the language gate covers prose, this gate covers headers)`);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Gate: style
+// ---------------------------------------------------------------------------
 function gateStyle() {
   for (const f of files) {
     const rel = relOf(f);
@@ -225,12 +278,25 @@ function gateStyle() {
         lastHeading = level;
       }
       if (/[^\s][ \t]+$/.test(line)) collect([], rel, n, 'trailing whitespace');
-      if (!inFence && /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(line)) collect([], rel, n, 'emoji/dingbat in prose');
+      // Inline-code spans are literal DATA, not prose (same posture as the
+      // language gate) - the voice checks look at the line without them.
+      const proseLine = line.replace(/`[^`]*`/g, '');
+      if (!inFence && /^[^|`]*\t/.test(proseLine)) collect([], rel, n, 'tab in prose (use spaces)');
+      // Voice rule (vant docs-style port): prose uses hyphens; em/en dashes
+      // are typographic sugar that reads differently per renderer. CHANGELOG
+      // is exempt (historical entries keep their punctuation).
+      if (/—|–/.test(proseLine) && relOf(f) !== 'CHANGELOG.md') collect([], rel, n, 'em/en dash in prose (use a hyphen)');
+      // Pipe-table shape (vant docs-style port): a table row line must end
+      // with a pipe, headings never take pipes, bullets never end with them.
+      // (Table checks keep the RAW line - a pipe inside a code span still
+      // changes how a renderer splits the row.)
+      if (/^\s*\|/.test(line) && !/\|\s*$/.test(line)) collect([], rel, n, 'table row does not end with a pipe');
+      if (/^\s*\|[\s|:-]+$/.test(line) && !/^[\s|:-]+$/.test(line)) collect([], rel, n, 'malformed table divider row');
+      if (h && line.match(/^(#+)\s/) && line.includes('|')) collect([], rel, n, 'pipe in heading (breaks table detect on some renderers)');
+      if (!inFence && /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(proseLine)) collect([], rel, n, 'emoji/dingbat in prose');
     });
   }
-}
-
-// ---------------------------------------------------------------------------
+}// ---------------------------------------------------------------------------
 // Gate: truthfulness
 // ---------------------------------------------------------------------------
 
@@ -316,6 +382,8 @@ const gates = {
   nav: gateNav,
   style: gateStyle,
   truthfulness: gateTruthfulness,
+  language: gateLanguage,
+  codefmt: gateCodeFormat,
 };
 
 const requested = process.argv.slice(2);

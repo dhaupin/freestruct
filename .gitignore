@@ -1,7 +1,26 @@
-docs/node_modules/
+# --- build outputs ---
 node_modules/
+docs/node_modules/
 docs/_site/
+
+# --- toolchain caches that must never enter git ---
+.npm/
+*.tsbuildinfo
+
+# --- env files (secrets never live in the repo; production uses deploy env) ---
+.env
+.env.*
+!.env.example
+
+# --- crashtest run artifacts (regenerated per campaign; plan stubs are session-local) ---
 packs/local/
 labs/crashledger.json
 labs/hardening.md
 labs/run-meta.json
+
+# --- editor and OS noise ---
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/

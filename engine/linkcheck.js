@@ -1,4 +1,4 @@
-// freestruct lib/linkcheck.js - internal link validation (Phase 1.1 split)
+// engine/linkcheck.js - internal link validation (Phase 1.1 split)
 // Report-only by default; --strict (see bin) consumes the returned broken list.
 
 import fs from 'fs';

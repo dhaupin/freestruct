@@ -1,4 +1,4 @@
-// freestruct lib/config.js - config discovery, schema and validation (Phase 2)
+// engine/config.js - config discovery, schema and validation (Phase 2)
 // Discovery order (owner-ratified rename): freestruct.config.yml first, with
 // back-compat reads of the old ssr-config.yml name.
 // Config-first, no magic: unknown flags and retired flags produce loud

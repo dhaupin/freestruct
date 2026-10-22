@@ -1,0 +1,11 @@
+# Search hygiene for ripgrep (and friends): .gitignore covers what must not
+# enter the repo; this file adds artifacts GIT has no reason to care about
+# but a SEARCH has no reason to scan. Only machine blobs you would never
+# grep belong here - keep it as tight as .gitignore's spirit.
+node_modules/
+docs/_site/
+packs/local/
+labs/crashledger.json
+labs/run-meta.json
+labs/hardening.md
+*.tsbuildinfo

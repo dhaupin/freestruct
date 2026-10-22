@@ -337,6 +337,48 @@
 - CI runs after the change: test + Deploy Docs green on the pushed head.
 - Version freeze untouched: everything ships under 0.6.0.
 
+### Pass 15 - readme/meta surface rewrite + repo hygiene + artifact audit + gate cherry-picks (done, on 0.6.0)
+- **Owner call:** redo README completely, add root AGENTS.md + DEPLOY.md
+  crosslinked together and with the README; refresh .gitignore; add .ignore
+  for search hygiene; verify sitemap/robots/404 handling; cherry-pick the
+  vant/prestruct docs-lint gates; make code comments consistent.
+- **Artifact audit first, and it found real bugs the pins had missed:**
+  robots.txt's sitemap pointer and the RSS channel/atom self links ignored
+  basePath (the #3 class in different artifacts - pointers 404 on sub-path
+  installs), and the generated 404 carried a hard-coded raw-site.url home
+  link plus a guessy `/docs/` link. All moved onto the pageUrlFor contract
+  (robots pointer, feed channel/self, 404 form + home link); the basePath
+  pin grew assertions for each (robots, feed self-link, 404 home link, and
+  a no-doubling check on both). The 404's generated page no longer ships a
+  link to a path that never exists.
+- **README rewritten** around the quick start with the full crosslink
+  surface (docs site, docs system, family sites, meta files); `## v0.6.0`
+  block restored after the first battery run flagged its removal (the
+  version pin working as designed).
+- **AGENTS.md + DEPLOY.md landed at root:** house rules/structure/gates and
+  the release truth (Pages pipeline, npm runbook, measured-cache
+discipline). docs/AGENTS.md stays the rendered engineering-decisions page;
+  the root file is the orientation file linking to it.
+- **Gates cherry-picked from vant:** English-only language gate as
+  `scripts/check-language.cjs` (script-block longest-run detection, URL/
+  import/base64 exemption, fence/inline-code/frontmatter exemption) wired
+  into the docs audit runner as the `language` gate; the vant voice checks
+  (em/en dash rule with CHANGELOG exempt, tabs, table-row shape) folded
+  into `style` with inline-code-as-data posture; new `codefmt` gate pins
+  engine source headers to `// engine/<file>.js - <purpose>` (the format
+  that would have caught the whole rehaul leaving eleven headers saying
+  `freestruct lib/...` behind).
+- **Comment format normalized:** all eleven engine headers rewritten to
+  name their own path; section banner style unchanged (already uniform);
+  bin/scripts carry the same shebang-plus-purpose shape. The format is now
+  AGENTS.md policy, machine-checked by `codefmt`.
+- **Hygiene:** .gitignore rebuilt (build outputs, env files, npm cache,
+  crashtest artifacts, editor noise); `.ignore` added for ripgrep-family
+  search scoping (machine artifacts only).
+- **End-to-end:** audit all seven gates clean (language PASS over 23 prose
+  files), battery 39/39, and the whole set rides the same CI.
+- Version freeze untouched: everything ships under 0.6.0.
+
 ## Next up (open, unowned)
 
 - Work the residual issue queue with receipts: #2–#14 are fixed in the

@@ -1,4 +1,4 @@
-// freestruct lib/notfound.js - the 404 pipeline (Phase 1.4)
+// engine/notfound.js - the 404 pipeline (Phase 1.4)
 // FIX (freestruct issue #11): generated AND custom 404 pages now get the full
 // SEO pipeline via the same injectPage call every normal page uses, plus a
 // robots noindex meta. The CHANGELOG's long-claimed noindex finally ships.
@@ -6,13 +6,15 @@
 import fs from 'fs';
 import path from 'path';
 import { injectPage } from './seo.js';
+import { pageUrlFor } from './urls.js';
 
 /** Generate the fallback 404 page (search form + links), then run it through the SEO pipeline. */
 export function generate404(config, outputDir, buildHash, template, snippetDir) {
   const file = path.join(outputDir, '404.html');
-  const siteUrl = config.site.url || 'https://example.com';
+  // Links follow the pageUrlFor contract (basePath-aware) - raw site.url
+  // guesses like '/docs/' point at 404s on sub-path installs (#3 class).
   const siteName = config.site.name || 'Site';
-
+  const homeUrl = pageUrlFor(config, '/');
   const notFound = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -35,14 +37,13 @@ export function generate404(config, outputDir, buildHash, template, snippetDir) 
   <p>Page not found</p>
   <p>The page you're looking for doesn't exist or was moved.</p>
   <div class="search">
-    <form action="${siteUrl}/" method="get">
+    <form action="${homeUrl}" method="get">
       <input type="text" name="s" placeholder="Search docs...">
       <button type="submit">Search</button>
     </form>
   </div>
   <div class="links">
-    <a href="${siteUrl}/">Home</a>
-    <a href="${siteUrl}/docs/">Docs</a>
+    <a href="${homeUrl}">Home</a>
   </div>
 </body>
 </html>`;

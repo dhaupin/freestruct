@@ -1,4 +1,4 @@
-// freestruct lib/search.js - search.json generation (Phase 1.1 split)
+// engine/search.js - search.json generation (Phase 1.1 split)
 // OPT-IN feature (owner decision): only generated when config.searchIndex is
 // explicitly true. FIXES from the 0.4.x state:
 //  - noindex pages are excluded (owner: noindex honored by default, issue #5)

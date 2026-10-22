@@ -1,4 +1,4 @@
-// freestruct lib/urls.js - URL construction, basePath semantics (Phase 2)
+// engine/urls.js - URL construction, basePath semantics (Phase 2)
 // FIX (freestruct issue #3, crashtest-class): 0.4.x stripped basePath from the
 // relative path and concatenated whatever site.url said, silently mapping
 // sub-path installs onto the wrong URLs (404s). The contract now:
