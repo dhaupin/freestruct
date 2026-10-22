@@ -137,11 +137,19 @@ This avoids Jekyll's `_includes/` folder.
 
 ## Debug Mode
 
-No built-in debug mode yet. To debug:
+There is no separate debug mode - the default run already narrates to stdout
+(build hash, page count, per-file warnings and every artifact it writes). The
+layered tools:
 
-1. Add temporary console.log to inject.js
-2. Check output HTML directly
-3. Verify config keys against the Configuration Reference page (Freestruct.config Reference in the menu).
+1. `npx freestruct validate` first: a config-only preflight that prints
+   diagnostics (unknown/retired key warnings included) without touching the
+   output tree
+2. Read the `[freestruct] config warning` and `[freestruct] page warning`
+   lines in the run output - nothing dies silently
+3. `npx freestruct --tolerant` reports fatal errors with exit `0` for CI
+   tolerance runs
+4. Verify config keys against the [Freestruct.config Reference](/guides/ssr-config)
+   and the [CLI Reference](/guides/cli)
 
 ---
 

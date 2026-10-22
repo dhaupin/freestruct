@@ -13,6 +13,7 @@
 // CLI (Phase 0/2 contract):
 //   --version   print the package.json version and exit 0 (works configless;
 //               resolved one level up: engine/ is the package root's sibling dir)
+//   validate | init [dir] | help   subcommands (see the helpers below)
 //   --strict    opt-in: broken internal links exit 1 instead of
 //               shipping green
 //   --tolerant  opt-out for CI tolerance: fatal config errors log and exit 0
@@ -28,11 +29,10 @@
 
 import fs from 'fs';
 import path from 'path';
-import crypto from 'crypto';
 import { pathToFileURL, fileURLToPath } from 'url';
 
 import { loadConfig } from './config.js';
-import { getHtmlFiles, buildPages, htmlIsNoindex } from './scan.js';
+import { getHtmlFiles, buildPages, computeBuildHash, htmlIsNoindex } from './scan.js';
 import { injectPage, addReadingTime, addLastModified, addLazyLoading } from './seo.js';
 import { generateSitemap, generateRobots, generateFeed } from './xmllike.js';
 import { generate404, pipeline404 } from './notfound.js';
@@ -43,7 +43,12 @@ import { runPurgeHooks } from './hooks.js';
 const FLAG_VALUES = new Set(['--version', '--strict', '--tolerant']);
 const _argv = process.argv.slice(2);
 const _flags = _argv.filter(a => FLAG_VALUES.has(a));
-const _positional = _argv.find(a => !a.startsWith('--'));
+// Subcommands before the positional output-dir: the first bare word decides
+// what the run is (validate/init/help mirror prestruct's command surface);
+// any other bare word stays the outputDir override it always was.
+const COMMANDS = new Set(['validate', 'init', 'help']);
+const _firstArg = _argv.find(a => !a.startsWith('--'));
+const _positional = _firstArg && !COMMANDS.has(_firstArg) ? _firstArg : undefined;
 
 export const EXIT_OK = 0;
 export const EXIT_CONFIG = 1;
@@ -66,7 +71,76 @@ function printVersion() {
   console.log(pkg.version);
 }
 
-if (_flags.includes('--version')) { printVersion(); process.exit(0); }
+// ---------- CLI subcommands (prestruct's init/validate/help surface) ----------
+
+const HELP = `
+freestruct -- post-build SEO layer for static doc sites
+
+  freestruct                Run the full post-build pass (config discovered
+                            by walking up from cwd; output dir defaults to
+                            docs/_site, or pass one as an argument)
+  freestruct validate       Load + validate the config; exit 1 on fatal errors
+                            (no output tree is touched)
+  freestruct init [dir]     Scaffold the consumer kit (starter config +
+                            template copies) into <dir>/docs; the default dir
+                            is the cwd. Existing files are never clobbered.
+  freestruct help (--help)  This text.
+
+Flags: --version | --strict | --tolerant
+Exit codes: 0 ok | 1 config fatal | 2 template missing | 3 output dir missing
+`;
+
+function printHelp() {
+  console.log(HELP);
+}
+
+/**
+ * `freestruct validate`: config-only preflight for CI. Warnings still print
+ * (collectConfigDiagnostics runs inside loadConfig); a fatal config error
+ * exits EXIT_CONFIG, honoring --tolerant like every other fatal.
+ */
+function cmdValidate() {
+  let loaded;
+  try {
+    loaded = loadConfig(process.cwd());
+  } catch (e) {
+    fail(e.message, EXIT_CONFIG);
+  }
+  console.log('[freestruct] config ok: ' + loaded.configPath);
+  process.exit(EXIT_OK);
+}
+
+/**
+ * `freestruct init [dir]`: copy the consumer scaffold kit (init/docs: starter
+ * config + template copies) into <dir>/docs (default dir: cwd), never
+ * clobbering an existing file. Mirrors the manual `cp -r node_modules/
+ * freestruct/init/docs .` shape the init kit README describes.
+ */
+function cmdInit(dirArg) {
+  const targetRoot = path.resolve(process.cwd(), dirArg || '.');
+  const docsDir = path.join(targetRoot, 'docs');
+  // engine/inject.js -> package root -> init/docs (files list ships init/)
+  const kitDir = path.join(fileURLToPath(new URL('../init/docs', import.meta.url)));
+  if (!fs.existsSync(kitDir)) fail('Scaffold kit not found at ' + kitDir, EXIT_TEMPLATE);
+
+  let created = 0;
+  let skipped = 0;
+  function copy(src, dest) {
+    if (fs.statSync(src).isDirectory()) {
+      fs.mkdirSync(dest, { recursive: true });
+      for (const entry of fs.readdirSync(src)) copy(path.join(src, entry), path.join(dest, entry));
+      return;
+    }
+    if (fs.existsSync(dest)) { skipped++; console.log('  skip (exists): ' + path.relative(targetRoot, dest)); return; }
+    fs.copyFileSync(src, dest);
+    created++;
+    console.log('  created: ' + path.relative(targetRoot, dest));
+  }
+  copy(kitDir, docsDir);
+  console.log('[freestruct] init: ' + created + ' file(s) created in ' + docsDir + (skipped > 0 ? ', ' + skipped + ' existing file(s) left untouched' : ''));
+  if (created === 0) console.log('[freestruct] init: nothing new to scaffold - the kit was already present');
+  process.exit(EXIT_OK);
+}
 
 const STRICT = _flags.includes('--strict');
 
@@ -88,7 +162,6 @@ export function runInject(options = {}) {
     : path.resolve(configDir, config.outputDir || '_site');
 
   if (!fs.existsSync(outputDir)) fail('Output directory not found: ' + outputDir, EXIT_OUTPUT);
-
   // Template resolution: user-staged first (docs/_freestruct next to the
   // config), then the PACKAGE-shipped copy (npm install ships engine/_freestruct
   // - repo-shaped runs always hit the staged one, fresh-machine installs fall
@@ -108,16 +181,18 @@ export function runInject(options = {}) {
   }
   const template = fs.readFileSync(templatePath, 'utf8');
 
-  const buildHash = crypto.createHash('sha1')
-    .update(JSON.stringify(config || {}) + String(Date.now()))
-    .digest('hex').slice(0, 8);
-  console.log('Build: ' + buildHash);
-
   const htmlFiles = getHtmlFiles(outputDir);
   console.log('Found ' + htmlFiles.length + ' HTML files');
 
+  // Build hash is content-derived (see scan.js computeBuildHash): the pages
+  // snapshot must exist before it can be computed, and empty trees hash the
+  // config alone.
+  const pagesForHash = htmlFiles.length > 0 ? buildPages(htmlFiles, outputDir) : [];
+  const buildHash = computeBuildHash(config, pagesForHash);
+  console.log('Build: ' + buildHash);
+
   if (htmlFiles.length > 0) {
-    const pages = buildPages(htmlFiles, outputDir);
+    const pages = pagesForHash;
     const sitePages = pages.filter(p => !p.is404);
 
     // SEO pipeline over every regular page
@@ -190,10 +265,20 @@ export function runInject(options = {}) {
   console.log('freestruct: Done (' + buildHash + ')');
 }
 
-// Main-module detection, symlink-safe: npm's .bin shim is a symlink, but
-// import.meta.url resolves the target's real path. Comparing only the raw
-// argv[1] made real installs run silently (exit 0, no work) - caught by the
-// tarball e2e. Resolve BOTH sides to their real paths before comparing.
+// Module-level command dispatch: the bin shim IMPORTS runInject() rather
+// than invoking this file as main, so commands must dispatch at import time
+// (the pre-change --version module-level check had the same shape). Library
+// importers pass no such argv and simply skip all of these.
+if (_flags.includes('--version')) { printVersion(); process.exit(0); }
+// `help` is the subcommand; --help is the flag alias (both print the same text)
+if (_firstArg === 'help' || _argv.includes('--help')) { printHelp(); process.exit(EXIT_OK); }
+if (_firstArg === 'validate') cmdValidate();
+if (_firstArg === 'init') cmdInit(_argv[_argv.indexOf('init') + 1]);
+
+// Main-module detection: npm's .bin shim is a symlink, but import.meta.url
+// resolves the target's real path. Comparing only the raw argv[1] made real
+// installs run silently (exit 0, no work) - caught by the tarball e2e. Only
+// the DEFAULT full-pass run needs the main-module gate.
 const argvReal = process.argv[1]
   ? (() => { try { return fs.realpathSync(process.argv[1]); } catch (e) { return process.argv[1]; } })()
   : '';

@@ -26,6 +26,8 @@ All hooks support these placeholders:
 - `{{siteUrl}}` - Site URL from config
 - `{{buildHash}}` - Current build hash
 
+`{{buildHash}}` is safe in head snippets (the injector strips the generated head region before deriving the next hash), but do not embed it in a body or footer snippet: the hash is derived from page content, so an embedded hash would make every following build depend on its own previous value.
+
 ## Examples
 
 ### Add custom fonts (inject-header.html)

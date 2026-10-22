@@ -199,12 +199,42 @@ Site-level information.
 
 ### author
 
-Author information for schema.org.
+Optional author identity, shipped as a schema.org `Person` under
+`"founder"` on the injected Organization JSON-LD block.
+
+```yaml
+author:
+  name: Jane Doe
+  url: https://janedoe.dev
+```
 
 | Key | Required | Description |
 |-----|----------|-------------|
-| `name` | No | Author name |
+| `name` | Yes (to ship `founder`) | Author name |
 | `url` | No | Author URL (GitHub, personal site, etc.) |
+
+No author configured: the Organization JSON-LD carries no `founder` key.
+
+### jsonLd
+
+Custom structured data, appended after the built-in Organization and WebSite
+JSON-LD blocks. Takes a single object or an array of objects:
+
+```yaml
+jsonLd:
+  - "@type": BreadcrumbList
+    itemListElement:
+      - "@type": ListItem
+        position: 1
+```
+
+- Ships through the same missing-only gate as the built-ins: a page that
+  already carries `application/ld+json` keeps its own and receives no extra
+  blocks.
+- Serialization neutralizes `<` (as `\u003c`) so a value cannot close the
+  script tag early.
+- A non-object entry is skipped with a loud `[freestruct] config warning`
+  line; nothing dies silently.
 
 ## Meta Options
 
@@ -214,8 +244,12 @@ Twitter Card meta tags.
 
 | Key | Required | Description |
 |-----|----------|-------------|
-| `username` | Yes | Twitter handle (include @) |
+| `username` | No | Twitter handle (include @). Omit the whole twitter block without one: `twitter:site` and `twitter:creator` then stay out of the injected head (card type and `twitter:title` still inject) |
 | `card` | No | Card type: `summary`, `summary_large_image`, `app`, `player` |
+
+`twitter:description` ships alongside `twitter:title` on every page (same
+value as `og:description`), and `twitter:image` ships whenever an
+`og.image` (or per-page `ogImage`) is configured.
 
 ### og
 
@@ -226,6 +260,12 @@ Open Graph meta tags.
 | `image` | No | OG image path (absolute or relative to site url) |
 | `locale` | No | Locale (default: `en_US`) |
 | `type` | No | Content type: `website`, `article`, `book`, `profile` |
+
+`og.image` is optional: with no image configured (and no per-page override),
+no `og:image` or `twitter:image` tag ships at all - a bare image tag pointing
+at the site root is a broken social card, not a fallback. Relative image
+paths are joined onto `site.url`; absolute HTTP(S) values pass through
+unchanged. Values that reach the head are HTML-attribute-escaped first.
 
 ## Template Placeholders
 
@@ -243,23 +283,41 @@ Available placeholders in `inject-brand.html`:
 | `{{twitterUsername}}` | Twitter handle |
 | `{{twitterCard}}` | Twitter card type |
 | `{{ogImage}}` | OG image path |
+| `{{ogImageFull}}` | OG/Twitter image as a full URL (relative values joined onto the site url) |
 | `{{ogType}}` | OG content type |
 | `{{ogLocale}}` | OG locale |
 
 ## Per-Page Options
 
-For page-specific SEO, add a comment to your page content:
+For page-specific SEO, add a data comment to the built page:
 
 ```html
 <!-- freestruct: {"title": "My Page", "ogType": "article", "ogImage": "/images/post.jpg"} -->
 ```
 
-Available per-page options:
-- `title`, `description`
-- `ogType` (article, book, profile)
-- `ogImage`
-- `twitterCard` (summary_large_image)
-- `publishedTime`, `author`, `section`
+| Key | Effect |
+|-----|--------|
+| `title` | Replaces the page part of the og/twitter title composition (the site name suffix still applies) |
+| `description` | Replaces the injected description (og and twitter) |
+| `ogType` | Replaces the injected `og:type` value |
+| `ogImage` | Per-page og image; relative values join onto `site.url` like `og.image` |
+| `twitterCard` | Replaces the injected `twitter:card` value |
+| `publishedTime` | Ships `article:published_time` with the og injection |
+| `author` | Ships `article:author` with the og injection |
+| `section` | Ships `article:section` with the og injection |
+
+Ground rules:
+
+- Missing-only wins: a page that already ships its own description, Open
+  Graph or Twitter tags keeps them, and overrides aimed at those groups are
+  skipped with a loud `[freestruct] page warning` line (they never die
+  silently).
+- `article:published_time`, `article:author` and `article:section` ride the
+  Open Graph injection: they ship only when freestruct actually injects og
+  tags on that page.
+- Unknown keys in the comment warn; malformed JSON in the comment warns and
+  the whole comment is ignored.
+- Attribute values are HTML-escaped before they land in the head.
 
 ## Source Attribution
 

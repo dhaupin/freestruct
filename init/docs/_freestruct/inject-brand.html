@@ -12,22 +12,24 @@
 <meta property="og:site_name" content="{{siteName}}">
 <meta property="og:type" content="{{ogType}}">
 <meta property="og:locale" content="{{ogLocale}}">
-<meta property="og:image" content="{{siteUrl}}{{ogImage}}">
+<meta property="og:image" content="{{ogImageFull}}">
 
 <!-- Twitter -->
 <meta name="twitter:card" content="{{twitterCard}}">
 <meta name="twitter:title" content="{{pageTitle}}">
+<meta name="twitter:description" content="{{pageDescription}}">
 <meta name="twitter:site" content="{{twitterUsername}}">
 <meta name="twitter:creator" content="{{twitterUsername}}">
+<meta name="twitter:image" content="{{ogImageFull}}">
 
 <!-- JSON-LD -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "Organization",
-  "name": "{{siteName}}",
-  "url": "{{siteUrl}}",
-  "description": "{{siteDescription}}"
+  "name": "{{siteNameJson}}",
+  "url": "{{siteUrlJson}}",
+  "description": "{{siteDescriptionJson}}"{{authorJson}}
 }
 </script>
 
@@ -35,11 +37,11 @@
 {
   "@context": "https://schema.org",
   "@type": "WebSite",
-  "name": "{{siteName}}",
-  "url": "{{siteUrl}}",
+  "name": "{{siteNameJson}}",
+  "url": "{{siteUrlJson}}",
   "potentialAction": {
     "@type": "SearchAction",
-    "target": "{{siteUrl}}/?s={search_term_string}"
+    "target": "{{siteUrlJson}}/?s={search_term_string}"
   }
 }
 </script>

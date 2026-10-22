@@ -1,5 +1,5 @@
 ---
-permalink: /contributing/style.html
+permalink: /contributing/style/
 layout: default
 title: Voice & Style
 description: How Freestruct docs are written - voice rules, formatting and fence conventions

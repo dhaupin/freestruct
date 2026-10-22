@@ -21,6 +21,37 @@ new behavior change - it is the promotion of the committed truth:
   full audit close-outs (stale claims culled, dead exports retired,
   purge-hook canary pins).
 
+### Added (SEO port wave from prestruct, rides the 0.9.0 number)
+
+- Deterministic, content-derived build hash (prestruct's deploy-id audit
+  ported): identical content now yields an identical `freestruct-build` meta
+  and `?v=` asset params instead of churning CDN caches on every run; the
+  generated head tail, the generated 404 page, late-pass metas and lazy-load
+  attributes are excluded from the hash so reruns stay stable
+- CLI subcommands mirroring prestruct's surface: `freestruct validate`
+  (config-only preflight, exit 1 on fatal errors, no output touched),
+  `freestruct init [dir]` (scaffolds the init kit into `<dir>/docs`, never
+  clobbers) and `freestruct help` (with the `--help` flag alias)
+- `FREESTRUCT_URL` env override implemented (previously documented but never
+  honored): replaces `site.url` before every canonical/sitemap/feed consumer,
+  announced loudly in the run output
+- HTML-attribute escaping for every injected og/twitter/canonical value and
+  JSON-safe literals inside the generated JSON-LD (a raw `<` in a value
+  renders as `\u003c` and can no longer close the script tag early)
+- `og:image` ship-when-set parity: no image configured means no `og:image`
+  and no `twitter:image` tag at all (a bare tag pointing at the site root is
+  a broken card); `twitter:description` now accompanies `twitter:title`
+- `author` config key: ships a schema.org `Person` under `"founder"` on the
+  Organization JSON-LD block (previously documented but never implemented)
+- Per-page data comments (`<!-- freestruct: {...} -->`) implemented: title,
+  description, ogType, ogImage, twitterCard, plus `article:published_time` /
+  `article:author` / `article:section` companions (also previously documented
+  but never implemented); unknown keys and malformed JSON warn loudly,
+  missing-only stays the law
+- `jsonLd` config key: a custom JSON-LD object (or array of objects) appended
+  to the injected structured data, gated by the same missing-only rule; a
+  non-object entry is skipped with a loud config warning
+
 ## [0.6.0] - 2026-10-21
 
 Phase 2 of the v1.0.0 rehaul (PRD: labs/prd-freestruct.md) - the config

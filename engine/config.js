@@ -17,7 +17,7 @@ export const CONFIG_LEGACY = ['ssr-config.yml'];
 // checked, warn-and-continue on the unknown; nothing dies silently in config
 // files with 'docs said I could do this'.
 export const KNOWN_CONFIG_KEYS = Object.freeze([
-  'site', 'twitter', 'og', 'basePath', 'outputDir', 'minify', 'runHooks',
+  'site', 'twitter', 'og', 'author', 'jsonLd', 'basePath', 'outputDir', 'minify', 'runHooks',
   'generateSitemap', 'generateFeed', 'generate404', 'generateRobots',
   'readingTime', 'lastModified', 'lazyLoad', 'linkCheck', 'searchIndex',
   'cacheBusting',
@@ -110,6 +110,14 @@ export function loadConfig(cwd = process.cwd()) {
   }
   if (!parsed.site.url || !parsed.site.name) {
     throw new ConfigError('Invalid config: site.url and site.name are required');
+  }
+
+  // Documented env override (ssr-config.md "Environment Overrides"):
+  // FREESTRUCT_URL replaces site.url for staging-style CI runs. Announced,
+  // never silent, and it lands before every canonical/sitemap/feed consumer.
+  if (process.env.FREESTRUCT_URL) {
+    console.log('[freestruct] env override: site.url -> ' + process.env.FREESTRUCT_URL);
+    parsed.site.url = process.env.FREESTRUCT_URL;
   }
 
   const configName = path.basename(configPath);

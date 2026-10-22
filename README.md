@@ -84,7 +84,7 @@ template, and an empty output dir each fail loudly with their own exit code
 (`1` config, `2` template, `3` output dir; `--tolerant` downgrades fatals to
 exit 0 for CI tolerance).
 
-### Useful flags
+### Useful flags and subcommands
 
 ```bash
 npx freestruct --version        # installed version
@@ -93,6 +93,10 @@ npx freestruct --strict         # fail (nonzero) on broken internal links
                                 # artifacts and wire-guarded by the crashtest pack)
 npx freestruct --tolerant       # report everything, never fail the CI build
 npx freestruct path/to/output   # explicit output dir override
+npx freestruct validate         # config-only preflight; exit 1 on fatal errors
+npx freestruct init             # scaffold the starter kit into ./docs
+                                # (npx freestruct init mydir -> mydir/docs;
+                                #  existing files are never clobbered)
 ```
 
 ---
@@ -103,6 +107,14 @@ npx freestruct path/to/output   # explicit output dir override
 
 - Injects missing title, description, canonical, Open Graph, Twitter cards, and
   JSON-LD (missing-only: existing tags are left alone)
+- Attribute-safe everywhere: og/twitter values are HTML-escaped, JSON-LD
+  literals are JSON-escaped (a raw `<` cannot close the script tag),
+  `og:image`/`twitter:image` ship only when an image is configured, and an
+  optional `author` key rides the Organization JSON-LD as a schema.org founder
+- Page-level tuning survives the build: a `<!-- freestruct: {...} -->` comment
+  overrides title/description/ogType/ogImage/twitterCard and adds
+  `article:published_time`/`author`/`section`; custom `jsonLd` objects append
+  structured data
 - Honest canonical URLs including sub-path (`basePath`) installs - the same
   contract holds for the `sitemap.xml` locs, `robots.txt` sitemap pointer, the
   RSS channel/self links, and the generated 404's home link
@@ -149,6 +161,8 @@ Full key list (unknown or retired keys produce warnings, not silence):
 | `site.name`                            | - (required)   | Site name; composes page titles                                                                       |
 | `site.url`                             | - (required)   | Canonical origin; URLs build from this                                                                |
 | `site.description`                     | -              | Fallback description for pages without one                                                            |
+| `author`                               | *(unset)*      | Author identity; ships as schema.org founder on the Organization JSON-LD                              |
+| `jsonLd`                               | *(unset)*      | Custom JSON-LD object(s) appended to the injected structured data                                     |
 | `basePath`                             | *(unset)*      | URL path prefix the output tree is served under; all generated URLs get exactly this prefix           |
 | `outputDir`                            | `docs/_site`   | Build output directory (or pass it as a CLI arg)                                                      |
 | `generateSitemap`                      | `true`         | Generate `sitemap.xml`                                                                               |
@@ -170,6 +184,7 @@ The docs ([freestruct.creadev.org](https://freestruct.creadev.org)) carry the
 key-by-key guides: the [config reference](https://freestruct.creadev.org/guides/ssr-config),
 [cache busting](https://freestruct.creadev.org/guides/cache-busting), [custom
 injection](https://freestruct.creadev.org/guides/custom-injection),
+[CLI reference](https://freestruct.creadev.org/guides/cli),
 [post-render hooks](https://freestruct.creadev.org/guides/post-render-hooks),
 [CI/CD](https://freestruct.creadev.org/guides/cicd) and
 [troubleshooting](https://freestruct.creadev.org/guides/troubleshooting).

@@ -444,6 +444,33 @@ discipline). docs/AGENTS.md stays the rendered engineering-decisions page;
 - Version truth: package.json == README heading == CHANGELOG top entry ==
   0.9.0, battery-pinned.
 
+### Pass 18 - audit + SEO pass + prestruct port wave + CLI (done, on 0.9.0)
+- **Docs audit:** every page carries complete frontmatter; nav_order
+  normalized 0-14 to the nav.yml listing order; seven missing Related
+  blocks written and crosslink resolution machine-verified (zero unresolved).
+- **SEO pass on the live site:** the twitter handle placeholder left the
+  dogfood config (the engine now skips `twitter:site`/`creator` without one);
+  `style.md` permalink normalized; the og:image pointed at a live 404 -
+  `docs/og-image.png` generated (1200x630, pure-Node PNG writer, no deps).
+- **Prestruct port wave (CHANGELOG section):** attribute-escaping for all
+  injected values, JSON-safe JSON-LD literals, `og:image`/`twitter:image`
+  ship-when-set, `twitter:description`, `author` -> JSON-LD founder,
+  per-page `<!-- freestruct: {} -->` overrides (previously documented, never
+  implemented), custom `jsonLd` hook. The dogfood config now carries author
+  (Creadev.org) + jsonLd (dhaupin) and dropped two retired keys.
+- **Deterministic build hash:** content-derived (prestruct deploy-id audit
+  ported); the generated head tail, generated 404, late-pass metas and
+  `loading=lazy` are excluded from the hashed view so reruns stay stable.
+- **CLI:** `validate` / `init [dir]` / `help` (+ the `--help` alias);
+  dispatch is module-level because the bin shim imports `runInject` - the
+  first cut put the dispatch behind `invokedAsMain` and the tarball e2e
+  caught it live.
+- `FREESTRUCT_URL` env override implemented (documented, never honored before);
+  **Docs:** new CLI Reference page (nav + frontmatter + Related), links from
+  getting-started/README, hash + env-override docs made honest.
+- Battery 36 -> 49 green; sync:check, lint:docs (all 7 gates) and the
+  tarball e2e all clean.
+
 ## Next up (open, unowned)
 
 - Work the residual issue queue with receipts: #2-#14 are fixed in the

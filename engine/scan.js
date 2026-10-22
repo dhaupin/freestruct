@@ -4,6 +4,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 
 /** Recursively list HTML files under dir (exists-checked). */
 export function getHtmlFiles(dir) {
@@ -109,4 +110,42 @@ export function buildPages(files, outputDir) {
     });
   }
   return pages;
+}
+
+/**
+ * Deterministic content hash (ported principle from prestruct's deploy-id
+ * audit: a timestamp-seeded hash churns ?v= asset params and CDN caches on
+ * every run even when nothing changed). Derived from config + the sorted
+ * pre-injection page content, so identical content always yields an
+ * identical hash regardless of build time or machine.
+ *
+ * Everything this tool itself rewrites between runs is stripped or excluded
+ * before hashing: the regenerated last-modified/reading-time/freestruct-build
+ * metas, the previous ?v= bust params, and the whole head region after the
+ * freestruct marker (that region holds the custom header snippet, whose
+ * substituted {{buildHash}} would make the hash self-referential).
+ * blurred lines, accepted consequences:
+ *  - robots metas are excluded too: the 404 pipeline strip-and-reappears it
+ *    at a different position each run (404 is tool-owned anyway); a noindex
+ *    toggle on a user page will therefore not change the bust hash, and the
+ *    page is not crawled either way.
+ *  - a body/footer snippet that embeds {{buildHash}} self-references; that
+ *    is documented as a no-go, not hacked around in the regex.
+ */
+export function computeBuildHash(config, pages) {
+  const h = crypto.createHash('sha1');
+  h.update(JSON.stringify(config || {}));
+  // 404 pages sit outside the hash entirely: freestruct generates the missing
+  // one mid-run (so run 1 and run 2 would otherwise disagree on page count),
+  // and a noindex 404 is never crawled regardless.
+  const stable = (html) => html
+    .replace(/<meta[^>]*name="(freestruct-build|last-modified|reading-time|robots)"[^>]*>/gi, '')
+    .replace(/<!-- freestruct -->[\s\S]*?(?=<\/head>)/i, '')
+    .replace(/\?v=[0-9a-f]{8}/g, '')
+    .replace(/ loading="lazy"/g, '');
+  for (const page of pages.filter(p => !p.is404).sort((a, b) => (a.rel < b.rel ? -1 : a.rel > b.rel ? 1 : 0))) {
+    h.update(page.rel);
+    h.update(stable(page.html));
+  }
+  return h.digest('hex').slice(0, 8);
 }

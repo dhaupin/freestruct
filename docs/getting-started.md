@@ -147,6 +147,7 @@ Or add to your `package.json`:
 ## Related
 
 - [Configuration](/configuration) - All available options
+- [CLI Reference](/guides/cli) - Every command, flag and exit code
 - [Cache Busting Guide](/guides/cache-busting) - Why the hash matters
 - [FAQ](/guides/cache-busting-faq) - Pain points and solutions
 - [CI/CD Recipes](/guides/cicd) - Automating the deploy pipeline

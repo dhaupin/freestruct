@@ -16,6 +16,11 @@ import { fileURLToPath } from 'url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CANON = path.join(ROOT, 'engine', '_freestruct');
 const TARGETS = [path.join(ROOT, 'docs', '_freestruct'), path.join(ROOT, 'init', 'docs', '_freestruct')];
+// NOTE: test/fixtures/main/docs/_freestruct is deliberately NOT a sync target:
+// its snippet doubles (header/body-start/footer) carry the placeholder
+// content the issue-#10 pins assert on, and its inject-brand.html is kept
+// in byte-lockstep with the canonical set by hand (diff it when the canonical
+// templates change).
 
 function listDir(dir) {
   return fs.readdirSync(dir, { withFileTypes: true })

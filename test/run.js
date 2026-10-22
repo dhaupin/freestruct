@@ -256,6 +256,286 @@ test('default run: full SEO pipeline on a bare page (slug fixed to /)', () => {
   } finally { rmDir(dir); }
 });
 
+test('config contract: twitter block optional - no handle, no identity tags', () => {
+  // Same fixture config as 'main' with the twitter block dropped entirely:
+  // without a handle the engine must leave twitter:site/creator out rather
+  // than rendering content="" placeholders (twitter:card still injects).
+  const dir = scenario('main', {
+    'docs/ssr-config.yml': [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      '',
+      'og:',
+      '  image: /og.png',
+      '',
+      'searchIndex: true',
+      '',
+    ].join('\n'),
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/index.html');
+    assert.includes(html, '<meta name="twitter:card" content="summary">');
+    assert.includes(html, '<meta name="twitter:title" content="Home | Foo Docs">');
+    assert.ok(!/name="twitter:site"/.test(html), 'no twitter:site without a handle');
+    assert.ok(!/name="twitter:creator"/.test(html), 'no twitter:creator without a handle');
+  } finally { rmDir(dir); }
+});
+
+test('defaults: og.image optional means no image tags, escapes attributes, twitter parity', () => {
+  // Same fixture as 'main' minus the og block (no image anywhere). No image
+  // configured -> no og:image/twitter:image ship at all; values are
+  // attribute-escaped; twitter:description accompanies twitter:title.
+  const dir = scenario('main', {
+    'docs/ssr-config.yml': [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A "broken" <b>docs</b> description',
+      '',
+      'twitter:',
+      '  username: "@foos"',
+      '  card: summary_large_image',
+      '',
+      'searchIndex: true',
+      '',
+    ].join('\n'),
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/index.html');
+    assert.ok(!/og:image/.test(html), 'no og:image without a configured image');
+    assert.ok(!/twitter:image/.test(html), 'no twitter:image without a configured image');
+    assert.includes(html, '<meta name="description" content="A &quot;broken&quot; &lt;b&gt;docs&lt;/b&gt; description">');
+    assert.includes(html, '<meta name="twitter:description" content="A &quot;broken&quot; &lt;b&gt;docs&lt;/b&gt; description">');
+    assert.includes(html, '<meta name="twitter:card" content="summary_large_image">');
+    // raw ampersand stays raw in canonical attributes (existing contract)
+    const ab = read(dir, 'docs/_site/a&b.html');
+    assert.includes(ab, '<link rel="canonical" href="https://docs.example.com/a&b">');
+  } finally { rmDir(dir); }
+});
+
+test('defaults: no author key means no JSON-LD founder; author ships Person with url', () => {
+  const dir = scenario('main', {
+    'docs/ssr-config.yml': [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      '',
+      'author:',
+      '  name: Jane Doe',
+      '  url: https://janedoe.dev',
+      '',
+      'searchIndex: true',
+      '',
+    ].join('\n'),
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/index.html');
+    assert.includes(html, '"founder": { "@type": "Person", "name": "Jane Doe", "url": "https://janedoe.dev" }');
+  } finally { rmDir(dir); }
+  // main fixture carries no author: Organization JSON-LD must not have founder
+  const bare = scenario('main');
+  try {
+    runInject(bare);
+    const html = read(bare, 'docs/_site/index.html');
+    assert.ok(!html.includes('"founder"'), 'no founder without a configured author');
+  } finally { rmDir(bare); }
+});
+
+test('per-page freestruct comment overrides the injected tags and warns loudly', () => {
+  const files = [
+    'site:',
+    '  name: Foo Docs',
+    '  url: https://docs.example.com',
+    '  description: A test docs site',
+    '',
+    'twitter:',
+    '  username: "@foos"',
+    '  card: summary_large_image',
+    '',
+    'og:',
+    '  image: /og.png',
+    '',
+    'searchIndex: true',
+    '',
+  ].join('\n');
+  const dir = scenario('main', { 'docs/ssr-config.yml': files });
+  try {
+    const indexHtml = path.join(dir, 'docs/_site/index.html');
+    let html = fs.readFileSync(indexHtml, 'utf8');
+    html = html.replace('</head>',
+      '<!-- freestruct: {"title": "Guide Home", "ogType": "article", "ogImage": "/post.jpg", "twitterCard": "player", "publishedTime": "2026-10-01", "author": "Jane Roe", "section": "Docs", "bogus": 1} -->\n</head>');
+    fs.writeFileSync(indexHtml, html);
+
+    const stdout = runInject(dir);
+    assert.includes(stdout, 'unknown per-page key(s) "bogus" ignored');
+
+    const out = read(dir, 'docs/_site/index.html');
+    assert.includes(out, '<meta property="og:title" content="Guide Home | Foo Docs">');
+    assert.includes(out, '<meta property="og:type" content="article">');
+    assert.includes(out, '<meta property="og:image" content="https://docs.example.com/post.jpg">');
+    assert.includes(out, '<meta name="twitter:image" content="https://docs.example.com/post.jpg">');
+    assert.includes(out, '<meta name="twitter:card" content="player">');
+    assert.includes(out, '<meta property="article:published_time" content="2026-10-01">');
+    assert.includes(out, '<meta property="article:author" content="Jane Roe">');
+    assert.includes(out, '<meta property="article:section" content="Docs">');
+  } finally { rmDir(dir); }
+
+  // malformed JSON in the comment: warn + ignore, standard injection still lands
+  const bad = scenario('main', { 'docs/ssr-config.yml': files });
+  try {
+    const indexHtml = path.join(bad, 'docs/_site/index.html');
+    let html = fs.readFileSync(indexHtml, 'utf8');
+    html = html.replace('</head>', '<!-- freestruct: {"ogType": article} -->\n</head>');
+    fs.writeFileSync(indexHtml, html);
+
+    const stdout = runInject(bad);
+    assert.includes(stdout, 'malformed JSON in the freestruct per-page comment');
+    assert.includes(read(bad, 'docs/_site/index.html'), '<meta property="og:type" content="website">');
+  } finally { rmDir(bad); }
+});
+
+test('defaults: build hash is content-derived (deterministic, idempotent, content-sensitive)', () => {
+  const run = (dir) => {
+    runInject(dir);
+    return read(dir, 'docs/_site/index.html').match(/<meta name="freestruct-build" content="([0-9a-f]{8})"/)[1];
+  };
+  // identical content in two independent trees -> identical hash
+  const a = scenario('main');
+  const b = scenario('main');
+  try {
+    const hashA = run(a);
+    assert.strictEqual(hashA, run(b), 'identical content builds an identical hash');
+    // rerun over the already-injected tree -> still the same hash
+    assert.strictEqual(hashA, run(a), 'rerunning on an injected tree keeps the hash');
+  } finally { rmDir(a); rmDir(b); }
+  // a real content change flips the hash
+  const c = scenario('main');
+  try {
+    const before = run(c);
+    const indexHtml = path.join(c, 'docs/_site/index.html');
+    fs.writeFileSync(indexHtml, fs.readFileSync(indexHtml, 'utf8').replace('Welcome to the Foo Docs fixture site', 'Welcome CHANGED'));
+    run(c);
+    const after = read(c, 'docs/_site/index.html').match(/<meta name="freestruct-build" content="([0-9a-f]{8})"/)[1];
+    assert.notStrictEqual(before, after, 'content change produces a new hash');
+  } finally { rmDir(c); }
+});
+
+test('cli: validate ok/fatal, init scaffold + no-clobber, help', () => {
+  // validate: config-only preflight
+  const ok = scenario('main');
+  try {
+    const res = spawnSync(process.execPath, [INJECT, 'validate'], { cwd: ok, encoding: 'utf8' });
+    assert.strictEqual(res.status, 0);
+    assert.includes(res.stdout, 'config ok');
+    assert.ok(!fs.existsSync(path.join(ok, 'docs', '_site', 'sitemap.xml')) && !fs.existsSync(path.join(ok, 'sitemap.xml')), 'validate touches no output tree');
+  } finally { rmDir(ok); }
+
+  const bad = scenario('main', {
+    'docs/ssr-config.yml': ['site:', '  name: OnlyName', ''].join('\n'),
+  });
+  try {
+    const res = spawnSync(process.execPath, [INJECT, 'validate'], { cwd: bad, encoding: 'utf8' });
+    assert.notStrictEqual(res.status, 0);
+    assert.includes(res.stderr, 'Invalid config');
+  } finally { rmDir(bad); }
+
+  // init: fresh scaffold into <dir>/docs, then a no-clobber rerun
+  const fresh = fs.mkdtempSync(path.join(os.tmpdir(), `freestruct-cli-init-${process.pid}-`));
+  try {
+    const first = spawnSync(process.execPath, [INJECT, 'init'], { cwd: fresh, encoding: 'utf8' });
+    assert.strictEqual(first.status, 0);
+    assert.ok(fs.existsSync(path.join(fresh, 'docs', 'freestruct.config.yml')));
+    assert.ok(fs.existsSync(path.join(fresh, 'docs', '_freestruct', 'inject-brand.html')));
+
+    const again = spawnSync(process.execPath, [INJECT, 'init'], { cwd: fresh, encoding: 'utf8' });
+    assert.strictEqual(again.status, 0);
+    assert.includes(again.stdout, 'nothing new to scaffold');
+    assert.includes(again.stdout, 'skip (exists)');
+  } finally { rmDir(fresh); }
+
+  // help (subcommand) and its --help flag alias must print the same text
+  const help = spawnSync(process.execPath, [INJECT, 'help'], { encoding: 'utf8' });
+  assert.strictEqual(help.status, 0);
+  assert.includes(help.stdout, 'freestruct validate');
+  assert.includes(help.stdout, 'freestruct init');
+  const flag = spawnSync(process.execPath, [INJECT, '--help'], { encoding: 'utf8' });
+  assert.strictEqual(flag.status, 0);
+  assert.strictEqual(flag.stdout, help.stdout, '--help prints the same help text');
+});
+
+test('config contract: FREESTRUCT_URL env override redirects the canonical origin, loudly', () => {
+  const dir = scenario('main');
+  try {
+    const res = spawnSync(process.execPath, [INJECT], {
+      cwd: dir, encoding: 'utf8',
+      env: { ...process.env, FREESTRUCT_URL: 'https://staging.example.com' },
+    });
+    assert.strictEqual(res.status, 0);
+    assert.includes(res.stdout, 'env override: site.url -> https://staging.example.com');
+    const html = read(dir, 'docs/_site/index.html');
+    assert.includes(html, '<link rel="canonical" href="https://staging.example.com/">');
+    assert.includes(html, '<meta property="og:url" content="https://staging.example.com/">');
+    // stderr must stay clean like every successful run
+    assert.strictEqual(res.stderr.trim(), '', 'env override must not emit stderr noise');
+  } finally { rmDir(dir); }
+});
+
+test('config contract: jsonLd hook appends custom structured data (missing-only, script-safe)', () => {
+  const dir = scenario('main', {
+    'docs/ssr-config.yml': [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      '',
+      'jsonLd:',
+      '  - "@type": BreadcrumbList',
+      '    position: 1',
+      '  - 5',
+      '',
+      'searchIndex: true',
+      '',
+    ].join('\n'),
+  });
+  try {
+    const stdout = runInject(dir);
+    assert.includes(stdout, 'jsonLd[1] is not an object; block skipped');
+    const html = read(dir, 'docs/_site/index.html');
+    assert.strictEqual((html.match(/application\/ld\+json/g) || []).length, 3, 'built-in Organization + WebSite + one custom block');
+    assert.includes(html, '{"@type":"BreadcrumbList","position":1}');
+    // existing-seo page keeps its own JSON-LD (missing-only), no extra blocks
+    const existing = read(dir, 'docs/_site/existing-seo.html');
+    assert.strictEqual((existing.match(/application\/ld\+json/g) || []).length, 1);
+  } finally { rmDir(dir); }
+
+  // script-safety: '<' in a value renders as \u003c in the serialized block
+  const hostile = scenario('main', {
+    'docs/ssr-config.yml': [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      '',
+      'jsonLd:',
+      '  name: "</script>alert(1)<x>"',
+      '',
+      'searchIndex: true',
+      '',
+    ].join('\n'),
+  });
+  try {
+    runInject(hostile);
+    const html = read(hostile, 'docs/_site/index.html');
+    assert.includes(html, '"name":"\\u003c/script>alert(1)\\u003cx>"');
+  } finally { rmDir(hostile); }
+});
+
 test('default run: missing-only gate leaves pages that already ship SEO untouched', () => {
   const dir = scenario('main');
   try {

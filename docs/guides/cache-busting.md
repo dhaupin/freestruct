@@ -8,7 +8,7 @@ Freestruct provides a built-in cache busting system that ensures your content is
 
 ## How It Works
 
-Every build generates a unique **build hash** that's injected into your HTML. This hash changes on every build, ensuring:
+Every build derives a deterministic **build hash** from your config and the pre-injection page content - identical content always yields an identical hash, and real content changes always change the hash. That keeps the injected markers ensuring:
 
 1. **Asset cache busting** - CSS, JS, and images get `?v={hash}` query params
 2. **Meta tag** - Hash visible in page source for debugging
@@ -80,7 +80,6 @@ These settings control cache busting behavior:
 |--------|---------|-------------|
 | `assetQueryParam` | true | Add `?v={hash}` to CSS, JS, image URLs |
 | `hashInCanonicalUrl` | false | Add `?v={hash}` to canonical URLs |
-| `hash` | true | Always generate build hash |
 | `runHooks` | false | Run purge commands (must be enabled explicitly) |
 
 ## Environment Variables

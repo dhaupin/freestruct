@@ -4,10 +4,20 @@ site:
   url: https://freestruct.creadev.org
   description: Post-build SEO layer for static docs
 
-# Twitter Cards
-twitter:
-  username: "@yourhandle"
-  card: summary
+# Author identity: ships as a schema.org Person under "founder" on the
+# injected Organization JSON-LD block
+author:
+  name: Creadev.org
+  url: https://creadev.org
+
+# Maintainer identity: custom JSON-LD appended after the built-in
+# Organization + WebSite blocks (missing-only gate keeps pages that arrive
+# with their own ld+json untouched)
+jsonLd:
+  - "@type": Person
+    name: dhaupin
+    url: https://github.com/dhaupin
+    jobTitle: Freestruct maintainer
 
 # Open Graph
 og:
@@ -30,12 +40,7 @@ generateRobots: true
 # Minify HTML (experimental, off by default)
 # minify: true
 
-# Preserve existing meta tags
-preserveExistingMeta: true
-
-# Cache busting
-cacheBusting:
-  hash: true
+# Cache busting (a build hash is always generated; assetQueryParam on by default)
 
 # Generate RSS feed (on by default)
 generateFeed: true
