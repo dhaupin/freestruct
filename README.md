@@ -217,12 +217,15 @@ Two shipped surfaces beyond the engine:
   README/CHANGELOG truth. Single source, no drift.
 - `CHANGELOG.md` is the changelog; releases are tagged (`v*`) and
   CHANGELOG-truthful or they don't ship.
-- Current release: **0.6.0** (version frozen on this number; see
+- Current release: **0.9.0** (the owner's version call, 2026-10-22; see
   `labs/TASKS.md` for the version policy).
 - Deployment truth lives in [DEPLOY.md](DEPLOY.md): the GitHub Pages pipeline
   (this repo's own docs site deploys through it) and the npm release runbook.
 
-## v0.6.0
+## v0.9.0
+
+This number carries the full rehaul-era stack, accumulated under the 0.6.0
+freeze and released as one truthful number by owner call:
 
 - Config renamed to `freestruct.config.yml` with legacy read; schema-checked
   with loud diagnostics; FAST_FAIL exit codes + `--tolerant`
@@ -238,7 +241,8 @@ Two shipped surfaces beyond the engine:
   English-only language gate, engine comment format), the docs CI itself
   runs `--strict` plus the crashtest pack dogfood
 - Release truth: tarball e2e CI gate + hard publish gate; version pinned
-  and frozen
+- crashtest pack surface (`packs/public/freestruct-docs-shapes`) with CI
+  teeth on every push and the Pages build
 
 ---
 

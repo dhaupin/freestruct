@@ -2,6 +2,25 @@
 
 All notable changes to freestruct will be documented here.
 
+## [0.9.0] - 2026-10-22
+
+Owner version call: 0.9.0 is the release-truth number for the rehaul-era
+stack that accumulated under the 0.6.0 freeze. Nothing in this section is a
+new behavior change - it is the promotion of the committed truth:
+
+- Version truth swept repo-wide to 0.9.0 (package.json, README, CHANGELOG
+  top entry, `init/VERSION`, the battery's agreement pin, and the release
+  runbook example tag); every artifact now names one number.
+- Post-0.6.0 work that rides this number: the prestruct-shaped house
+  structure (`engine/` + `init/` + `bin/` shim + template sync gate), the
+  crashtest pack surface (`packs/`, dogfooded in CI), the tarball-e2e and
+  pack-selftest CI gates, the `--strict` graduation into the docs CI (its
+  harvest fixed three production 404s), the docs-audit gate family
+  (frontmatter/links/nav/style/truthfulness/English-only language/
+  engine-header codefmt), the README/AGENTS/DEPLOY meta rewrite, and the
+  full audit close-outs (stale claims culled, dead exports retired,
+  purge-hook canary pins).
+
 ## [0.6.0] - 2026-10-21
 
 Phase 2 of the v1.0.0 rehaul (PRD: labs/prd-freestruct.md) - the config

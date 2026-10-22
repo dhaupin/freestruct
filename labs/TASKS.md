@@ -427,6 +427,23 @@ discipline). docs/AGENTS.md stays the rendered engineering-decisions page;
   both ways; battery unchanged (fixture pages genuinely noindex).
 - Version freeze untouched: everything ships under 0.6.0.
 
+### Pass 17 - version truth swept to 0.9.0 (owner call, done on 0.9.0)
+- **OWNER CALL supersedes the freeze:** the version number moves
+  0.6.0 -> 0.9.0. The structural freeze policy was doing its job (one
+  number everywhere behind a CI pin); the owner chose to promote that
+  truth. Sweep executed over the AUDIT's live-truth set: package.json,
+  README (release line + the `## v0.9.0` heading the battery pin reads),
+  CHANGELOG (new top `[0.9.0]` entry - the promotion rollup - with the
+  [0.6.0] entry left verbatim as history), `init/VERSION`, the battery pin
+  itself, CONTRIBUTING.md / AGENTS.md / DEPLOY.md policy text, and the
+  release.yml example tag. Historical notes in TASKS/PRD/CHANGELOG during
+  the freeze stay verbatim - that is what 0.6.0-era passes shipped under,
+  and rewriting logs would falsify the record it exists to keep.
+- The pin wall now enforces exactly 0.9.0 everywhere until the owner moves
+  it again.
+- Version truth: package.json == README heading == CHANGELOG top entry ==
+  0.9.0, battery-pinned.
+
 ## Next up (open, unowned)
 
 - Work the residual issue queue with receipts: #2–#14 are fixed in the

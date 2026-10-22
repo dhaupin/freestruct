@@ -63,7 +63,7 @@ Every push and pull request runs:
 
 1. `npm test` - the fixture battery (41 pins), including the version-truth
    pin that enforces the triple agreement (README / package.json /
-   CHANGELOG) and the frozen **0.6.0**.
+   CHANGELOG) and the pinned **0.9.0** (owner call, 2026-10-22).
 2. Docs audit (`npm run lint:docs`) - frontmatter, links, nav symmetry,
    style, truthfulness, English-only language gate, and the engine-header
    comment format gate.
