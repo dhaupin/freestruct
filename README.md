@@ -88,7 +88,9 @@ exit 0 for CI tolerance).
 
 ```bash
 npx freestruct --version        # installed version
-npx freestruct --strict         # fail (nonzero) on broken links / noindex leakage
+npx freestruct --strict         # fail (nonzero) on broken internal links
+                                # (noindex pages are structurally excluded from
+                                # artifacts and wire-guarded by the crashtest pack)
 npx freestruct --tolerant       # report everything, never fail the CI build
 npx freestruct path/to/output   # explicit output dir override
 ```

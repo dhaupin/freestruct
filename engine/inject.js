@@ -13,7 +13,7 @@
 // CLI (Phase 0/2 contract):
 //   --version   print the package.json version and exit 0 (works configless;
 //               resolved one level up: engine/ is the package root's sibling dir)
-//   --strict    opt-in: broken links / noindex leaks exit 1 instead of
+//   --strict    opt-in: broken internal links exit 1 instead of
 //               shipping green
 //   --tolerant  opt-out for CI tolerance: fatal config errors log and exit 0
 //               (default is FAST_FAIL exit codes, see below)
