@@ -29,7 +29,20 @@ const { fileURLToPath, pathToFileURL } = require('node:url');
 const { execFileSync } = require('node:child_process');
 
 const ROOT = join(dirname(__filename), '..');
-const CRASHTEST_BINS = [process.env.CRASHTEST_BIN, '/home/daytona/crashtest/bin/crashtest.js'].filter(Boolean);
+// A relative CRASHTEST_BIN (e.g. CI's node_modules/crashtest/bin/crashtest.js)
+// must be resolved against the CALLING cwd now - the campaigns later spawn
+// with temp-dir cwds, and a relative path would mysteriously vanish.
+const CRASHTEST_BINS = [
+  process.env.CRASHTEST_BIN && requires()
+    ? join(process.cwd(), process.env.CRASHTEST_BIN)
+    : process.env.CRASHTEST_BIN,
+  '/home/daytona/crashtest/bin/crashtest.js',
+].filter(Boolean);
+
+/** existsSync re-reading never says why a bin was rejected; resolve once. */
+function requires() {
+  return existsSync(join(process.cwd(), process.env.CRASHTEST_BIN));
+}
 
 const FIXTURE = {
   config: 'site:\n  name: Fixture Docs\n  url: https://docs.creadev.org\nog:\n  image: /og.png\ntwitter:\n  username: freestructdoc\n',

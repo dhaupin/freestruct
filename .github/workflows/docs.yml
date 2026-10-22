@@ -51,7 +51,7 @@ jobs:
       # EXPLOITED rows fail the Pages build - hardened output only.
       - name: Crashtest the built docs
         run: |
-          npm install --no-save github:dhaupin/crashtest
+          npm install --no-save github:dhaupin/crashtest#dc80a7c7a42e58a532b8ad624b79de2742d1ccbb
           npx crashtest run
 
       - name: Install Pagefind (official npm dist, not the global install)

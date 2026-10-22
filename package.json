@@ -30,7 +30,8 @@
     "inject": "node bin/freestruct.mjs",
     "test": "node test/run.js",
     "e2e": "node scripts/e2e-install.cjs",
-    "lint:docs": "node scripts/run-docs-audit.cjs"
+    "lint:docs": "node scripts/run-docs-audit.cjs",
+    "packs:selftest": "node scripts/packs-selftest.cjs"
   },
   "repository": {
     "type": "git",
