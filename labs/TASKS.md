@@ -508,20 +508,33 @@ discipline). docs/AGENTS.md stays the rendered engineering-decisions page;
 
 ## Next up (open, unowned)
 
-- Work the residual issue queue with receipts: #2-#14 are fixed in the
-  rehaul (pin-referenced in the battery/CHANGELOG) but still track as
-  OPEN - a sweep with per-issue receipts is the honest close-out.
-- The two live findings are queued fixes: #15 (pagefind 1.5.x needs
-  `<script type="module">`, the static preload throws on every docs page)
-  and #16 (docs theme `--ink-light` fails WCAG AA; fix shape
-  `#94867a` already proven in crashtest's copy).
-- Phase 4 residual: npm bootstrap publish + Trusted Publisher entry (PRD
-  section 4.1 steps 3-4) - owner actions on npmjs.com; everything on the repo side
-  is now gated and ready for the first `v*` tag whenever the owner makes it.
-- Beyond that, the open PRD items are owner-level calls, not build work:
-  any owner decisions on the residual questions in labs/prd-freestruct.md
-  section 4 (the resolved-set is already in). No repo-side gate remains open on
-  the freestruct side.
+State of this list as of Pass 20 (truth-up over the stale entries below it
+in the pass log, which are history): the repo side of the v1.0.0 path is
+closed. What remains is owner action plus one bookkeeping sweep.
 
-**Reminder (recorded twice on purpose, hard to see, easy to violate):** DO
-NOT BUMP THE VERSION. Everything above ships under 0.6.0.
+- The two live findings are DONE, the ledger just lagged: #15 (pagefind 1.5.x
+  static preload) is fixed by design - `docs/_layouts/default.html` loads
+  Pagefind as a dynamic ESM import inside the search modal only, with no
+  static `<script src>` preload, and the live site serves exactly that; #16
+  (`--ink-light` WCAG) is moot in the current tree - no `--ink` token exists
+  in `docs/assets` or the layouts anymore (if it is ever reintroduced, the
+  `#94867a` AA-passing shape is already proven in crashtest's copy).
+- Issue-queue close-out: #2-#14 are fixed in the rehaul (pin-referenced in
+  the battery/CHANGELOG) but still track as OPEN in the issue queue - the
+  receipt sweep that closes them is bookkeeping, not build work.
+- **Before the npm release, owner actions only (PRD 4.1 steps 3-4):**
+  1. One-time manual bootstrap publish from a dev machine (`npm publish;
+     OIDC cannot create a brand-new package; do not set
+     publishConfig.provenance for it).
+  2. npmjs.com -> freestruct -> Settings -> Trusted Publisher (user dhaupin,
+     repo freestruct, workflow publish.yml).
+  3. Owner cuts the first tag (`git tag v1.0.0 && git push origin main
+     --follow-tags`); publish.yml + release.yml fire from there, and the
+     announcement draft at `docs/discussions/announcing-v1.0.0.md` is ready
+     for the Discussions post.
+- No repo-side gate remains open on the freestruct side: battery (49 pins),
+  docs audit (7 gates), template sync, tarball e2e, crashtest pack selftest
+  + docs dogfood and the version-truth pin are all CI-green on main.
+
+**Reminder (current truth, supersedes the freeze):** the pin wall enforces
+0.9.0 everywhere until the owner promotes to the release tag.
