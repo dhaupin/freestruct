@@ -224,7 +224,7 @@ When working on the docs theme:
     <a href="{{ '/guides' | relative_url }}">Guides</a>
     <script src="{{ 'pagefind/pagefind.js' | relative_url }}"></script>
 
-See: [_layouts/default.html](../_layouts/default.html), [index.md](/)
+Preview checks happen through `_layouts/default.html` (its includes live under `_includes/`).
 
 ## Common Doc Blocks
 
@@ -235,4 +235,4 @@ See: [_layouts/default.html](../_layouts/default.html), [index.md](/)
 | Tips/Notes | Blockquote with a label (>, NOTE: or WARNING:) |
 | Warnings | Why it matters (1 sentence) |
 
-See also: [Configuration](/configuration.html), [Getting Started](/getting-started.html)
+See also: [Configuration](/configuration), [Getting Started](/getting-started)
