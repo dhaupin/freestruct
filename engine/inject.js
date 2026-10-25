@@ -192,15 +192,15 @@ export function runInject(options = {}) {
   // uncaught ENOTDIR stack - fatal errors need a named cause + exit code.
   if (!fs.existsSync(outputDir)) fail('Output directory not found: ' + outputDir, EXIT_OUTPUT);
   else if (!fs.statSync(outputDir).isDirectory()) fail('Output directory is not a directory: ' + outputDir, EXIT_OUTPUT);
-  // Source-tree hardening (Pass 26.15): the outputDir positional accepts any
-  // directory, and pointing it at an SSG SOURCE tree (this repo's docs/,
-  // today - committed template copies and layout HTML injected in place)
-  // poisons files silently. A built tree never contains the config file, a
-  // _layouts/ staging dir, or template staging; any of those means the
-  // caller aimed at source, so abort loudly with the fix spelled out.
+  // Source-tree hardening (Pass 26.15, tightened after CI): the outputDir
+  // positional accepts any directory, and pointing it at an SSG SOURCE tree
+  // (this repo's docs/, today - committed template copies and layout HTML
+  // injected in place) poisons files silently. Sentinels are ONLY staging
+  // dirs: Jekyll never exports underscore dirs into _site, but it DOES copy
+  // bare files like the config into it (CI hit the over-fire), so config
+  // files are not evidence. Staging dirs inside a built tree mean the
+  // caller aimed at source: abort loudly with the fix spelled out.
   const sourceMarkers = [
-    ['freestruct.config.yml', 'the config file'],
-    ['ssr-config.yml', 'the legacy config file'],
     ['_layouts', '_layouts/ staging'],
     ['_freestruct', 'template staging'],
   ];

@@ -1019,10 +1019,13 @@ battery grew 100 -> 102:
   output root) made the engine walk the SSG SOURCE tree and stamp build
   meta into committed template copies, layout HTML and stray pages, in
   place, silently - recovered here via git restore + npm run sync, and
-  the shape is now refused BEFORE any file is touched: a config file,
-  `_layouts/` or `_freestruct/` staging inside the output dir aborts
-  with exit 3 and the fix (point at `docs/_site`) spelled out. Pinned:
-  both sentinels trip, marker-free trees still inject.
+  the shape is now refused BEFORE any file is touched: `_layouts/` or
+  `_freestruct/` staging inside the output dir aborts with exit 3 and
+  the fix (point at `docs/_site`) spelled out. Sentinels are the
+  staging dirs ONLY - CI then caught the over-fire (a Jekyll `_site`
+  legitimately carries the copied config file), so config-file markers
+  never gate. Pinned: staging trip, config-carrying built tree still
+  injects, marker-free trees still inject.
 - **Live-site re-verification post-swap:** sitemap/robots/feed/llms/404
   200s, 19-item feed, breadcrumb JSON-LD on a guide page, 404 noindex,
   reading-time + last-modified + lazy-load metas, pagefind bundle, and

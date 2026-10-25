@@ -2298,18 +2298,23 @@ test('final-gate: a control byte in a page fact is a LOUD build failure (the esc
 test('pass-hunt: injecting an SSG SOURCE tree refuses loudly before any file is touched (Pass 26.15)', () => {
   const dir = scenario('main');
   try {
-    // Both sentinels: the legacy config file AND template staging sit inside
-    // the tree a wrong positional (docs/ instead of docs/_site) would walk.
     // The real-world hit: a run over the source dir stamped build-hash meta
-    // into committed template copies, in place, silently.
+    // into committed template copies, in place, silently. Sentinels are the
+    // STAGING dirs only - CI proved a built _site legitimately carries the
+    // config file (Jekyll copies it), so that marker must not gate.
     const res = runInjectFailing(dir, ['docs']);
     assert.strictEqual(res.status, 3, 'the source-tree refusal exits EXIT_OUTPUT (3)');
-    assert.includes(res.stderr, 'Refusing to inject', 'the refusal is loud and named');
+    assert.includes(res.stderr, 'template staging', 'the refusal is loud and names the staging sentinel');
     assert.includes(res.stderr, 'SSG source tree', 'the message names what it hit');
     assert.includes(res.stderr, 'docs/_site', 'the message spells the fix');
     // The poisoned template copy proves the point: BEFORE the guard, this
     // file was the contamination shape (injected junk inside a template).
     assert.ok(!read(dir, 'docs/_freestruct/inject-brand.html').includes('freestruct-build'), 'template staging stays uninjected when the guard fires');
+    // A built tree that carries the config file (the Jekyll copy class)
+    // still injects: a config file alone never gates the guard.
+    fs.writeFileSync(path.join(dir, 'docs/_site/freestruct.config.yml'), 'site:\n  url: https://docs.example.com\n');
+    runInject(dir);
+    assert.ok(read(dir, 'docs/_site/index.html').includes('freestruct-build'), 'the config-file-in-output case does not over-fire');
   } finally { rmDir(dir); }
 });
 

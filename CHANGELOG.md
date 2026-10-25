@@ -67,7 +67,8 @@ The SEO-gap pass (eight additions, all opt-in, missing-only, pinned):
   SSG SOURCE tree (config file, `_layouts/` or template staging inside
   the output dir) - the wrong-positional class that stamped build meta
   into committed template copies now aborts loudly with exit 3 and the
-  fix spelled out (#18 + Pass 26.15)
+  fix spelled out; staged-dirs-only sentinels (a built _site legitimately
+  carries the config file, so that marker never gates) (#18 + Pass 26.15)
 
 ## [1.0.0] - 2026-10-22
 
