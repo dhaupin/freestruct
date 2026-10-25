@@ -1,10 +1,12 @@
 ---
 title: Example Page Template
-description: Copy this template when creating new docs pages. Shows all supported frontmatter and section structure.
+description: Copy this template when creating new docs pages - it shows all supported frontmatter fields, section structure and the heading style this site audits for.
 nav_order: 9
 ---
 
-<!-- This is the complete template for Freestruct docs. Copy it when creating new pages. -->
+<!-- # Example Page Template
+
+This is the complete template for Freestruct docs. Copy it when creating new pages. -->
 
 ## Frontmatter
 

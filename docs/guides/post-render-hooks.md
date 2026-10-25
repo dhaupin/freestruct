@@ -4,7 +4,7 @@ description: Use Freestruct as a build-time HTML processor for anything you need
 nav_order: 8
 ---
 
-## Beyond SEO: Post-Render HTML Processing
+# Beyond SEO: Post-Render HTML Processing
 
 Freestruct isn't just for SEO. It's a **build-time HTML processor** that runs after your SSG completes. This opens up possibilities beyond meta tags.
 

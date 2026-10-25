@@ -19,9 +19,14 @@ jsonLd:
     url: https://github.com/dhaupin
     jobTitle: Freestruct maintainer
 
-# Open Graph
+# Open Graph - object form (og.image: { src, width, height, alt }) so the
+# audit's width/height/alt glow rows pass; dimensions match the real file.
 og:
-  image: /og-image.png
+  image:
+    src: /og-image.png
+    width: 1200
+    height: 630
+    alt: freestruct - post-build SEO layer for static doc sites
   type: website
   locale: en_US
 

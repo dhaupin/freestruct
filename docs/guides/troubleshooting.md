@@ -1,9 +1,11 @@
 ---
 title: Troubleshooting
-description: Common issues and how to fix them
+description: Common Freestruct issues and their fixes - config errors, missing meta, link check failures and CI exit codes, with the command that shows each problem
 nav_order: 10
 ---
 Common issues and solutions.
+
+# Troubleshooting
 
 ## Errors
 
