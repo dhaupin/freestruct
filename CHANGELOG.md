@@ -2,6 +2,44 @@
 
 All notable changes to freestruct will be documented here.
 
+## [1.1.0] - 2026-10-25
+
+The first post-stable release: the all-items issue sweep (#17-#24 plus the
+#25 follow-on only here by owner direction) and the CI tooling that came
+with it. Every item below is battery-pinned; the battery grew 49 -> 75.
+
+- `freestruct audit`: independent baked-output verification - per-page head
+  hygiene (attribute-order-tolerant, missing-only-aware FAIL/WARN mapping),
+  the 404 noindex contract, sitemap/robots checks, `--json` digest, exit 0
+  clean / 1 findings / 3 missing dir (#18)
+- `hooks.postBuild`: general post-build hook seam behind the `runHooks`
+  gate - 30s timeout, `$`-placeholders + `FREESTRUCT_SITE_URL` /
+  `FREESTRUCT_BUILD_HASH` / `FREESTRUCT_OUTPUT_DIR` env on the child, a
+  nonzero exit fails the build with the new documented exit code 4 (#21)
+- IndexNow: key-file emission during the run (the keyLocation ownership
+  proof; generate-once-and-persist `indexnow-key.txt`), and the
+  `freestruct indexnow [--dry-run]` post-deploy submission (post-deploy:
+  keyLocation must resolve live) (#19)
+- Structured `og.image`: `{ src, width, height, alt, allowSvg }` with
+  `og:image:width`/`height`/`alt` companions, string form untouched, the
+  SVG blank-card trap warns on every run and fails under `--strict` (#20)
+- Per-page OG-image generation: `ogImageGeneration` renders a branded
+  1200x630 PNG per page from a consumer SVG template through the optional
+  `@resvg/resvg-js` rasterizer (loud skip when absent; sandbox-safe font
+  buffers; deterministic bytes; missing-only intact) (#22)
+- Slug-glob scoped config: `jsonLd` map form (exact, `*` one segment,
+  `**` a sub-tree) and `og.scoped` image variants, most-specific-first,
+  malformed entries warn honestly (a list-valued scoped variant ships NO
+  image, never synthesized garbage) (#25 + follow-on)
+- Latent hardening: config/page-carried values ride function replacers
+  everywhere (the `$`-expansion class is dead); `escapeReplacement`
+  contracts documented (#24)
+- Docs hygiene: the dead prism line-numbers pair removed from the docs
+  layout (#17); the announcement draft unwrapped + renamed to
+  `announcing-freestruct-v1.0.0.md` (#23)
+- CI: packstruct manifest lint joined the push/PR battery beside the
+  crashtest pack selftest (pinned-sha installs, cache-owned)
+
 ## [1.0.0] - 2026-10-22
 
 First stable release. The manual npm bootstrap put the package on npm; from

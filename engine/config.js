@@ -213,8 +213,8 @@ export function collectConfigDiagnostics(config, configName) {
       if (!/^\//.test(key) && key !== '*' && !key.includes('*')) {
         warnings.push('og.scoped keys must be slug globs (starting with "/", optionally with * / **) - skipping "' + key + '"');
       }
-      if (!Array.isArray(v) && (v === null || (typeof v !== 'string' && typeof v !== 'object'))) {
-        warnings.push('og.scoped "' + key + '" must be an og image string or object');
+      if (v === null || Array.isArray(v) || (typeof v !== 'string' && typeof v !== 'object')) {
+        warnings.push('og.scoped "' + key + '" must be an og image string or a { src, width, height, alt, allowSvg } object (a list of images is not a variant - one page matches one image) - no image ships from this key');
       }
     }
   }

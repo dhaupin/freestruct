@@ -286,10 +286,33 @@ Two shipped surfaces beyond the engine:
   README/CHANGELOG truth. Single source, no drift.
 - `CHANGELOG.md` is the changelog; releases are tagged (`v*`) and
   CHANGELOG-truthful or they don't ship.
-- Current release: **1.0.0** (the owner's version call, 2026-10-22 - the
-  first stable release; see `labs/TASKS.md` for the version policy).
+- Current release: **1.1.0** (the version sweep + first post-1.0.0 surface:
+  this release carries the issue sweep landed after the 2026-10-22 tag;
+  see `labs/TASKS.md` for the version policy).
 - Deployment truth lives in [DEPLOY.md](DEPLOY.md): the GitHub Pages pipeline
   (this repo's own docs site deploys through it) and the npm release runbook.
+
+## v1.1.0
+
+The first post-stable release, carried by the all-items issue sweep
+(#17-#25 plus the #25 follow-on) and the CI tooling that came with it:
+
+- `freestruct audit` - independent baked-output verification (per-page head
+  hygiene, the 404 noindex contract, sitemap/robots) with `--json` for CI
+- `hooks.postBuild` - the general post-build hook seam (exit code 4,
+  `FREESTRUCT_*` env on hook children)
+- IndexNow - key-file emission + the `freestruct indexnow` post-deploy
+  submission (`--dry-run` for CI)
+- Scoped config - slug-glob map forms for `jsonLd` and `og.scoped`
+- Structured `og.image` - `{ src, width, height, alt, allowSvg }` with the
+  companion tags and the SVG warn/strict ladder
+- Per-page OG-image generation - `ogImageGeneration` through the optional
+  `@resvg/resvg-js` rasterizer
+- Latent hardening - every config/page-carried substitute now rides
+  function replacers ($-expansion cannot corrupt output), plus the
+  docs-layout dead-CSS removal
+- CI - packstruct manifest lint joined the push/PR battery alongside the
+  crashtest pack selftest; the battery grew 49 -> 75 pins
 
 ## v1.0.0
 

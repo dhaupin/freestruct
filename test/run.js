@@ -108,7 +108,7 @@ test('package.json is ESM, node >= 20, and ships the house structure (bin + engi
 
 // ---------- version truth (issue #7) ----------
 
-test('README, package.json and CHANGELOG agree on one version (1.0.0 owner pin)', () => {
+test('README, package.json and CHANGELOG agree on one version (1.1.0 owner pin)', () => {
   const pkg = JSON.parse(read('.', 'package.json'));
   const readme = read('.', 'README.md');
   const changelog = read('.', 'CHANGELOG.md');
@@ -118,10 +118,11 @@ test('README, package.json and CHANGELOG agree on one version (1.0.0 owner pin)'
   assert.ok(changeVer, 'CHANGELOG must open with a "## [X.Y.Z]" version entry');
   assert.strictEqual(readmeVer, pkg.version, 'README version heading must equal package.json version');
   assert.strictEqual(changeVer, pkg.version, 'CHANGELOG top entry must equal package.json version');
-  // Owner call (2026-10-22): the pin moved to 1.0.0 - the first stable
-  // release. The manual npm bootstrap is done; only the tag remains
+  // Owner call: the pin moved to 1.0.0 - the first stable release, and to
+  // 1.1.0 on 2026-10-25 with the first post-stable surface. The manual npm
+  // bootstrap is done; only the tag remains
   // owner-gated (see labs/TASKS.md VERSION POLICY).
-  assert.strictEqual(pkg.version, '1.0.0', 'version pinned at 1.0.0 by owner call - see the VERSION POLICY in labs/TASKS.md first');
+  assert.strictEqual(pkg.version, '1.1.0', 'version pinned at 1.1.0 by owner call - see the VERSION POLICY in labs/TASKS.md first');
 });
 
 test('README quickstart YAML example actually parses (issue #8)', () => {
@@ -1763,6 +1764,27 @@ test('og.scoped: most-specific variant wins over the global image; override stil
     assert.includes(deep, '<meta property="og:image" content="https://docs.example.com/og/guide.png">', 'sub-tree variant wins over the global default');
     assert.includes(deep, '<meta property="og:image:width" content="1200">', 'the structured variant rides companions');
     assert.includes(deep, '<meta property="og:image:alt" content="Guide banner">');
+  } finally { rmDir(dir); }
+});
+
+test('og.scoped: a list-valued variant warns loudly and ships NO image - never synthesized garbage', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site description that is long enough',
+      'og:',
+      '  scoped:',
+      '    "/guide/**":',
+      '      - /og/aar.png',
+      '      - /og/bbb.png',
+    ].join('\n') + '\n');
+    const out = runInject(dir);
+    assert.includes(out, 'must be an og image string or a { src, width, height, alt, allowSvg } object', 'the shape diagnostic names the value class');
+    const guide = read(dir, 'docs/_site/guide/index.html');
+    assert.ok(!/og:image/.test(guide), 'honest absence: no garbage comma-joined og:image');
   } finally { rmDir(dir); }
 });
 

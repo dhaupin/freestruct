@@ -555,8 +555,9 @@ closed. What remains is owner action plus one bookkeeping sweep.
   docs audit (7 gates), template sync, tarball e2e, crashtest pack selftest
   + docs dogfood and the version-truth pin are all CI-green on main.
 
-**Reminder (current truth):** the pin wall enforces 1.0.0 everywhere - the
-first stable release, owner sweep applied 2026-10-22. The manual npm
+**Reminder (current truth):** the pin wall enforces 1.1.0 everywhere - the
+first post-stable surface, owner sweep applied 2026-10-25 (the 1.0.0
+first-stable landed 2026-10-22). The manual npm
 bootstrap is done; the tag is the only remaining owner gate.
 
 ### Pass 22 - the issue sweep, all eight open items (done, on 1.0.0)
@@ -613,6 +614,26 @@ Counters: battery 49 -> 69 pins (all green), engine modules 9 -> 12
 re-run at the end of the pass: battery, lint:docs, sync:check, e2e.
 Next pass picks up: none of #17-#24 remain; the issue queue is empty and
 the version is owner-gated as ever.
+
+### Pass 24 - version sweep to 1.1.0 (owner call, done on 1.1.0)
+
+Preceded by the pass-23.5 edge hunt: ran crashtest (pack selftest against
+the pinned checkout) and packstruct (manifest lint + deep module census)
+locally, then probed the new seams for edges. One real bug found and fixed:
+an array-valued `og.scoped` variant slipped past the config shape
+diagnostic (arrays pass the `typeof object` check) and the runner would
+have shipped a garbage comma-joined `og:image`. Now the diagnostic names
+the value class, the runner resolves wrong-shaped variants to NO image,
+and a pin keeps the honest-absence behavior. Battery 74 -> 75.
+
+Then the bump, consciously flipped per the owner call, same ritual as the
+1.0.0 sweep: package.json + package-lock, `init/VERSION`, README (release
+line + the new `## v1.1.0` section above the `## v1.0.0` one), CHANGELOG
+new top entry, the battery pin (test name + message), DEPLOY (pin wording
++ battery count 49 -> 75), CONTRIBUTING + AGENTS pin wording, release.yml
+tag example, and this reminder line. Next pass picks up: the owner tag
+(`git tag v1.1.0 && git push origin v1.1.0`) - publish + release fire
+from the tag, proven on 1.0.0.
 
 ### Pass 23 - scoped jsonLd (#25) + og.scoped follow-on (done, on 1.0.0)
 

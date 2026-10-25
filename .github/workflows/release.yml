@@ -5,8 +5,8 @@
 # changelog stays the single source of truth.
 #
 # To release:
-#   git tag v1.0.0
-#   git push origin v1.0.0
+#   git tag v1.1.0
+#   git push origin v1.1.0
 #
 # (npm publish happens in publish.yml; these two workflows run on the same tag.)
 

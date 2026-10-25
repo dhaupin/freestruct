@@ -159,6 +159,14 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
       if (score > bestScore) { bestScore = score; scopedForPage = variant; }
     }
   }
+  // Defensive shape gate (config.js already warns loudly at load): a variant
+  // that is neither a string nor a plain object (god forbid a list - one page
+  // matches ONE image) resolves to NO image, never to synthesized garbage.
+  if (scopedForPage !== null && scopedForPage !== undefined
+      && typeof scopedForPage !== 'string'
+      && (typeof scopedForPage !== 'object' || Array.isArray(scopedForPage))) {
+    scopedForPage = null;
+  }
   const scopedIsObject = scopedForPage !== null && typeof scopedForPage === 'object' && !Array.isArray(scopedForPage);
   const allowSvgAccept = scopedForPage === null
     ? (ogImageObj ? ogImageObj.allowSvg === true : false)

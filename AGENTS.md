@@ -86,8 +86,9 @@ npm run e2e                  # tarball e2e: fresh install quick start through th
 
 ## Working rules the gates pin down
 
-- **Version pin:** everything ships under **1.0.0** (owner call,
-  2026-10-22, first stable, superseding the earlier 0.6.0 freeze and the
+- **Version pin:** everything ships under **1.1.0** (bumped from the
+  1.0.0 first stable on 2026-10-25, carrying the post-1.0.0 sweep and first
+  stable, superseding the earlier 0.6.0 freeze and the
   0.9.0 pin; `labs/TASKS.md` VERSION POLICY has the trail; the battery pin
   enforces one number everywhere).
   The manual npm bootstrap is done; tags are still owner-gated - the whole

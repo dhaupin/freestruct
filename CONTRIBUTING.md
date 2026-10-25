@@ -29,9 +29,8 @@ Electrically honest design rules that PRs must keep:
   build refuses loudly
 - **basePath is one contract** - every generated URL (canonical, sitemap loc,
   robots pointer, feed links, 404 home link) goes through `pageUrlFor`
-- **The version is pinned at 1.0.0** (owner call, 2026-10-22, first stable)
-  until the owner
-  moves it again
+- **The version is pinned at 1.1.0** (bumped from the 1.0.0 first stable
+  on 2026-10-25) until the owner moves it again
 
 Where to change things: the runtime lives in `engine/` (one orchestrator +
 eight modules; see the
