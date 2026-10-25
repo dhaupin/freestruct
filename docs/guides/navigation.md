@@ -4,7 +4,7 @@ description: How the docs menu works - one data file, rendered by one partial
 nav_order: 3
 ---
 
-# Navigation
+## Navigation
 
 Freestruct's docs menu is a **single data file**: `docs/_data/nav.yml`. The
 `header.html` include and the `default.html` sidebar both render the same

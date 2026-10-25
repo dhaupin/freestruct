@@ -13,31 +13,34 @@ export function getHtmlFiles(dir) {
   for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
     const fp = path.join(dir, item.name);
     if (item.isDirectory()) files.push(...getHtmlFiles(fp));
-    else if (item.name.endsWith('.html')) files.push(fp);
+    // Case-insensitive .html/.htm (Pass 26.10): a consumer SSG that emits
+    // .HTM or upper-case extensions is a page like any other - the old
+    // suffix test silently dropped it from every artifact.
+    else if (/\.html?$/i.test(item.name)) files.push(fp);
   }
   return files;
 }
 
-/**
- * Canonical slug for a file relative to the output root.
+/** Canonical slug for a file relative to the output root.
  *   index.html       -> '/'
  *   guide/index.html -> '/guide/'
  *   a&b.html         -> '/a&b'
+ *   legacy.htm       -> '/legacy' (case-insensitive .html/.htm)
  */
 export function slugFor(rel) {
   let p = String(rel).replace(/\\/g, '/');
-  if (p === '/index.html' || p === 'index.html') return '/';
+  if (/^\/?index\.html?$/i.test(p)) return '/';
   p = '/' + p;
   p = p
-    .replace(/\/index\.html$/, '/')
-    .replace(/\.html$/, '');
+    .replace(/\/index\.html?$/i, '/')
+    .replace(/\.html?$/i, '');
   return p;
 }
 
 /** 404.html at root or any directory level is the 404 pipeline's business. */
 export function is404File(rel) {
   const p = String(rel).replace(/\\/g, '/');
-  return p === '404.html' || p.endsWith('/404.html');
+  return /(^|\/)404\.html?$/i.test(p);
 }
 
 /** Robots noindex detection on (possibly injected) HTML. */
@@ -68,19 +71,25 @@ export function extractDescription(html) {
  * Does the page already import SEO of the given type from SSG/frontmatter?
  * Used by the missing-only injection gate ('description' added in Phase 1: a
  * plain <meta name="description"> counts as covered).
+ *
+ * Every probe is TAG-ANCHORED (Pass 26.12): substring matches fire on the
+ * page's own PROSE too - a docs page that quotes 'application/ld+json' in
+ * a code span silenced its own structured-data injection, exactly the
+ * configuration-reference page. Markup quotes markup: anchors, never
+ * discussion.
  */
 export function hasSeoType(html, type) {
   if (type === 'og') {
-    return html.includes('property="og:title"') || html.includes('property="og:description"');
+    return /<meta[^>]+property=["']og:(title|description)["']/i.test(html);
   }
   if (type === 'twitter') {
-    return html.includes('name="twitter:card"') || html.includes('name="twitter:title"');
+    return /<meta[^>]+name=["']twitter:(card|title)["']/i.test(html);
   }
   if (type === 'jsonld') {
-    return html.includes('application/ld+json');
+    return /<script[^>]+type=["']application\/ld\+json["']/i.test(html);
   }
   if (type === 'canonical') {
-    return html.includes('rel="canonical"');
+    return /<link[^>]+rel=["']canonical["']/i.test(html);
   }
   if (type === 'description') {
     return /<meta[^>]*name=["']description["']/.test(html);

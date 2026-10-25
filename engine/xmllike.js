@@ -87,7 +87,7 @@ export function generateFeed(pages, config, outputDir) {
     const html = fs.readFileSync(page.file, 'utf8');
     const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
     const descMatch = html.match(/<meta[^>]*name="description"[^>]*content="([^"]+)"/i);
-    const title = titleMatch ? titleMatch[1].split(' | ')[0] : path.basename(page.file, '.html');
+    const title = titleMatch ? titleMatch[1].split(' | ')[0] : path.basename(page.file).replace(/\.html?$/i, '');
     const desc = descMatch ? descMatch[1] : '';
     const pageUrl = pageUrlFor(config, page.slug);
     const pubDate = page.mtime.toUTCString();

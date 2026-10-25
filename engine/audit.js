@@ -52,12 +52,17 @@ function grabCanonical(head) {
   return href ? href[1] : null;
 }
 
+/** Count every occurrence of a head shape - the duplicate-class probe. */
+function countHead(head, re) {
+  return (head.match(re) || []).length;
+}
+
 function walkHtml(dir) {
   let out = [];
   for (const name of readdirSync(dir)) {
     const p = path.join(dir, name);
     if (statSync(p).isDirectory()) out = out.concat(walkHtml(p));
-    else if (name.endsWith('.html')) out.push(p);
+    else if (/\.html?$/i.test(name)) out.push(p);
   }
   return out;
 }
@@ -105,7 +110,9 @@ export function auditOutput({ outputDir, config, json = false, capture = false }
   const fail = (page, msg) => fails.push({ page, msg });
   const warn = (page, msg) => warns.push({ page, msg });
 
-  if (!existsSync(outputDir)) {
+  // File-at-path hardening (Pass 26.13): a file at the outputDir path passes
+  // existsSync, and walkHtml's readdirSync would arrive here uncaught.
+  if (!existsSync(outputDir) || !statSync(outputDir).isDirectory()) {
     if (json) console.log(JSON.stringify({ ok: false, error: 'output dir not found: ' + outputDir }));
     else console.error('[freestruct] audit: no "' + outputDir + '" directory - run the build first.');
     return { fails: [{ page: 'outputDir', msg: 'missing' }], warns, pages: 0, sitemapLocs: 0 };
@@ -121,7 +128,7 @@ export function auditOutput({ outputDir, config, json = false, capture = false }
     const head = html.split('</head>')[0];
     const label = rel.replace(/\\/g, '/');
 
-    if (label === '404.html' || label.endsWith('/404.html')) {
+    if (/(^|\/)404\.html?$/i.test(label)) {
       const robots = grabMeta(head, 'name', 'robots') || '';
       if (!/noindex/i.test(robots)) fail(label, '404 page missing its noindex robots directive');
       continue;
@@ -144,6 +151,19 @@ export function auditOutput({ outputDir, config, json = false, capture = false }
     const canonical = grabCanonical(head);
     if (!canonical || canonical === '') fail(label, 'missing canonical link');
     else if (!/^https?:\/\//i.test(canonical)) fail(label, 'canonical not absolute: ' + canonical);
+
+    // Duplicate tags ride the FAIL class: missing-only injection never
+    // adds a tag the page already carries, so any duplicate in a baked
+    // head is a page/SSG edit gone wrong (Pass 26.11). Attribute-order
+    // tolerant, same as the missing checks.
+    for (const dup of [
+      ['duplicate canonical link (a page ships exactly one)', /<link[^>]+rel=["']canonical["']/gi],
+      ['duplicate meta description', /<meta[^>]+name=["']description["']/gi],
+      ['multiple <title> elements', /<title[^>]*>/gi],
+      ['duplicate og:title', /<meta[^>]+property=["']og:title["']/gi],
+    ]) {
+      if (countHead(head, dup[1]) > 1) fail(label, dup[0]);
+    }
 
     for (const prop of OG_CORE) {
       if (!grabMeta(head, 'property', prop)) fail(label, 'missing ' + prop);

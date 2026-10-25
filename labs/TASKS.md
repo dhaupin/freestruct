@@ -861,3 +861,117 @@ The dogfood pass (26.8) exposed the engine bug live; engine fix + pins
 - Gates: battery 93/93, all seven docs-audit gates clean, template sync
   lockstep, packs selftest teeth (engine touched), tarball e2e, validate.
 
+### Pass 26.10 - extension-class + linkcheck-route walk (done, same session, post-26.9)
+
+The next hunt class - what the tree walk and the link checker silently
+drop. Findings + fixes (battery 93 -> 95):
+
+- **Extension-class blind spot (fixed):** `getHtmlFiles` matched a
+  case-sensitive `.html` suffix - `.HTM`, `legacy.htm` (Hugo alt-styles,
+  Windows exports) were invisible to the WHOLE pipeline (find -> inject
+  -> sitemap -> feed -> llms -> linkcheck). Now case-insensitive across
+  scan (walk + slug strip + 404 detect), linkcheck, audit walk + 404
+  label, and the `basename(page.file, '.html')` fallbacks in search/
+  xmllike. Pinned: mixed-case and .htm join injection + sitemap with
+  extension-stripped slugs.
+- **Linkcheck route shapes (fixed):** the checker only validated literal
+  file targets - extension-less INTERNAL hrefs (the pretty-URL shape
+  real consumer pages carry) silently passed. Now: extension targets
+  checked as files (page extensions), pretty-URL targets resolve through
+  the walker's route model (dir index first, then .html/.htm sibling);
+  asset targets (non-page-extension last segment) stay out of the
+  checker's purview. Pinned: dir index + .htm sibling resolve, real
+  misses report, the stylesheet href stays out.
+- Honest non-edges: empty scoped-map shapes (`locales: {}`,
+  `jsonLd: {}`, `article.scoped: {}`, plus `verification: {}`) are
+  no-ops with exit 0 - no crash, no fake artifacts. Hostile filenames
+  (`a&b.html`, `q%2Fmark.html`, `have space.html`) escape correctly in
+  sitemap/feed XML; the audit returns clean on the tree.
+- Count truths aligned at 95: README trail, AGENTS house table,
+  CHANGELOG 1.1.0 line, the v1.1.0 announcement.
+- Gates: battery 95/95, docs audit, sync lockstep, packs selftest
+  (engine touched), tarball e2e, validate.
+
+### Pass 26.11 - audit duplicate-class + CLI/encoding walk (done, same session, post-26.10)
+
+The encoding + reporting surface. One real gap found and fixed
+(battery 95 -> 96):
+
+- **Honest boundaries confirmed:** a BOM'd config loads fine (js-yaml
+  eats the byte order mark); `audit some/dir --json` positional-after-
+  flags parses (the earlier exit-0 reading was probe pipe pollution -
+  missing dir is exit 3, findings exit 1, clean exit 0, all as
+  documented).
+- **Audit duplicate class (fixed):** the audit asked only "is it
+  present?", never "is it alone?" - a doctored page carrying TWO
+  canonicals + TWO og:title reported only the missing companions.
+  Missing-only injection cannot duplicate, so a duplicate in a baked
+  head is always consumer-caused: duplicate canonical / meta
+  description / og:title and multiple `<title>` now ride the FAIL
+  class (attribute-order tolerant). Pinned: the doctored page names
+  all four and exits 1.
+- Count truths aligned at 96: README trail, AGENTS house table,
+  CHANGELOG 1.1.0 line, the v1.1.0 announcement.
+- Gates: battery 96/96, docs audit, sync lockstep, packs selftest
+  (engine touched), tarball e2e, validate.
+
+### Pass 26.12 - real-tree audit walk + the tag-anchored missing-only gate (done, same session, post-26.11)
+
+The audit ran against the REAL docs artifact pulled from CI (pages
+artifact of the green deploy) - 0 failures, 83 warnings, exit 0. The
+walk found one more engine-class bug and three site polish items:
+
+- **Tag-anchored missing-only gate (fixed):** `hasSeoType` matched on
+  raw substrings, so a page PROSE-quoting 'application/ld+json'
+  silenced the structured-data injection - the config-reference page
+  itself was bit (the page teaching JSON-LD shipped none because its
+  code spans quote the string). All probes now anchor to real markup
+  (`<meta property=og:title>`, `<script type=application/ld+json>`,
+  `<link rel=canonical>`, `<meta name=twitter:card>`). Pinned: a page
+  quoting all four strings in code spans still gets every injected
+  group (battery 96 -> 97).
+- **Honest audit verdicts reconfirmed:** missing dir exit 3, findings
+  exit 1 (both re-probed pipe-free), clean exit 0, `--json` digest
+  consistent with the human report.
+- **Site polish from the audit's own findings:** home description
+  trimmed 207 -> 158 chars; the two `# content-h1` pages
+  (navigation, post-render-hooks) demoted so the layout h1 stays
+  unique. The `.html` artifact siblings (Jekyll slash-less permalinks)
+  and the ssr-config redirect stub (no h1, WARN-only) are documented
+  shapes, not defects.
+- **Count truths aligned at 97:** README trail, AGENTS house table,
+  CHANGELOG 1.1.0 line, announcement.
+- Gates: battery 97/97, docs audit, sync lockstep, packs selftest
+  (engine touched), tarball e2e, validate.
+
+### Pass 26.13 - the untouched-paths walk (done, same session, post-26.12)
+
+Every engine corner the recent waves had NOT probed. Three real
+findings, all fixed (battery 97 -> 99):
+
+- **basePath double-slash (fixed):** a consumer basePath carrying its
+  own trailing slash joined onto lead-slash slugs as `/myproject//` -
+  doubled through canonical, og:url, sitemap, feed, hreflang
+  (`_norm` kept the trailing slash; only `site.url` normalized it).
+  `pageUrlFor` now strips consumer basePath trailing slashes (slug
+  trailing slashes stay - a directory page's slash is canonical).
+  Pinned: slash-y basePath -> single-slash canonical + feed alternate,
+  no doubled junction in the sitemap.
+- **outputDir-is-a-file crash (fixed):** all three commands + the audit
+  accepted a FILE at the outputDir path (`existsSync`), then the tree
+  walk crashed with an uncaught ENOTDIR stack. All four check sites now
+  require a directory -> named `Output directory is not a directory`
+  fatal + exit 3 (the documented OUTPUT exit class).
+- **Headless-.html run-side diagnostics (fixed):** a tree fragment with
+  no `</head>` took zero head injection (every surface anchors on the
+  head close), silently. `injectPage` now names it on the run (`no
+  </head> found - the whole head-injection surface skips this page`);
+  the page stays indexable missing-only, no guesses. Pinned.
+- **Honest boundaries:** zero-byte .html joins the pipeline fine;
+  indexnow without the config key prints named guidance (no crash);
+  empty scoped-map shapes stay no-ops (26.10 recheck).
+- **CI consistency:** one workflow still pinned `setup-node@v4` while
+  the rest rode `@v7` (publish.yml - the tag-published leg); aligned.
+- Gates: battery 99/99, docs audit, sync lockstep, packs selftest
+  (unsafe-corner engine surface touched), tarball e2e, validate.
+

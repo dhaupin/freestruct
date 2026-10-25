@@ -16,7 +16,14 @@ const _norm = s => '/' + String(s).replace(/^\/+/, '');
 
 export function pageUrlFor(config, slug) {
   const base = canonicalBase(config);
-  const basePath = config.basePath ? _norm(config.basePath) : '';
+  // Trailing slashes on a CONSUMER-PROVIDED basePath normalize away
+  // (Pass 26.13): '/myproject/' joined onto a lead-slash slug doubled the
+  // junction ('/myproject//guide/') through every injected URL class
+  // (canonical, sitemap, feed, hreflang). Directory SLUGS keep theirs -
+  // a directory page's trailing slash is canonical - only basePath strips.
+  const basePath = config.basePath
+    ? _norm(config.basePath).replace(/\/+$/, '')
+    : '';
   const slugPath = _norm(slug);
 
   // rel path already carries the deploy directory (e.g. tree nests docs/) -

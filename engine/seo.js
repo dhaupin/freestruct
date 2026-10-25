@@ -245,6 +245,15 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
   const siteUrl = config.site.url;
   const overrides = readPageOverrides(html, page);
 
+  // Headless-page diagnostics (Pass 26.13): every injected surface anchors
+  // on the head close tag, so a .html file without one silently takes NO
+  // head injection - the audit names the gaps afterwards, but the RUN says
+  // so here too (headless fragments are the octet-stream post class: never
+  // die silently).
+  if (!/<\/head>/i.test(html)) {
+    pageWarn(page, 'no </head> found - the whole head-injection surface skips this page');
+  }
+
   let pageTitle = (page.title || siteName) + ' | ' + siteName;
   let pageDescription = (page.description !== undefined && page.description !== null)
     ? page.description

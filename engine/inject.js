@@ -187,7 +187,11 @@ export function runInject(options = {}) {
     ? path.resolve(cwd, _positional)
     : path.resolve(configDir, config.outputDir || '_site');
 
+  // File-at-path hardening (Pass 26.13): the existence check alone let an
+  // outputDir pointing at a FILE through, and the tree walk crashed with an
+  // uncaught ENOTDIR stack - fatal errors need a named cause + exit code.
   if (!fs.existsSync(outputDir)) fail('Output directory not found: ' + outputDir, EXIT_OUTPUT);
+  else if (!fs.statSync(outputDir).isDirectory()) fail('Output directory is not a directory: ' + outputDir, EXIT_OUTPUT);
   // Template resolution: user-staged first (docs/_freestruct next to the
   // config), then the PACKAGE-shipped copy (npm install ships engine/_freestruct
   // - repo-shaped runs always hit the staged one, fresh-machine installs fall
@@ -378,8 +382,8 @@ async function cmdAudit() {
     ? path.resolve(process.cwd(), explicitDir)
     : path.resolve(configDir, (config && config.outputDir) || '_site');
 
-  if (!fs.existsSync(outputDir)) {
-    fail('Output directory not found: ' + outputDir, EXIT_OUTPUT);
+  if (!fs.existsSync(outputDir) || !fs.statSync(outputDir).isDirectory()) {
+    fail('Output directory not found (or not a directory): ' + outputDir, EXIT_OUTPUT);
   }
 
   const result = auditOutput({ outputDir, config, json: useJson && !useExternal, capture: useJson && useExternal });
@@ -439,8 +443,8 @@ async function cmdIndexNow() {
   const outputDir = explicitDir
     ? path.resolve(process.cwd(), explicitDir)
     : path.resolve(configDir, config.outputDir || '_site');
-  if (!fs.existsSync(outputDir)) {
-    fail('Output directory not found: ' + outputDir + ' - run freestruct first (indexnow reads the baked sitemap)', EXIT_OUTPUT);
+  if (!fs.existsSync(outputDir) || !fs.statSync(outputDir).isDirectory()) {
+    fail('Output directory not found (or not a directory): ' + outputDir + ' - run freestruct first (indexnow reads the baked sitemap)', EXIT_OUTPUT);
   }
 
   const result = await submitIndexNow({ config, configDir, outputDir, dryRun });

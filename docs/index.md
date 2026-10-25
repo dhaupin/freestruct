@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Freestruct - the post-build SEO layer for static doc sites
-description: Run one command after any SSG builds and every page of your docs carries complete SEO meta, a real sitemap, an RSS feed, a noindex 404, cache-busted assets and validated links. No plugins, no template edits.
+description: One command after any SSG builds - every page of your docs gets full SEO meta, a real sitemap, an RSS feed, a noindex 404 and cache-busted assets. No plugins, no template edits.
 nav_order: 0
 ---
 

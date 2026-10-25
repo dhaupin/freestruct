@@ -28,7 +28,7 @@ export function generateSearchIndex(pages, config, outputDir) {
       ? bodyMatch[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 500)
       : '';
 
-    const title = titleMatch ? titleMatch[1].split(' | ')[0] : path.basename(page.file, '.html');
+    const title = titleMatch ? titleMatch[1].split(' | ')[0] : path.basename(page.file).replace(/\.html?$/i, '');
     const description = descMatch ? descMatch[1] : '';
     const heading = h1Match ? h1Match[1] : title;
     const url = pageUrlFor(config, page.slug);

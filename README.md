@@ -327,7 +327,7 @@ The first post-stable release, carried by the all-items issue sweep
   function replacers ($-expansion cannot corrupt output), plus the
   docs-layout dead-CSS removal
 - CI - packstruct manifest lint joined the push/PR battery alongside the
-  crashtest pack selftest; the battery grew 49 -> 75 -> 93 pins
+  crashtest pack selftest; the battery grew 49 -> 75 -> 99 pins
 
 ## v1.0.0
 

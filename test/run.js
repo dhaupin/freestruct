@@ -1419,6 +1419,26 @@ test('audit: a real engine run audits CLEAN, doctored output FAILS with exit 1 (
   } finally { rmDir(dir); }
 });
 
+test('audit: duplicate head tags ride the FAIL class (never engine-caused - missing-only cannot duplicate)', () => {
+  const dir = scenario('main');
+  try {
+    runInject(dir);
+    const idx = path.join(dir, 'docs/_site/index.html');
+    const html = fs.readFileSync(idx, 'utf8');
+    fs.writeFileSync(idx, html
+      .replace('</title>', '</title>\n<title>Second</title>')
+      .replace(/<link rel="canonical"[^>]*>/i, (m) => m + '\n<link rel="canonical" href="https://docs.example.com/other">')
+      .replace(/<meta name="description"[^>]*>/i, (m) => m + '\n<meta name="description" content="second description planted by the doctor pass">')
+      .replace(/<meta property="og:title"[^>]*>/i, (m) => m + '\n<meta property="og:title" content="Duplicated">'));
+    const out = spawnSync(process.execPath, [INJECT, 'audit'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(out.status, 1, 'a duplicated head surface exits 1');
+    assert.includes(out.stdout, 'duplicate canonical link');
+    assert.includes(out.stdout, 'duplicate meta description');
+    assert.includes(out.stdout, 'duplicate og:title');
+    assert.includes(out.stdout, 'multiple <title> elements');
+  } finally { rmDir(dir); }
+});
+
 test('audit: the 404 noindex contract is checked independently of the og set (issue #18)', () => {
   const dir = scenario('main');
   try {
@@ -2019,6 +2039,103 @@ test('audit --external: the json digest parses with the warns merged; unknown au
     const bad = spawnSync(process.execPath, [INJECT, 'audit', '--bad'], { cwd: dir, encoding: 'utf8' });
     assert.ok(bad.status !== 0, 'unknown flags fail');
     assert.includes(bad.stdout + bad.stderr, 'only --json and --external are supported flags');
+  } finally { rmDir(dir); }
+});
+
+test('a headless .html fragment names itself on the run: whole head surface skips, page stays honest', () => {
+  const dir = scenario('main', {
+    'docs/_site/headless.html':
+      '<h1>a bare fragment with no html shell</h1>',
+  });
+  try {
+    const out = runInject(dir);
+    assert.includes(out, 'headless.html: no </head> found', 'the run names the headless page');
+    const sitemap = read(dir, 'docs/_site/sitemap.xml');
+    assert.ok(/\/headless</.test(sitemap), 'the fragment stays an indexable page (missing-only, no guesses)');
+    const f = read(dir, 'docs/_site/headless.html');
+    assert.ok(!f.includes('<meta name="description"'), 'no head injection lands on a headless page');
+  } finally { rmDir(dir); }
+});
+
+test('a consumer basePath carrying a trailing slash normalizes away - no doubled junction anywhere', () => {
+  const dir = scenario('main', {});
+  try {
+    const cfg = path.join(dir, 'docs/ssr-config.yml');
+    fs.writeFileSync(cfg, [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com/',
+      '  description: A test docs site',
+      'basePath: /myproject/',
+    ].join('\n') + '\n');
+    runInject(dir);
+    const guide = read(dir, 'docs/_site/guide/index.html');
+    assert.includes(guide, 'href="https://docs.example.com/myproject/guide/"', 'canonical joins single-slash over the slash-y basePath');
+    assert.includes(guide, 'href="https://docs.example.com/myproject/feed.xml"', 'the feed alternate joins single-slash too');
+    const sitemap = read(dir, 'docs/_site/sitemap.xml');
+    assert.ok(!/myproject\/\//.test(sitemap), 'no doubled junction in sitemap urls');
+    assert.includes(sitemap, 'https://docs.example.com/myproject/', 'the basePath root still ships its trailing slash');
+  } finally { rmDir(dir); }
+});
+
+test('missing-only gates are tag-anchored: page PROSE quoting the SEO strings cannot silence injection', () => {
+  const dir = scenario('main', {
+    'docs/_site/doc-wordy.html':
+      '<html><head><title>Docs</title></head><body><h1>Docs</h1>'
+      + '<p>write <code>application/ld+json</code> and <code>property="og:title"</code>'
+      + ' and <code>rel="canonical"</code> and <code>name="twitter:card"</code> quotes.</p></body></html>',
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/doc-wordy.html');
+    assert.ok((html.match(/<script[^>]+type="application\/ld\+json"/g) || []).length >= 2, 'the built-in Organization + WebSite still inject over prose quotes');
+    assert.ok(html.includes('property="og:title"'), 'og injection survives prose quotes');
+    assert.ok(html.includes('rel="canonical" href="https://docs.example.com/doc-wordy"'), 'canonical injects over prose quotes');
+  } finally { rmDir(dir); }
+});
+
+test('linkcheck route shapes: dir index + .htm sibling resolve, real misses report, assets stay out', () => {
+  const dir = scenario('main', {
+    'docs/_site/index.html':
+      '<html><head><title>H</title></head><body><h1>h</h1>'
+      + '<a href="/blog/">dir index</a>'
+      + '<a href="/contact.htm">htm sibling</a>'
+      + '<a href="/nowhere">gone</a>'
+      + '<a href="/css/site.css">style</a>'
+      + '</body></html>',
+    'docs/_site/blog/index.htm':
+      '<html><head><title>P</title></head><body><h1>p</h1></body></html>',
+    'docs/_site/contact.htm':
+      '<html><head><title>C</title></head><body><h1>c</h1></body></html>',
+  });
+  try {
+    const out = runInject(dir);
+    assert.includes(out, 'Link check: 2 broken links found');
+    assert.includes(out, '/nowhere');
+    assert.includes(out, 'ghost.html', "the fixture's own ghost link still reports");
+    assert.ok(!out.includes('site.css'), 'the stylesheet href stays out of the checker');
+  } finally { rmDir(dir); }
+});
+
+test('.htm and mixed-case extensions join the full pipeline (injection + sitemap + extension-stripped slugs)', () => {
+  const dir = scenario('main', {
+    'docs/_site/UPPER.HTML':
+      '<html><head><title>Upper</title></head><body><h1>upper</h1></body></html>',
+    'docs/_site/legacy.htm':
+      '<html><head><title>Legacy</title></head><body><h1>legacy</h1></body></html>',
+  });
+  try {
+    runInject(dir);
+    const upper = read(dir, 'docs/_site/UPPER.HTML');
+    assert.ok(upper.includes('<!-- freestruct -->'), 'upper-case .HTML is modeled and injected');
+    assert.includes(upper, 'rel="canonical" href="https://docs.example.com/UPPER"', 'the slug strips the extension');
+    const legacy = read(dir, 'docs/_site/legacy.htm');
+    assert.ok(legacy.includes('<!-- freestruct -->'), '.htm is modeled and injected');
+    assert.includes(legacy, 'rel="canonical" href="https://docs.example.com/legacy"', '.htm strips like .html');
+    const sitemap = read(dir, 'docs/_site/sitemap.xml');
+    assert.ok(/\/UPPER</.test(sitemap), 'mixed-case page reaches the sitemap');
+    assert.ok(/\/legacy</.test(sitemap), '.htm page reaches the sitemap');
+    assert.ok(!/\.htm/i.test(sitemap), 'no extension leaks into any sitemap URL');
   } finally { rmDir(dir); }
 });
 
