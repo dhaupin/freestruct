@@ -13,7 +13,7 @@ description: The v1.1.0 Discussions release post, per the Creadev family release
 
 # freestruct v1.1.0
 
-freestruct is a post-build SEO layer for static doc sites. v1.1.0 is the first post-stable release: a subtitle of new surface that includes the entire issue sweep and the SEO-gap pass, everything battery-pinned. This post ships with the v1.1.0 tag: npm has the tarball by the time you read it:
+freestruct is a post-build SEO layer for static doc sites. v1.1.0 is the first post-stable release: a suite of new surface that includes the entire issue sweep and the SEO-gap pass, everything battery-pinned. This post ships with the v1.1.0 tag: npm has the tarball by the time you read it:
 
 ```bash
 npm i -D freestruct
