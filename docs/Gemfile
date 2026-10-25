@@ -1,5 +1,7 @@
 source 'https://rubygems.org'
 
 gem 'jekyll', '~> 4.4'
-# No sitemap/seo-tag plugins: freestruct generates sitemap.xml post-build and
-# the engine owns all meta injection; both were previously listed here unused.
+# Ruby 3.4 moved bigdecimal from default to BUNDLED gems: liquid 4.0.4
+# requires it, so it must be named here or bundle exec dies on LoadError
+# (CI hit this the moment a resolved Gemfile.lock landed).
+gem 'bigdecimal', '~> 3.1'
