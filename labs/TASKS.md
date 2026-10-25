@@ -639,3 +639,11 @@ battery-pin sketch and built in the same pass.
   the winning descriptor. One pin.
 - Docs: config guide (jsonLd scoped section + og.scoped), README feature
   bullet. Counters: battery 69 -> 74 pins.
+- Also this pass: the v1.0.0 announcement draft is unwrapped (the family
+  ~72-char hand-wrap made every paste-to-Discussions re-flow read like
+  poetry; one flowing line per paragraph now, fences untouched, and the
+  audit passes with zero findings on the unwrapped file) and renamed to
+  `docs/discussions/announcing-freestruct-v1.0.0.md` for cross-repo
+  clarity (permalink and nav entry follow; the prestruct#48 convention
+  pull proposes unwrapping family-wide). Earlier TASKS/CHANGELOG path
+  references stay verbatim - they describe the tagged v1.0.0 state.
