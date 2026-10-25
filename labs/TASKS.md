@@ -997,3 +997,38 @@ The push's own `--strict` CI run caught the walk's residual bug
   v1.1.0 announcement.
 - Ships the same push as the flowforge rig adoption (next pass).
 
+### Pass 26.15 - the post-rig walk (done, same session, post-26.14)
+
+The walk over everything after the flowforge rig theme adoption; the
+battery grew 100 -> 102:
+
+- **Flowforge rig adopted (the theme swap itself):** docs/_layouts kept
+  the rig shape (fixed header, slide-out sidebar, pagefind modal,
+  light/dark tokens) with freestruct identity; the rig's baked SEO head
+  is trimmed so canonical/OG/JSON-LD stay the engine's missing-only
+  output. Old partial/SCSS theme retired (-1595 lines), icon.svg added.
+  Ruby 3.4/bigdecimal Gemfile fix rode along so CI's bundle exec holds.
+- **Audit twitter grade cools when no handle is configured:** the
+  injector already ships neither twitter:site nor twitter:creator
+  without `config.twitter.username` (seo.js late pass), but the audit
+  warned about the absence anyway - repeat noise for teams without a
+  twitter presence. Those two grades now gate on the same condition;
+  pinned by symmetry only (the docs audit remains 0 twitter rows).
+- **Source-tree guard (the real bug of the pass):** a wrong positional
+  (`node bin/freestruct.mjs --strict docs` with `docs/` treated as the
+  output root) made the engine walk the SSG SOURCE tree and stamp build
+  meta into committed template copies, layout HTML and stray pages, in
+  place, silently - recovered here via git restore + npm run sync, and
+  the shape is now refused BEFORE any file is touched: a config file,
+  `_layouts/` or `_freestruct/` staging inside the output dir aborts
+  with exit 3 and the fix (point at `docs/_site`) spelled out. Pinned:
+  both sentinels trip, marker-free trees still inject.
+- **Live-site re-verification post-swap:** sitemap/robots/feed/llms/404
+  200s, 19-item feed, breadcrumb JSON-LD on a guide page, 404 noindex,
+  reading-time + last-modified + lazy-load metas, pagefind bundle, and
+  the audit --external probe (30 URLs, only npmjs's bot-wall 403 - a
+  known-crawler shape, not a dead link).
+- Trail aligned at 102: README trail, AGENTS house table, CHANGELOG
+  1.1.0 line + hardening bullet.
+- Gates: battery 102/102, docs audit, sync lockstep, validate.
+

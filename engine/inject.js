@@ -192,6 +192,24 @@ export function runInject(options = {}) {
   // uncaught ENOTDIR stack - fatal errors need a named cause + exit code.
   if (!fs.existsSync(outputDir)) fail('Output directory not found: ' + outputDir, EXIT_OUTPUT);
   else if (!fs.statSync(outputDir).isDirectory()) fail('Output directory is not a directory: ' + outputDir, EXIT_OUTPUT);
+  // Source-tree hardening (Pass 26.15): the outputDir positional accepts any
+  // directory, and pointing it at an SSG SOURCE tree (this repo's docs/,
+  // today - committed template copies and layout HTML injected in place)
+  // poisons files silently. A built tree never contains the config file, a
+  // _layouts/ staging dir, or template staging; any of those means the
+  // caller aimed at source, so abort loudly with the fix spelled out.
+  const sourceMarkers = [
+    ['freestruct.config.yml', 'the config file'],
+    ['ssr-config.yml', 'the legacy config file'],
+    ['_layouts', '_layouts/ staging'],
+    ['_freestruct', 'template staging'],
+  ];
+  for (const [marker, meaning] of sourceMarkers) {
+    if (fs.existsSync(path.join(outputDir, marker))) {
+      fail('Refusing to inject: ' + outputDir + ' looks like an SSG source tree (' + meaning +
+        ' found inside). Point freestruct at the BUILT output instead (e.g. docs/_site).', EXIT_OUTPUT);
+    }
+  }
   // Template resolution: user-staged first (docs/_freestruct next to the
   // config), then the PACKAGE-shipped copy (npm install ships engine/_freestruct
   // - repo-shaped runs always hit the staged one, fresh-machine installs fall

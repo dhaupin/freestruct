@@ -2295,5 +2295,32 @@ test('final-gate: a control byte in a page fact is a LOUD build failure (the esc
   } finally { rmDir(dir); }
 });
 
+test('pass-hunt: injecting an SSG SOURCE tree refuses loudly before any file is touched (Pass 26.15)', () => {
+  const dir = scenario('main');
+  try {
+    // Both sentinels: the legacy config file AND template staging sit inside
+    // the tree a wrong positional (docs/ instead of docs/_site) would walk.
+    // The real-world hit: a run over the source dir stamped build-hash meta
+    // into committed template copies, in place, silently.
+    const res = runInjectFailing(dir, ['docs']);
+    assert.strictEqual(res.status, 3, 'the source-tree refusal exits EXIT_OUTPUT (3)');
+    assert.includes(res.stderr, 'Refusing to inject', 'the refusal is loud and named');
+    assert.includes(res.stderr, 'SSG source tree', 'the message names what it hit');
+    assert.includes(res.stderr, 'docs/_site', 'the message spells the fix');
+    // The poisoned template copy proves the point: BEFORE the guard, this
+    // file was the contamination shape (injected junk inside a template).
+    assert.ok(!read(dir, 'docs/_freestruct/inject-brand.html').includes('freestruct-build'), 'template staging stays uninjected when the guard fires');
+  } finally { rmDir(dir); }
+});
+
+test('pass-hunt: a built tree with none of the sentinels still injects (the guard does not over-fire)', () => {
+  const dir = scenario('main');
+  try {
+    runInject(dir); // docs/_site holds no config/_layouts/_freestruct -> unmolested
+    const root = read(dir, 'docs/_site/index.html');
+    assert.ok(root.includes('freestruct-build'), 'the normal path still injects fully');
+  } finally { rmDir(dir); }
+});
+
 // done
 console.log('[freestruct battery] complete');

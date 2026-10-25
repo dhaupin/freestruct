@@ -7,7 +7,7 @@ All notable changes to freestruct will be documented here.
 The first post-stable release: the all-items issue sweep (#17-#24 plus the
 #25 follow-on only here by owner direction) and the CI tooling that came
 with it, plus the SEO-gap pass landed inside this same untagged version.
-Every item below is battery-pinned; the battery grew 49 -> 100.
+Every item below is battery-pinned; the battery grew 49 -> 102.
 
 The SEO-gap pass (eight additions, all opt-in, missing-only, pinned):
 
@@ -61,6 +61,13 @@ The SEO-gap pass (eight additions, all opt-in, missing-only, pinned):
   `announcing-freestruct-v1.0.0.md` (#23)
 - CI: packstruct manifest lint joined the push/PR battery beside the
   crashtest pack selftest (pinned-sha installs, cache-owned)
+- Final hardening: the audit grades `twitter:site`/`twitter:creator`
+  absence only when a handle is configured (symmetry with the injector's
+  own no-handle-ships-nothing rule), and the injector refuses to walk an
+  SSG SOURCE tree (config file, `_layouts/` or template staging inside
+  the output dir) - the wrong-positional class that stamped build meta
+  into committed template copies now aborts loudly with exit 3 and the
+  fix spelled out (#18 + Pass 26.15)
 
 ## [1.0.0] - 2026-10-22
 
