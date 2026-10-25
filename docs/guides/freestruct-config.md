@@ -490,7 +490,9 @@ Opt-in auto BreadcrumbList JSON-LD built from each page's own position in
 the URL tree: the site root first, then one `ListItem` per URL segment, with
 the page's own title on the tail item. The root page (no segments) ships
 none, and pages that carry JSON-LD of their own stay untouched
-(missing-only).
+(missing-only). Your config-level `jsonLd` - global list or scoped map -
+coexists with the trail; the skip class is a page's own existing
+structured data, never freestruct's own blocks.
 
 ```yaml
 breadcrumb: true
@@ -503,7 +505,8 @@ Pages in the matching subtree get one `Article` / `TechArticle` /
 `NewsArticle` block built from the page's own title, URL, description and
 og image, plus the per-page comment facts (`author` rides as
 `article:author`, `publishedTime` as `datePublished`). Skipped for pages
-that already carry JSON-LD or that receive a scoped `jsonLd` block.
+that already carry JSON-LD or that receive a scoped `jsonLd` block; a
+global custom `jsonLd` list coexists.
 
 ```yaml
 article:

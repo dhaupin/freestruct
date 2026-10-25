@@ -113,6 +113,23 @@ function breadcrumbJsonLd(page, config) {
 }
 
 /**
+ * Does this page RECEIVE a scoped jsonLd block? The scoped map form keys
+ * slug globs to block lists (config.js reads legacy forms - a schema object
+ * or an array of them - as the global set, with non-glob keys). Pages that
+ * receive a scoped block skip the GENERATED article block (the documented
+ * skip: a consumer-authored block outranks the derived one), while the
+ * breadcrumb trail coexists with any config jsonLd form.
+ */
+function pageReceivesScopedJsonLd(page, config) {
+  const jsonLd = config.jsonLd;
+  if (!jsonLd || typeof jsonLd !== 'object' || Array.isArray(jsonLd)) return false;
+  const keys = Object.keys(jsonLd);
+  if (keys.length === 0) return false;
+  if (!keys.every((k) => typeof k === 'string' && k.startsWith('/'))) return false;
+  return keys.some((k) => slugMatchesGlob(k, page.slug));
+}
+
+/**
  * hreflang alternates for a page: the locales map keys slug globs to
  * language codes; the most specific matching pattern decides the page's own
  * language, the others give the replica slugs (the page's slug with the
@@ -420,8 +437,16 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
   // 404s AND robots-noindex pages (the same exclusion class sitemap/feed/
   // search/llms already honor); the core injected set stays everywhere.
   const noindexExtrasGate = page.is404 === true || htmlIsNoindex(html);
-  if (!noindexExtrasGate && !hasSeoType(html, 'jsonld') && config.jsonLd === undefined) {
-    const articleType = articleTypeForPage(page, config);
+  // Missing-only class: the page's OWN pre-existing ld+json suppresses the
+  // generated extras. Config-level jsonLd is OUR block - it coexists with
+  // the generated ones (Pass 26.9: the old gate refused the extras whenever
+  // ANY config jsonLd existed, silently killing breadcrumb/article on sites
+  // that also ship a global custom block - the docs site itself was bit).
+  const pageOwnsJsonLd = hasSeoType(html, 'jsonld');
+  if (!noindexExtrasGate && !pageOwnsJsonLd) {
+    const articleType = !pageReceivesScopedJsonLd(page, config)
+      ? articleTypeForPage(page, config)
+      : null;
     if (articleType) {
       const block = {
         '@context': 'https://schema.org',

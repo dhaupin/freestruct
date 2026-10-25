@@ -1887,6 +1887,31 @@ test('breadcrumb: true builds BreadcrumbList from the URL tree; root ships none;
   } finally { rmDir(dir); }
 });
 
+test('breadcrumb coexists with a global config jsonLd (the docs-site shape); page-owned ld+json still suppresses the trail', () => {
+  const dir = scenario('main', {
+    'docs/_site/own-ld.html':
+      '<html><head><title>L</title><script type="application/ld+json">{"@type":"WebPage"}</script></head><body><h1>l</h1></body></html>',
+  });
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'breadcrumb: true',
+      'jsonLd:',
+      '  - "@type": Person',
+      '    name: Tester',
+    ].join('\n') + '\n');
+    runInject(dir);
+    const guide = read(dir, 'docs/_site/guide/index.html');
+    assert.ok(/BreadcrumbList/.test(guide), 'a global config jsonLd does not block the trail');
+    assert.includes(guide, '"name":"Tester"', 'the config jsonLd block still ships beside it');
+    const own = read(dir, 'docs/_site/own-ld.html');
+    assert.ok(!/BreadcrumbList/.test(own), 'a page with its own JSON-LD still stays untouched');
+  } finally { rmDir(dir); }
+});
+
 test('verification: provider codes land as engine-owned meta names; unknown providers warn', () => {
   const dir = scenario('main');
   try {
@@ -1994,6 +2019,34 @@ test('audit --external: the json digest parses with the warns merged; unknown au
     const bad = spawnSync(process.execPath, [INJECT, 'audit', '--bad'], { cwd: dir, encoding: 'utf8' });
     assert.ok(bad.status !== 0, 'unknown flags fail');
     assert.includes(bad.stdout + bad.stderr, 'only --json and --external are supported flags');
+  } finally { rmDir(dir); }
+});
+
+test('article.scoped: a scoped jsonLd receiver skips the generated article; elsewhere it coexists with the config jsonLd set', () => {
+  const dir = scenario('main', {
+    'docs/_site/blog/post.html':
+      '<html><head><title>Post</title></head><body><h1>post</h1></body></html>',
+  });
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'article:',
+      '  scoped:',
+      '    "/**": TechArticle',
+      'jsonLd:',
+      '  "/guide/**":',
+      '    - "@type": HowTo',
+      '      name: Wired Guide',
+    ].join('\n') + '\n');
+    runInject(dir);
+    const guide = read(dir, 'docs/_site/guide/index.html');
+    assert.ok(/HowTo/.test(guide), 'the scoped jsonLd block ships to the guide');
+    assert.ok(!/TechArticle/.test(guide), 'the generated article skips a scoped jsonLd receiver');
+    const post = read(dir, 'docs/_site/blog/post.html');
+    assert.ok(/TechArticle/.test(post), 'the generated article ships where no scoped jsonLd block lands');
   } finally { rmDir(dir); }
 });
 

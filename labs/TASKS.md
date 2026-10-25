@@ -835,3 +835,29 @@ stale spots. Fixes + gates:
   lockstep, packs selftest teeth (8 attacks held, planted regressions
   trip), tarball e2e fresh-install proof, config validate.
 
+### Pass 26.9 - breadcrumb gate fix + count-truth alignment (done, same session, post-26.8)
+
+The dogfood pass (26.8) exposed the engine bug live; engine fix + pins
+(battery 91 -> 93):
+
+- **Gate bug (engine/seo.js):** the article/breadcrumb extras gate carried
+  `config.jsonLd === undefined` - ANY global custom jsonLd in the config
+  silently killed breadcrumb AND article on every page (nothing pinned
+  it; both rendered docs describe skips in terms of a page's own
+  structured data). The docs site itself was bit: `breadcrumb: true` +
+  the maintainer Person block -> no BreadcrumbList anywhere, on wire.
+- Restructured: page-owned ld+json suppresses the generated extras
+  (missing-only, as pinned); config-level jsonLd - global list or scoped
+  map - coexists with the trail; article keeps the documented scoped
+  skip via pageReceivesScopedJsonLd (mixed/legacy key shapes read as the
+  global form, mirroring config.js).
+- Two pins: breadcrumb coexists with a global config jsonLd (the
+  docs-site shape) while a page-owned ld+json still suppresses it; and
+  article skips a scoped-jsonLd receiver while shipping elsewhere.
+- Count-truth stragglers aligned at 93: README trail (`49 -> 75 -> 93`),
+  AGENTS.md house table, the v1.1.0 announcement (91 -> 93).
+- Config reference: breadcrumb + article sections now state the
+  coexistence contract and skip classes explicitly.
+- Gates: battery 93/93, all seven docs-audit gates clean, template sync
+  lockstep, packs selftest teeth (engine touched), tarball e2e, validate.
+

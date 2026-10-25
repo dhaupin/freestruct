@@ -78,7 +78,7 @@ Exit codes remain part of the contract: 0 ok, 1 config fatal, 2 template missing
 
 ## Quality layer
 
-The fixture battery grew from 49 pins at the 1.0.0 sweep's start to 91 now, with red-checked additions per change and the hunt passes that found and fixed the noindex-junk and line-flattening classes before any release. CI runs the standard gates (docs audit with seven gates, template sync lockstep, tarball e2e), plus crashtest two ways: the pack selftest proves the attack surface holds, and the docs deploy dogfoods a second campaign against the freshly built site. Packstruct's manifest lint holds the `/packs` spec from drifting. All of it runs on every push and PR.
+The fixture battery grew from 49 pins at the 1.0.0 sweep's start to 93 now, with red-checked additions per change and the hunt passes that found and fixed the noindex-junk and line-flattening classes before any release. CI runs the standard gates (docs audit with seven gates, template sync lockstep, tarball e2e), plus crashtest two ways: the pack selftest proves the attack surface holds, and the docs deploy dogfoods a second campaign against the freshly built site. Packstruct's manifest lint holds the `/packs` spec from drifting. All of it runs on every push and PR.
 
 ## Links
 
