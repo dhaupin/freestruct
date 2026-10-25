@@ -144,11 +144,14 @@ layered tools:
 1. `npx freestruct validate` first: a config-only preflight that prints
    diagnostics (unknown/retired key warnings included) without touching the
    output tree
-2. Read the `[freestruct] config warning` and `[freestruct] page warning`
+2. `npx freestruct audit` on the baked output: it names every per-page head
+   gap (missing title/description/canonical, the 404 noindex contract,
+   sitemap/robots) with FAIL/WARN lines and exit 1 when something regressed
+3. Read the `[freestruct] config warning` and `[freestruct] page warning`
    lines in the run output - nothing dies silently
-3. `npx freestruct --tolerant` reports fatal errors with exit `0` for CI
+4. `npx freestruct --tolerant` reports fatal errors with exit `0` for CI
    tolerance runs
-4. Verify config keys against the [Freestruct.config Reference](/guides/freestruct-config)
+5. Verify config keys against the [Freestruct.config Reference](/guides/freestruct-config)
    and the [CLI Reference](/guides/cli)
 
 ---

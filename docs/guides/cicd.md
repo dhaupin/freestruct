@@ -162,6 +162,31 @@ npx freestruct /tmp/test-build
 grep freestruct-build /tmp/test-build/index.html
 ```
 
+And verify the result with the built-in checker instead of ad-hoc greps:
+
+```bash
+# Exit 0 clean, exit 1 names every gap (heads, 404 noindex, sitemap/robots)
+npx freestruct audit
+
+# Machine digest for CI annotations / scriptable gates
+npx freestruct audit --json
+```
+
+A stronger default for the PR build: `npx freestruct --strict` at build
+time (broken links and SVG og:image fail with exit 1 - the same ladder the
+docs CI on this repo dogfoods), then `npx freestruct audit` on the result.
+
+After the deploy lands, the search-engine notify step is one command:
+
+```bash
+# Post-deploy: POST the baked sitemap to api.indexnow.org
+npx freestruct indexnow            # 200/202 = accepted
+npx freestruct indexnow --dry-run  # build-time shape check, no network
+```
+
+The key file ships into the output during the run, so only the submission
+is a post-deploy concern (keyLocation must resolve live).
+
 ---
 
 ## Common Issues

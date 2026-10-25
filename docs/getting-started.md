@@ -139,10 +139,11 @@ Or add to your `package.json`:
 
 ## What If It Doesn't Work?
 
-1. **Check the hash** - View page source, look for `freestruct-build`
-2. **Verify outputDir** - Does it match your SSG's output folder?
-3. **Check config** - Run `cat docs/freestruct.config.yml` and verify `site.name` and `site.url` on first run; Freestruct prints `[freestruct] config warning` lines for any key it does not recognize
-4. **See the [FAQ](/guides/cache-busting-faq)** - We documented every weird edge case
+1. **Run `npx freestruct audit`** - it verifies the baked output page by page (missing titles, descriptions, canonicals, the 404 noindex contract, sitemap/robots) and names every gap; `--json` gives you the machine digest
+2. **Check the hash** - View page source, look for `freestruct-build`
+3. **Verify outputDir** - Does it match your SSG's output folder?
+4. **Check config** - Run `cat docs/freestruct.config.yml` and verify `site.name` and `site.url` on first run; Freestruct prints `[freestruct] config warning` lines for any key it does not recognize
+5. **See the [FAQ](/guides/cache-busting-faq)** - We documented every weird edge case
 
 ## Related
 

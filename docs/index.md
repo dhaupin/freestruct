@@ -54,9 +54,22 @@ yours. Nothing overwritten, nothing guessed.
   `site.url + basePath` exactly once, so sub-path installs just work.
 - **Link validation** - Every internal link is checked on every run - and
   with `--strict` a broken one fails the build, so dead links never ship.
+  `freestruct audit` verifies the same truth independently on the baked
+  output (heads, 404 noindex, sitemap/robots) with `--json` for CI.
+- **Search-engine notify** - with `indexNow` in the config the key file
+  ships into the output (IndexNow's keyLocation proof, Bing/Seznam/Yandex)
+  and `freestruct indexnow` submits the baked sitemap after deploy.
+- **Scoped config** - `jsonLd` and `og.scoped` keys take slug globs
+  (`/faq` exact, `/blog/*` one segment, `/guides/**` a sub-tree), so
+  page-specific schema and per-directory image variants stay config-side.
+- **Per-page OG images** - `ogImageGeneration` renders a branded 1200x630
+  PNG per page from your SVG template (needs the optional
+  `@resvg/resvg-js` package; loud skip without it), wired under
+  missing-only.
 - **Loud diagnostics** - When something is off you get the named cause and
-  an exit code that says which step failed (1, 2 or 3), never a mystery
-  crash. `--tolerant` keeps experiments soft.
+  an exit code that says which step failed (1 config, 2 template, 3 output
+  dir, 4 hook failure), never a mystery crash. `--tolerant` keeps
+  experiments soft.
 
 ## It generates HTML too
 

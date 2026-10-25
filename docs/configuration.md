@@ -6,7 +6,7 @@ nav_order: 2
 
 ## Configure
 
-See the [Freestruct.config.yml Reference](/guides/freestruct-config) for complete options.
+See the [Freestruct.config.yml Reference](/guides/freestruct-config) for complete options. Newer surface it covers: `hooks.postBuild` (general post-build commands behind the `runHooks` gate), `indexNow` (key emission + the `freestruct indexnow` post-deploy submission), `ogImageGeneration` (per-page branded OG images), and the slug-glob scoped maps (`jsonLd: {"/blog/**": [...], ...}` plus `og.scoped` image variants).
 
 ## Quick Example
 
