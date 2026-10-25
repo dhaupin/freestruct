@@ -7,7 +7,7 @@ All notable changes to freestruct will be documented here.
 The first post-stable release: the all-items issue sweep (#17-#24 plus the
 #25 follow-on only here by owner direction) and the CI tooling that came
 with it, plus the SEO-gap pass landed inside this same untagged version.
-Every item below is battery-pinned; the battery grew 49 -> 99.
+Every item below is battery-pinned; the battery grew 49 -> 100.
 
 The SEO-gap pass (eight additions, all opt-in, missing-only, pinned):
 

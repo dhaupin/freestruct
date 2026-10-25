@@ -975,3 +975,25 @@ findings, all fixed (battery 97 -> 99):
 - Gates: battery 99/99, docs audit, sync lockstep, packs selftest
   (unsafe-corner engine surface touched), tarball e2e, validate.
 
+### Pass 26.14 - the CI-caught route bug (done, same session, post-26.13)
+
+The push's own `--strict` CI run caught the walk's residual bug
+(battery 99 -> 100) - the pin wall working as designed:
+
+- **Absolute hrefs resolved against the WRONG root:** `path.join(baseDir,
+  '/guides/cli')` APPENDS rather than resets, so the whole layout menu
+  (root-relative hrefs on nested pages) turned into misses and the
+  strict run flagged every menu link BROKEN. The 26.10 route-shapes pin
+  passed only because its probe pages sat at the ROOT - the nested-page
+  class needed CI to expose it. Resolution rule now: leading-slash
+  hrefs resolve against the OUTPUT ROOT, relative ones stay
+  page-relative. Pinned: a nested page's root link + a scripted chrome
+  string + a data: URI all get the right treatment.
+- **Script/style stripping + scheme skip:** inline JS template strings
+  ("href=' + url + '") are not links; data:, javascript: and any
+  scheme-shaped target is not a route. Scanned markdown = document
+  minus script/style payloads.
+- Trail aligned at 100: README, AGENTS house table, CHANGELOG, the
+  v1.1.0 announcement.
+- Ships the same push as the flowforge rig adoption (next pass).
+

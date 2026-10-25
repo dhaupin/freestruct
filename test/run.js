@@ -2042,6 +2042,25 @@ test('audit --external: the json digest parses with the warns merged; unknown au
   } finally { rmDir(dir); }
 });
 
+test('absolute hrefs resolve at the output ROOT from nested pages; script/data shapes stay out', () => {
+  const dir = scenario('main', {
+    'docs/_site/guides/deep.html':
+      '<html><head><title>D</title></head><body><h1>d</h1>'
+      + '<a href="/guide">root dir link</a>'
+      + '<a href="/no-such-route">gone</a>'
+      + '<a href="data:image/svg+xml;utf8,<svg></svg>">icon</a>'
+      + '<script>document.write("<a href=/ghost-script>js chrome</a>");</script>'
+      + '</body></html>',
+  });
+  try {
+    const out = runInject(dir);
+    assert.includes(out, 'Link check: 2 broken links found', 'fixture ghost + the real miss - the nested root link resolves');
+    assert.includes(out, '/no-such-route');
+    assert.ok(!out.includes('/ghost-script'), 'inline script chrome stays out of the checker');
+    assert.ok(!out.includes('data:image'), 'data: URI targets stay out of the checker');
+  } finally { rmDir(dir); }
+});
+
 test('a headless .html fragment names itself on the run: whole head surface skips, page stays honest', () => {
   const dir = scenario('main', {
     'docs/_site/headless.html':
