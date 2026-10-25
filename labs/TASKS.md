@@ -613,3 +613,29 @@ Counters: battery 49 -> 69 pins (all green), engine modules 9 -> 12
 re-run at the end of the pass: battery, lint:docs, sync:check, e2e.
 Next pass picks up: none of #17-#24 remain; the issue queue is empty and
 the version is owner-gated as ever.
+
+### Pass 23 - scoped jsonLd (#25) + og.scoped follow-on (done, on 1.0.0)
+
+Split out of #19's tail per the filer's own request; filed as #25 with a
+battery-pin sketch and built in the same pass.
+
+- **The matcher:** `engine/urls.js` grew `slugMatchesGlob` +
+  `globSpecificity` - slug-keyed glob language (`/` exact root, `/faq`
+  exact page, `/blog/*` one segment, `/guides/**` the sub-tree itself and
+  below, `**` anywhere). Specificity ranks exact > literal-heavy glob >
+  `**`; pins caught two matcher bugs before they shipped (the `/**`
+  normalization trap and a stale helper name).
+- **Scoped jsonLd (#25):** the #25 map form keys blocks by slug glob in
+  `seo.js` - legacy single-object/array untouched; every matching key
+  ships, most specific first; missing-only holds (own-LD pages get
+  nothing, scoped included); malformed entries warn and skip only
+  themselves; config.js shape diagnostics name the mixed-keys mistake.
+  Four pins per the #25 sketch.
+- **og.scoped (follow-on, closed inside #25's commit):** image variants
+  keyed by the same glob language; the MOST SPECIFIC match wins (images
+  are singular), the global `og.image` is the fallback, per-page
+  overrides and #22 generated images still rank ahead; structured
+  variant values ride the #20 companions; the allowSvg ladder follows
+  the winning descriptor. One pin.
+- Docs: config guide (jsonLd scoped section + og.scoped), README feature
+  bullet. Counters: battery 69 -> 74 pins.

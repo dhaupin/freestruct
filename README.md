@@ -167,6 +167,12 @@ npx freestruct audit            # verify the baked output (heads + sitemap/
   URL list to api.indexnow.org afterwards - deploy first (keyLocation must
   resolve), submission is the post-deploy step, and `--dry-run` prints the
   request body for CI
+- Slug-glob scoped config (issue #25): `jsonLd` accepts the legacy
+  object/list forms or a map keyed by page-slug globs (`/` exact, `/blog/*`
+  one segment, `/guides/**` a sub-tree) so page-specific schema lands only
+  where it is meant to; `og.scoped` does the same for og image variants
+  with the most specific match winning. Missing-only holds everywhere,
+  malformed entries warn loudly and skip only themselves
 - Per-page OG image generation (issue #22): freestruct already extracts
   each page's title/description, so it can render a branded 1200x630 PNG
   per page from a consumer SVG template (`{{ogTitle}}`/`{{ogDescription}}`/

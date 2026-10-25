@@ -1635,5 +1635,136 @@ test('ogImageGeneration: missing template files warn loudly and the run stays gr
   } finally { rmDir(dir); }
 });
 
+// ---------- scoped jsonLd + og.scoped (issue #25 + follow-on) ----------
+// The config side learns what the per-page comment side already knows:
+// glob-keyed scoping on page slugs. jsonLd: legacy object/list untouched or
+// a slug-glob map; og.scoped: most-specific matching image variant.
+
+test('jsonLd legacy shapes untouched: single object and list still reach every page (issue #25 back-compat)', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'jsonLd:',
+      '  - "@type": WebSite',
+      '    name: Foo Docs',
+    ].join('\n') + '\n');
+    runInject(dir);
+    const root = read(dir, 'docs/_site/index.html');
+    const deep = read(dir, 'docs/_site/guide/index.html');
+    for (const [label, html] of [['root', root], ['deep', deep]]) {
+      assert.ok(html.includes('"@type"'), label + ' keeps its jsonLd block');
+    }
+  } finally { rmDir(dir); }
+});
+
+test('jsonLd scoped map: \'/guide/**\' lands on the deep guide, never on root (issue #25)', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'jsonLd:',
+      '  "/guide/**":',
+      '    - "@type": BreadcrumbList',
+      '      name: Guides trail',
+    ].join('\n') + '\n');
+    runInject(dir);
+    const root = read(dir, 'docs/_site/index.html');
+    const deep = read(dir, 'docs/_site/guide/index.html');
+    assert.includes(deep, 'BreadcrumbList', 'scoped block reached the matching sub-tree');
+    assert.ok(!/BreadcrumbList/.test(root), 'scoped block never reached root');
+  } finally { rmDir(dir); }
+});
+
+test('jsonLd scoped map: exact key is exact, \'*\' is one segment, specificity orders output, and og-owning pages stay untouched (issue #25)', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'jsonLd:',
+      '  "/":',
+      '    - "@type": WebPage',
+      '      name: Landing',
+      '  "/*":',
+      '    - "@type": ItemList',
+      '      name: Top level',
+      '  "**":',
+      '    - "@type": Organization',
+      '      name: Everywhere',
+    ].join('\n') + '\n');
+    runInject(dir);
+    const root = read(dir, 'docs/_site/index.html');
+    const deep = read(dir, 'docs/_site/guide/index.html');
+    const own = read(dir, 'docs/_site/existing-seo.html');
+    assert.includes(root, 'WebPage');
+    assert.includes(root, 'Organization', 'the everywhere-glob reaches root too');
+    assert.ok(!/ItemList/.test(root), '/* is exactly one segment - never the bare root');
+    assert.ok(!/WebPage/.test(deep), 'exact key never bleeds into a subtree');
+    assert.includes(deep, 'ItemList', '/* matches a one-segment page');
+    assert.includes(deep, 'Organization');
+    assert.ok(!/Organization/.test(own), 'missing-only: an og-jsonLd-owning page gets no scoped blocks either');
+  } finally { rmDir(dir); }
+});
+
+test('jsonLd scoped map: one malformed entry warns loudly without nuking the others (issue #25)', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'jsonLd:',
+      '  "/":',
+      '    - just-a-string-not-an-object',
+      '  "/guide/**":',
+      '    - "@type": ItemList',
+      '      name: Guided',
+    ].join('\n') + '\n');
+    const out = runInject(dir);
+    assert.includes(out, 'jsonLd "/" must map to an LD+JSON object', 'the bad entry names itself');
+    const deep = read(dir, 'docs/_site/guide/index.html');
+    assert.includes(deep, 'ItemList', 'the healthy entry still ships');
+  } finally { rmDir(dir); }
+});
+
+test('og.scoped: most-specific variant wins over the global image; override still wins; companions ride (follow-on)', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'og:',
+      '  image: /og/global-default.png',
+      '  scoped:',
+      '    "/": /og/home.png',
+      '    "/guide/**":',
+      '      src: /og/guide.png',
+      '      width: 1200',
+      '      height: 630',
+      '      alt: Guide banner',
+    ].join('\n') + '\n');
+    runInject(dir);
+    const root = read(dir, 'docs/_site/index.html');
+    const deep = read(dir, 'docs/_site/guide/index.html');
+    assert.includes(root, '<meta property="og:image" content="https://docs.example.com/og/home.png">', 'exact scoped wins over the global default');
+    assert.ok(!/og:image:width/.test(root), 'string variant stays companion-free');
+    assert.includes(deep, '<meta property="og:image" content="https://docs.example.com/og/guide.png">', 'sub-tree variant wins over the global default');
+    assert.includes(deep, '<meta property="og:image:width" content="1200">', 'the structured variant rides companions');
+    assert.includes(deep, '<meta property="og:image:alt" content="Guide banner">');
+  } finally { rmDir(dir); }
+});
+
 // done
 console.log('[freestruct battery] complete');

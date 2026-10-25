@@ -302,22 +302,39 @@ No author configured: the Organization JSON-LD carries no `founder` key.
 ### jsonLd
 
 Custom structured data, appended after the built-in Organization and WebSite
-JSON-LD blocks. Takes a single object or an array of objects:
+JSON-LD blocks. Takes a single object, an array of objects, or (issue #25) a
+slug-glob MAP that scopes blocks per page:
 
 ```yaml
+# global - every page gets these (legacy form, unchanged)
 jsonLd:
   - "@type": BreadcrumbList
     itemListElement:
       - "@type": ListItem
         position: 1
+
+# scoped - blocks keyed by page-slug globs
+jsonLd:
+  "/":                       # exact keys match one page (the root here)
+    - "@type": WebPage
+      name: Landing
+  "/guides/**":              # the directory AND everything below it
+    - "@type": HowTo
+  "/blog/*":                 # exactly one segment under /blog
+    - "@type": BlogPosting
+  "**":                      # anywhere at all
+    - "@type": Organization
+      name: My Docs
 ```
 
-- Ships through the same missing-only gate as the built-ins: a page that
-  already carries `application/ld+json` keeps its own and receives no extra
-  blocks.
-- Serialization neutralizes `<` (as `\u003c`) so a value cannot close the
-  script tag early.
-- A non-object entry is skipped with a loud `[freestruct] config warning`
+Scoped semantics: matching blocks land after any global list, most specific
+first (exact keys outrank globs; between globs the one carrying more literal
+path characters wins the order); every matching key ships, not just the
+first. Pages with their own `application/ld+json` receive no blocks at all
+(missing-only, scoped included). One malformed entry warns loudly and skips
+only itself. Serialization neutralizes `<` (as `\u003c`) so a value cannot
+close the script tag early; a non-object entry is skipped with a loud
+`[freestruct] config warning`
   line; nothing dies silently.
 
 ## Meta Options
@@ -376,8 +393,27 @@ share preview blanks. An `.svg` src (string or object form) refuses silently
 no more - it warns on every run, `og.image.allowSvg: true` accepts it
 explicitly, and `--strict` fails the build until the trap is answered.
 
-Per-page `ogImage` overrides replace the whole image set for that page
-(companion tags included) - they ride the same warning ladder.
+`og.scoped` (issue #25 follow-on) scopes image variants by page-slug glob,
+using the same key language as the scoped `jsonLd` map (exact keys, `*` one
+segment, `**` a sub-tree). Each value takes the plain `og.image` shapes;
+the MOST SPECIFIC matching key wins for the page (an image is singular),
+and the global `og.image` is the fallback:
+
+```yaml
+og:
+  image: /og/default.png        # global fallback
+  scoped:
+    "/": /og/home.png           # the landing page gets its own card
+    "/blog/**":                 # the sub-tree gets the article banner,
+      src: /og/article.png      # with the #20 companions riding
+      width: 1200
+      height: 630
+      alt: Article preview
+```
+
+Per-page `ogImage` overrides (and per-page generated images from
+`ogImageGeneration`) still replace the whole image set ahead of any scoped
+match - the resolution order is override, generated, scoped, global.
 
 ## Template Placeholders
 

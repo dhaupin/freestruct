@@ -177,6 +177,48 @@ export function collectConfigDiagnostics(config, configName) {
     warnings.push('ogImageGeneration must be a { template, font, width, height } object, not ' + (Array.isArray(config.ogImageGeneration) ? 'an array' : typeof config.ogImageGeneration));
   }
 
+  // jsonLd map shape (issue #25): the legacy forms are a single object or a
+  // list; the scoped map form keys every entry by a slug glob whose value is
+  // an LD+JSON object or a list of them. Wrong shapes warn loudly; the
+  // runner skips bad values per block rather than dropping the global set.
+  if (config.jsonLd !== undefined && !Array.isArray(config.jsonLd) && config.jsonLd !== null) {
+    if (typeof config.jsonLd !== 'object') {
+      warnings.push('jsonLd must be an LD+JSON object, a list of them, or a slug-glob map of them');
+    } else if (Object.keys(config.jsonLd).length > 0) {
+      const pathish = (k) => /^\//.test(k) || k === '*' || k === '**' || k.includes('*');
+      const keys = Object.keys(config.jsonLd);
+      const allPathish = keys.every(pathish);
+      const anyPathish = keys.some(pathish);
+      if (allPathish) {
+        // scoped map: validate each value's shape up front
+        for (const key of keys) {
+          const v = config.jsonLd[key];
+          const blocks = Array.isArray(v) ? v : [v];
+          if (blocks.length === 0 || blocks.some((b) => !b || typeof b !== 'object' || Array.isArray(b))) {
+            warnings.push('jsonLd "' + key + '" must map to an LD+JSON object or a list of them');
+          }
+        }
+      } else if (anyPathish) {
+        warnings.push('jsonLd mixes slug-glob keys with schema-object keys - either use the scoped map form (every key a glob) or the legacy object form; the run skips no block but reads it as a legacy object');
+      }
+    }
+  }
+
+  // og.scoped shape (issue #25 follow-on): a slug-glob map whose values take
+  // the og.image shapes (string, or the structured object form).
+  if (config.og?.scoped !== undefined && (typeof config.og.scoped !== 'object' || config.og.scoped === null || Array.isArray(config.og.scoped))) {
+    warnings.push('og.scoped must be a slug-glob map of og.image values (string or { src, width, height, alt, allowSvg }), not ' + (Array.isArray(config.og.scoped) ? 'an array' : typeof config.og.scoped));
+  } else if (config.og?.scoped && typeof config.og.scoped === 'object') {
+    for (const [key, v] of Object.entries(config.og.scoped)) {
+      if (!/^\//.test(key) && key !== '*' && !key.includes('*')) {
+        warnings.push('og.scoped keys must be slug globs (starting with "/", optionally with * / **) - skipping "' + key + '"');
+      }
+      if (!Array.isArray(v) && (v === null || (typeof v !== 'string' && typeof v !== 'object'))) {
+        warnings.push('og.scoped "' + key + '" must be an og image string or object');
+      }
+    }
+  }
+
   for (const w of warnings) {
     console.log('[freestruct] config warning: ' + w);
   }

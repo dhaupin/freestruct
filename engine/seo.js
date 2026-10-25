@@ -8,7 +8,7 @@
 import fs from 'fs';
 import path from 'path';
 import { hasSeoType } from './scan.js';
-import { pageUrlFor } from './urls.js';
+import { pageUrlFor, slugMatchesGlob, globSpecificity } from './urls.js';
 
 function minifyHtml(html) {
   // Conservative HTML minifier - removes unnecessary whitespace
@@ -145,11 +145,32 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
   // (object or string form). Pages that ship their own og:image keep it
   // before any of this matters - missing-only.
   const generatedForPage = (generatedImages && generatedImages[page.slug]) || null;
-  const companionsSource = hasPerpageOgImage ? null : (generatedForPage || ogImageObj);
+  // og.scoped (issue #25 follow-on): image variants keyed by the same slug
+  // globs as jsonLd; the MOST SPECIFIC matching pattern wins (exact > glob).
+  // Per-page overrides and per-page generated images (#22) still rank ahead;
+  // the global og.image is the deepest fallback.
+  const ogScopedCfg = config.og?.scoped;
+  let scopedForPage = null;
+  if (ogScopedCfg && typeof ogScopedCfg === 'object' && !Array.isArray(ogScopedCfg)) {
+    let bestScore = -1;
+    for (const [pattern, variant] of Object.entries(ogScopedCfg)) {
+      if (!slugMatchesGlob(pattern, page.slug)) continue;
+      const score = globSpecificity(pattern);
+      if (score > bestScore) { bestScore = score; scopedForPage = variant; }
+    }
+  }
+  const scopedIsObject = scopedForPage !== null && typeof scopedForPage === 'object' && !Array.isArray(scopedForPage);
+  const allowSvgAccept = scopedForPage === null
+    ? (ogImageObj ? ogImageObj.allowSvg === true : false)
+    : (scopedIsObject ? scopedForPage.allowSvg === true : false);
+  const companionsSource = hasPerpageOgImage ? null
+    : (generatedForPage || (scopedIsObject ? scopedForPage : null) || (!scopedForPage ? ogImageObj : null));
   const rawOgImage = hasPerpageOgImage
     ? String(overrides.ogImage)
     : (generatedForPage ? generatedForPage.src
-      : (ogImageObj ? String(ogImageObj.src || '') : (ogImageCfg || '')));
+      : (scopedForPage !== null
+        ? (scopedIsObject ? String(scopedForPage.src || '') : String(scopedForPage))
+        : (ogImageObj ? String(ogImageObj.src || '') : (ogImageCfg || ''))));
   const ogImageFull = rawOgImage && !/^(https?:)?\/\//i.test(rawOgImage)
     ? siteUrl + rawOgImage
     : rawOgImage;
@@ -160,7 +181,7 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
   // graduates the collected offenses to build failures (same ladder as the
   // report classes), and allowSvg: true is the explicit way out.
   if (rawOgImage && /\.svg$/i.test(rawOgImage.split(/[?#]/)[0])
-      && !(ogImageObj && hasPerpageOgImage !== true && ogImageObj.allowSvg === true)) {
+      && hasPerpageOgImage !== true && !allowSvgAccept) {
     // Loud in every run; under --strict the orchestrator also graduates the
     // collected offenses (injectWarnings) to build failures.
     pageWarn(page, 'og image "' + rawOgImage + '" is an SVG: most social scrapers cannot render it and the share preview blanks (ship a raster image, or set allowSvg: true in the og.image object to accept it)');
@@ -208,21 +229,45 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
       : '',
   };
 
-  // Custom JSON-LD hook (config.jsonLd): a single object or an array of
-  // objects appended after the built-in blocks. Ships through the same
-  // missing-only gate as the built-ins, and '<' is neutralized so a value
-  // cannot close the script tag early (same posture as the XML escape-or-fail).
+  // Custom JSON-LD hook (config.jsonLd, issue #25): three accepted shapes -
+  //   single object, array of objects (legacy, every page), or the scoped
+  //   map form keyed by page-slug globs ('/' exact, '/blog/*' one segment,
+  //   '/guides/**' the tree). The scoped form lands per page: global first,
+  //   then every matching scoped block in specificity order (exact >
+  //   literal-heavy > '**'). missing-only is untouched: pages shipping
+  //   their own JSON-LD get nothing here, scoped or not. All blocks ship
+  //   through the same serialization ('<' neutralized) as the legacy form.
   let customJsonLd = '';
   if (config.jsonLd !== undefined) {
-    const blocks = Array.isArray(config.jsonLd) ? config.jsonLd : [config.jsonLd];
-    for (let i = 0; i < blocks.length; i++) {
-      const block = blocks[i];
-      if (!block || typeof block !== 'object' || Array.isArray(block)) {
-        console.log('[freestruct] config warning: jsonLd[' + i + '] is not an object; block skipped');
-        continue;
+    const jc = config.jsonLd;
+    const isScopedMap = !Array.isArray(jc) && jc && typeof jc === 'object'
+      && Object.keys(jc).length > 0
+      && Object.keys(jc).every((k) => /(^\/|^\*$|^\*\*$|\*)/.test(k));
+    if (isScopedMap) {
+      const keys = Object.keys(jc).sort((a, b) => globSpecificity(b) - globSpecificity(a));
+      for (const key of keys) {
+        if (!slugMatchesGlob(key, page.slug)) continue;
+        const blocks = Array.isArray(jc[key]) ? jc[key] : [jc[key]];
+        if (!blocks.length || blocks.some((b) => !b || typeof b !== 'object' || Array.isArray(b))) {
+          console.log('[freestruct] config warning: jsonLd "' + key + '" must map to an LD+JSON object or a list of them; block skipped');
+          continue;
+        }
+        for (const block of blocks) {
+          const serialized = JSON.stringify(block).replace(/</g, '\\u003c');
+          customJsonLd += '\n<script type="application/ld+json">\n' + serialized + '\n</script>\n';
+        }
       }
-      const serialized = JSON.stringify(block).replace(/</g, '\\u003c');
-      customJsonLd += '\n<script type="application/ld+json">\n' + serialized + '\n</script>\n';
+    } else {
+      const blocks = Array.isArray(jc) ? jc : [jc];
+      for (let i = 0; i < blocks.length; i++) {
+        const block = blocks[i];
+        if (!block || typeof block !== 'object' || Array.isArray(block)) {
+          console.log('[freestruct] config warning: jsonLd[' + i + '] is not an object; block skipped');
+          continue;
+        }
+        const serialized = JSON.stringify(block).replace(/</g, '\\u003c');
+        customJsonLd += '\n<script type="application/ld+json">\n' + serialized + '\n</script>\n';
+      }
     }
   }
 
