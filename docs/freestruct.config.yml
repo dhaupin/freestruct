@@ -25,9 +25,11 @@ og:
   type: website
   locale: en_US
 
-# Base path to strip from URLs
-basePath: 
-
+# Discovery - dogfooding the 1.1.0 surface on our own docs:
+# auto BreadcrumbList per page + the llms.txt AI summary.
+# Pagefind owns search (no server search URL), so no SearchAction here.
+breadcrumb: true
+llms: true
 # Generate sitemap.xml
 generateSitemap: true
 

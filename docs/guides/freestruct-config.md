@@ -116,20 +116,11 @@ linkCheck: false  # skip link checking
 
 ### searchIndex
 
-Generate search.json for client-side search.
+Generate search.json for client-side search. Opt-in: it ships only when the key is present, so sites that own their search (Pagefind, Algolia, the SSG's own index) never get a competing index.
 
 ```yaml
-searchIndex: true   # generates search.json (on by default)
-searchIndex: false  # skip search index
-```
-
-### generateNav
-
-Generate navigation from docs folder structure (default: true). Set false to use SSG menu.
-
-```yaml
-generateNav: true   # auto-generate from folder (default)
-generateNav: false  # use SSG built-in menu
+searchIndex: true   # generates search.json
+# no key = no search.json (the default)
 ```
 
 ## Cache Busting Options
@@ -260,14 +251,9 @@ Optional base path to strip from canonical URLs (for subpath deployments).
 basePath: /myproject  # Strip /myproject from URLs
 ```
 
-### preserveExistingMeta
+### Retired keys
 
-Whether to preserve existing meta tags or replace them entirely.
-
-```yaml
-preserveExistingMeta: true   # default - only add missing tags
-preserveExistingMeta: false  # remove existing SEO first, then inject fresh
-```
+`preserveExistingMeta`, `generateNav` and `cacheBusting.hash` existed in earlier releases and now do nothing: missing-only injection is unconditional, nav lives in your SSG or layout, and the build hash is always generated. Configuring any of them produces a named `[freestruct] config warning` - the run stays honest, but remove the keys from your config.
 
 ## Site Options
 

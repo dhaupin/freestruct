@@ -1,16 +1,19 @@
 ---
 version: 1.1.0
-permalink: /discussions/announcing-freestruct-v1.1.0
-layout: none
+permalink: /discussions/announcing-freestruct-v1.1.0/
+# Family release-post shape (the crashtest docs precedent): layout default
+# renders the post in the normal frame, and the trailing-slash permalink
+# lands the artifact as dir/index.html - an extensionless fragment would be
+# served by Pages as application/octet-stream: never injected, absent from
+# sitemap/feed/llms.
+layout: default
 title: "Announcing freestruct v1.1.0"
 description: The v1.1.0 Discussions release post, per the Creadev family release-post convention
-comments: false
-nav_order: 21
 ---
 
 # freestruct v1.1.0
 
-freestruct is a post-build SEO layer for static doc sites. v1.1.0 is the first post-stable release: a subtitle of new surface that includes the entire issue sweep and the SEO-gap pass, everything battery-pinned. It is on npm now:
+freestruct is a post-build SEO layer for static doc sites. v1.1.0 is the first post-stable release: a subtitle of new surface that includes the entire issue sweep and the SEO-gap pass, everything battery-pinned. This post ships with the v1.1.0 tag: npm has the tarball by the time you read it:
 
 ```bash
 npm i -D freestruct
@@ -75,7 +78,7 @@ Exit codes remain part of the contract: 0 ok, 1 config fatal, 2 template missing
 
 ## Quality layer
 
-The fixture battery grew from 49 pins at the 1.0.0 sweep's start to 89 now, with red-checked additions per change and the hunt passes that found and fixed the noindex-junk and line-flattening classes before any release. CI runs the standard gates (docs audit with seven gates, template sync lockstep, tarball e2e), plus crashtest two ways: the pack selftest proves the attack surface holds, and the docs deploy dogfoods a second campaign against the freshly built site. Packstruct's manifest lint holds the `/packs` spec from drifting. All of it runs on every push and PR.
+The fixture battery grew from 49 pins at the 1.0.0 sweep's start to 91 now, with red-checked additions per change and the hunt passes that found and fixed the noindex-junk and line-flattening classes before any release. CI runs the standard gates (docs audit with seven gates, template sync lockstep, tarball e2e), plus crashtest two ways: the pack selftest proves the attack surface holds, and the docs deploy dogfoods a second campaign against the freshly built site. Packstruct's manifest lint holds the `/packs` spec from drifting. All of it runs on every push and PR.
 
 ## Links
 

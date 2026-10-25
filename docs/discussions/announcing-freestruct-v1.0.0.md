@@ -1,11 +1,14 @@
 ---
 version: 1.0.0
-permalink: /discussions/announcing-freestruct-v1.0.0
-layout: none
+permalink: /discussions/announcing-freestruct-v1.0.0/
+# Family release-post shape (the crashtest docs precedent): layout default
+# renders the post in the normal frame, and the trailing-slash permalink
+# lands the artifact as dir/index.html - an extensionless fragment would be
+# served by Pages as application/octet-stream: never injected, absent from
+# sitemap/feed/llms.
+layout: default
 title: "Announcing freestruct v1.0.0"
 description: The v1.0.0 Discussions release post, per the Creadev family release-post convention
-comments: false
-nav_order: 21
 ---
 
 # freestruct v1.0.0

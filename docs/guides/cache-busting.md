@@ -163,7 +163,7 @@ Check if cache busting is working:
 1. View page source
 2. Look for `<meta name="freestruct-build">`
 3. Check assets have `?v=...` query params
-4. Each build should show a different hash
+4. The hash changes when your content changes; an unchanged rebuild carries the identical hash
 
 ## CDN Cache Headers
 
@@ -213,7 +213,7 @@ With Freestruct's asset query params:
 1. Build runs -> assets get `?v=abc123`
 2. CDN sees new URL (`app.css?v=abc123`) -> fetches from origin
 3. CDN caches `app.css?v=abc123` for 1 year
-4. Next deploy -> assets get `?v=xyz789`
+4. Next deploy with changed content -> assets get `?v=xyz789`
 5. CDN sees new URL -> fetches fresh, caches new version
 
 The `?v=` makes each build a unique URL, so CDN always fetches once, then serves from cache.

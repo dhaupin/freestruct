@@ -101,12 +101,20 @@ CDNs see different HTML -> must re-fetch -> fresh content.
 ### Hash Generation
 
 ```javascript
-const buildHash = crypto.createHash('sha1')
-  .update(JSON.stringify(config || {}) + String(Date.now()))
-  .digest('hex').slice(0, 8);
+const buildHash = crypto.createHash('sha1');
+buildHash.update(JSON.stringify(config || {}));
+// then, per sorted non-404 page: buildHash.update(page.rel);
+//                              buildHash.update(stable(page.html));
+const buildHashHex = buildHash.digest('hex').slice(0, 8);
 ```
 
-Timestamp in milliseconds makes collisions practically impossible.
+(Shape matches `engine/scan.js` `computeBuildHash`; the real helper strips
+freestruct's regenerated artifacts and previous `?v=` params first, and
+404 pages sit outside the hash entirely.)
+
+Content-derived, not timestamped: identical content rebuilds to an
+identical hash, which is what makes CDNs cache correctly, and a content
+or config change always flips it.
 
 ### CDN Purge Hooks
 

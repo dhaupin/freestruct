@@ -799,3 +799,39 @@ One more pass before the tag; findings + fixes + pins (battery +2, 89 ->
   generation first (U+0000 names the value class and the field). That
   order of consumption is now pinned as the contract, not papered over.
 
+### Pass 26.8 - rendered-site audit + release-post plumbing + docs truth sweep (done, same session, post-26.7)
+
+The rendered-site walk found one real bug; the truth walk found six
+stale spots. Fixes + gates:
+
+- **Release posts shipped as downloads, not pages.** `layout: none` +
+  extensionless permalinks made Jekyll emit two headless fragments that
+  Pages served as `application/octet-stream`; CI's `Found 17 HTML files`
+  proves freestruct never saw them - zero injection, absent from
+  sitemap/feed/llms. Fix per the crashtest family convention:
+  `layout: default` + trailing-slash permalinks (artifact lands as
+  dir/index.html). The temporary `release.html` shim is deleted.
+- `docs/discussions/index.md` added - the family release-post index
+  (crashtest's tree is the reference): one file per release, the file IS
+  the announcement, and the trailing-slash rule spelled out. The v1.1.0
+  row stays tag-pending (fiction-by-promotion is a rule, not advice).
+- **Dogfood:** docs config now carries `breadcrumb: true` + `llms: true`
+  (Pagefind owns search here, so no `search` key -> no SearchAction; the
+  empty `basePath:` key was dropped).
+- **Docs truth sweep (six stale spots):** the cache-busting FAQ still
+  described the timestamp hash + the retired `cacheBusting.hash: false`
+  switch + "different hash every deploy"; the cache-busting guide debug
+  step; the config reference documented three retired keys as live
+  (`generateNav`, `preserveExistingMeta`, `cacheBusting.hash`) and
+  `searchIndex` as default-on; troubleshooting recommended retired
+  `preserveExistingMeta` and the long-gone `docs/lib/inject.js` path;
+  docs/AGENTS.md's hash snippet predated the deterministic hash. All
+  rewritten to engine truth (battery 91, content-derived, opt-in
+  searchIndex, retired-keys note).
+- Post hygiene: the v1.1.0 announcement no longer claims to be on npm
+  before the tag ("this post ships with the tag" phrasing), battery
+  count aligned at 91.
+- Gates: battery 91/91, all seven docs-audit gates clean, template sync
+  lockstep, packs selftest teeth (8 attacks held, planted regressions
+  trip), tarball e2e fresh-install proof, config validate.
+

@@ -54,10 +54,10 @@ Found 0 HTML files
 
 ```text
 # If using Jekyll
-node docs/lib/inject.js docs/_site
+npx freestruct docs/_site
 
 # If using Hugo
-node docs/_site
+npx freestruct public
 ```
 
 ---
@@ -66,11 +66,7 @@ node docs/_site
 
 **Symptom:** Pages have duplicate og:title, description, etc.
 
-**Fix:** Set `preserveExistingMeta: false` in config:
-
-```yaml
-preserveExistingMeta: false
-```
+**Fix:** None needed in freestruct - injection is missing-only, so it never adds a tag the page already has. Duplicates come from the page or its layout shipping the same tag twice; deduplicate at the source (the page template). Retired `preserveExistingMeta` produces only a config warning, not a fix.
 
 ---
 

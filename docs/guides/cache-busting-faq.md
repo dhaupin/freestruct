@@ -44,7 +44,7 @@ No. It improves it:
 
 - Canonical URLs with `?v=` are still valid canonicals
 - Search engines understand versioned URLs
-- The hash changes every build, but that's intentional - you want everything fresh
+- The hash is content-derived: it changes only when your content changes, so search engines see a new URL exactly when there is genuinely new content to crawl
 
 ## My CDN already has auto-purge. Why do I need this?
 
@@ -79,7 +79,7 @@ Yes! Both have their own CDNs:
 **The hash still works!**
 
 Without purge hooks configured:
-- Every build generates a new hash
+- Every run derives a content hash; it flips when page content changes
 - `<meta name="freestruct-build">` is injected
 - Canonical URLs get `?v={hash}`
 - CDNs see different content (different HTML fingerprint)
@@ -89,23 +89,13 @@ You get ~80% of the benefit automatically. Purge hooks are the bonus for aggress
 
 ## Can the hash collide? What if two builds have the same hash?
 
-The hash is SHA1 of `JSON.stringify(config) + timestamp`. The timestamp is `Date.now()` in milliseconds. Collisions are practically impossible unless you:
+Not a bug - it is the design. The hash is SHA1 of your config plus the sorted pre-injection content of every page (freestruct's own regenerated artifacts and previous `?v=` params are stripped first). Identical content rebuilds to an identical hash, which is exactly what you want: CDNs and browsers keep serving a page that has not changed, and the hash flips the moment real content changes. The same hash on two builds means both runs produced byte-identical output.
 
-1. Run two builds in the same millisecond
-2. With identical config
-
-Even then, it's not a security issue - just means the same hash for two builds. Very unlikely.
+Config edits also flip the hash by design - the config is part of the input - so staging and production get their own bust values even with identical content.
 
 ## Can I disable the hash?
 
-Yes, but why would you? Add to config:
-
-```yaml
-cacheBusting:
-  hash: false
-```
-
-We don't recommend this. The hash is what makes cache busting work.
+No - it is always generated. The old `cacheBusting.hash: false` switch is a retired key: configuring it now produces a named `[freestruct] config warning` and no effect. And since the hash is content-derived, an unchanged page keeping its hash is the feature - there is no datestamp churn to opt out of.
 
 ## Does this work with SSGs other than Jekyll?
 
@@ -175,10 +165,10 @@ No security concerns:
 4. Note the hash
 5. Make a small change to any page
 6. Rebuild and deploy
-7. Check again - the hash should be different
-8. Check canonical URL has new `?v=` parameter
+7. Check again - the hash changed, because the content changed
+8. Check canonical URL carries the new `?v=` parameter
 
-You'll see the hash change every single deploy.
+An unchanged rebuild keeps the same hash - that is the CDN-friendliness contract; busting happens exactly when content does.
 
 ## Still have questions?
 
