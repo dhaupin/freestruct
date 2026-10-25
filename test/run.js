@@ -2071,5 +2071,38 @@ test('pass-hunt: a hostile search.url (quote + tag) lands as an escaped JSON str
   } finally { rmDir(dir); }
 });
 
+test('final-gate: verification dedupe is attribute-order tolerant', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'verification:',
+      '  google: engine-ships',
+      'llms: true',
+    ].join('\n') + '\n');
+    // page writes its own verification meta in the OTHER attribute order
+    fs.writeFileSync(path.join(dir, 'docs/_site/own-order.html'),
+      '<html><head><meta content="page-owned" name="google-site-verification"><title>O</title></head><body><h1>o</h1></body></html>');
+    runInject(dir);
+    const own = read(dir, 'docs/_site/own-order.html');
+    assert.ok((own.match(/google-site-verification/g) || []).length === 1, 'a page-owned verification meta in the other attribute order still wins (exactly one ships)');
+    assert.ok(!own.includes('engine-ships'), 'the engine adds no second meta beside a page-owned one');
+  } finally { rmDir(dir); }
+});
+
+test('final-gate: a control byte in a page fact is a LOUD build failure (the escaped-or-fail XML contract precedes every consumer)', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/_site/ctrl.html'),
+      '<html><head><title>Ctrl\u0000Title</title></head><body><h1>c</h1></body></html>');
+    const res = runInjectFailing(dir);
+    assert.strictEqual(res.status, 1, 'the loud-fail contract exits 1');
+    assert.includes(res.stderr, 'XML safety: value for feed title contains control character U+0000', 'the refusal names the value class and the field');
+  } finally { rmDir(dir); }
+});
+
 // done
 console.log('[freestruct battery] complete');

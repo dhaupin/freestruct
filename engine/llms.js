@@ -13,10 +13,14 @@ import { pageUrlFor } from './urls.js';
 /**
  * One line of plain text, whatever it was given: a newline (or CR) inside a
  * title/description would split a list entry into two, silently corrupting
- * the summary's shape. Whitespace is collapsed to single spaces.
+ * the summary's shape, and an XML-era control character would ride into the
+ * plain-text file as garbage. Bad bytes drop, whitespace collapses.
  */
 function oneline(value) {
-  return String(value).replace(/[\r\n]+/g, ' ').trim();
+  return String(value)
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
+    .replace(/[\r\n]+/g, ' ')
+    .trim();
 }
 
 /**

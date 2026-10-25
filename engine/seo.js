@@ -534,7 +534,9 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
     for (const [provider, code] of Object.entries(config.verification)) {
       const metaName = VERIFICATION_META_NAMES[provider];
       if (!metaName || typeof code !== 'string' || code === '') continue; // config.js warned
-      if (html.includes('name="' + metaName + '"')) continue; // missing-only
+      // missing-only, attribute-ORDER tolerant: a page that writes its own
+      // verification meta in the other attribute order still suppresses ours
+      if (new RegExp('<meta[^>]*name=["\']' + metaName + '["\']', 'i').test(html)) continue;
       verificationMetas.push('<meta name="' + metaName + '" content="' + escAttr(code) + '">');
     }
     if (verificationMetas.length) seoInjection += '\n' + verificationMetas.join('\n');

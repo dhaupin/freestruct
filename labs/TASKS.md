@@ -777,3 +777,25 @@ wired (hardened 8/8 REFUSED, vulnerable 7/7 trip):
   battery unchanged at 89 pins (the pack attacks live at the wire, not
   in the battery); pack claims in packs/README now truth-aligned.
 
+### Pass 26.7 - the pre-tag manual gate (done, same session)
+
+One more pass before the tag; findings + fixes + pins (battery +2, 89 ->
+91):
+
+- Count-truth stragglers: CHANGELOG said `49 -> 75 -> 86` (it is 89) and
+  AGENTS.md still said `39 pins` from an earlier era - both updated to
+  the live number.
+- Integration probe (basePath + hreflang + breadcrumb + article + search
+  + llms together): all pairings hold - alternates, trail items and the
+  typed block all carry the sub-path prefix; SearchAction intact; all
+  gates green on the combined run.
+- Verification dedupe was attribute-ORDER blind (a page-owned
+  `content-first` meta escaped the missing-only gate); now order
+  tolerant, pinned.
+- llms `oneline()` additionally strips control bytes (defense in depth -
+  unreachable today, see below).
+- Boundary discovery: a control byte in a page fact never reaches llms -
+  the escaped-or-fail XML contract aborts the build LOUDLY at feed
+  generation first (U+0000 names the value class and the field). That
+  order of consumption is now pinned as the contract, not papered over.
+
