@@ -55,5 +55,24 @@ jobs:
       - name: Crashtest pack selftest (hardened holds / regressed trips)
         run: CRASHTEST_BIN=node_modules/crashtest/bin/crashtest.js node scripts/packs-selftest.cjs
 
+      # Packstruct manifest lint (pinned install - same pattern as crashtest:
+      # the zero-dep lint CLI kills broken pack manifests at author time, and
+      # the gate keeps the /packs spec contract from drifting). Cache by pin
+      # sha; a bump means a fresh (cheap) install. lint + --deep probe the
+      # entries module census, not just the manifest shape.
+      - name: Restore packstruct (manifest linter cache)
+        id: ps
+        uses: actions/cache@v6
+        with:
+          path: node_modules/packstruct
+          key: packstruct-f7f4fe2943e2827db4efe6cc448d489cff97feba
+      - name: Install packstruct (cache misses only)
+        if: ${{ steps.ps.outputs['cache-hit'] != 'true' }}
+        run: npm install --no-save --no-audit --no-fund github:dhaupin/packstruct#f7f4fe2943e2827db4efe6cc448d489cff97feba
+      - name: Packstruct lint (manifest contract + deep module census)
+        run: |
+          node node_modules/packstruct/bin/cli.mjs lint packs
+          node node_modules/packstruct/bin/cli.mjs lint packs --deep
+
       - name: Engine template sync check (canonical engine/_freestruct in lockstep)
         run: node scripts/sync-templates.mjs check
