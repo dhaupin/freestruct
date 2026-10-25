@@ -106,7 +106,7 @@ function readPageOverrides(html, page) {
  * pages that ship their own OG/Twitter/JSON-LD/canonical/description keep them.
  * Page-level freestruct comments refine the injected tags (see PERPAGE_KEYS).
  */
-export function injectPage(page, { config, template, buildHash, snippetDir }) {
+export function injectPage(page, { config, template, buildHash, snippetDir, injectWarnings, generatedImages }) {
   let html = page.html;
   const siteName = config.site.name;
   const siteUrl = config.site.url;
@@ -128,16 +128,44 @@ export function injectPage(page, { config, template, buildHash, snippetDir }) {
   const canonicalUrl = pageUrlFor(config, page.slug)
     + (config.cacheBusting?.hashInCanonicalUrl === true ? '?v=' + buildHash : '');
 
-  // og image: the per-page comment wins over config; relative values are
-  // joined onto the site url, absolute HTTP(S) values pass through as-is.
-  // No image anywhere: no og:image/twitter:image ship at all (prestruct
-  // parity - a bare image tag pointing at the site root is a broken card).
-  const rawOgImage = (overrides?.ogImage !== undefined && overrides.ogImage !== '')
+  // og image (issue #20): config accepts the back-compat string form or the
+  // structured { src, width, height, alt } object form (shared prestruct
+  // shape so configs move between engines). Per-page overrides win over the
+  // config either way; relative values join onto the site url, absolute
+  // HTTP(S) values pass through as-is. No image anywhere: no og:image/
+  // twitter:image ship at all (a bare image tag pointing at the site root is
+  // a broken card).
+  const ogImageCfg = config.og?.image;
+  const ogImageObj = (ogImageCfg !== undefined && ogImageCfg !== null
+    && typeof ogImageCfg === 'object' && !Array.isArray(ogImageCfg))
+    ? ogImageCfg : null;
+  const hasPerpageOgImage = overrides?.ogImage !== undefined && overrides.ogImage !== '';
+  // Resolution order (issue #20 + #22): per-page override > per-page
+  // GENERATED image (issue #22 deliverables, keyed by slug) > the config
+  // (object or string form). Pages that ship their own og:image keep it
+  // before any of this matters - missing-only.
+  const generatedForPage = (generatedImages && generatedImages[page.slug]) || null;
+  const companionsSource = hasPerpageOgImage ? null : (generatedForPage || ogImageObj);
+  const rawOgImage = hasPerpageOgImage
     ? String(overrides.ogImage)
-    : config.og?.image || '';
+    : (generatedForPage ? generatedForPage.src
+      : (ogImageObj ? String(ogImageObj.src || '') : (ogImageCfg || '')));
   const ogImageFull = rawOgImage && !/^(https?:)?\/\//i.test(rawOgImage)
     ? siteUrl + rawOgImage
     : rawOgImage;
+
+  // issue #20, the SVG trap: an SVG og:image cannot be rendered by most
+  // social scrapers and the share preview blanks. Loud warning always from
+  // here (config value or per-page override); under --strict the orchestrator
+  // graduates the collected offenses to build failures (same ladder as the
+  // report classes), and allowSvg: true is the explicit way out.
+  if (rawOgImage && /\.svg$/i.test(rawOgImage.split(/[?#]/)[0])
+      && !(ogImageObj && hasPerpageOgImage !== true && ogImageObj.allowSvg === true)) {
+    // Loud in every run; under --strict the orchestrator also graduates the
+    // collected offenses (injectWarnings) to build failures.
+    pageWarn(page, 'og image "' + rawOgImage + '" is an SVG: most social scrapers cannot render it and the share preview blanks (ship a raster image, or set allowSvg: true in the og.image object to accept it)');
+    injectWarnings.push('og image "' + rawOgImage + '" is an SVG: most social scrapers cannot render it and the share preview blanks (ship a raster image, or set allowSvg: true in the og.image object to accept it)');
+  }
 
   // Add cache-busting query param to assets (css, js, images, fonts, ...)
   if (config.cacheBusting?.assetQueryParam !== false) {
@@ -232,6 +260,16 @@ export function injectPage(page, { config, template, buildHash, snippetDir }) {
   if (!hasOg) {
     const ogMatch = seo.match(/<meta property="og:[^"]*"[^>]*>/gi);
     if (ogMatch) seoInjection += '\n' + ogMatch.join('\n');
+    // issue #20: the structured og.image object form also emits its
+    // companions; only when the shipped image IS the config object - a
+    // per-page override ships its own image and replaces the set wholesale.
+    if (ogImageFull && companionsSource && !hasPerpageOgImage) {
+      const companions = [];
+      if (companionsSource.width !== undefined && companionsSource.width !== '') companions.push('<meta property="og:image:width" content="' + escAttr(companionsSource.width) + '">');
+      if (companionsSource.height !== undefined && companionsSource.height !== '') companions.push('<meta property="og:image:height" content="' + escAttr(companionsSource.height) + '">');
+      if (companionsSource.alt !== undefined && companionsSource.alt !== '') companions.push('<meta property="og:image:alt" content="' + escAttr(companionsSource.alt) + '">');
+      if (companions.length) seoInjection += '\n' + companions.join('\n');
+    }
     // article:* companions for per-page article facts
     const articleTags = [];
     if (overrides?.publishedTime) articleTags.push('<meta property="article:published_time" content="' + escAttr(overrides.publishedTime) + '">');
@@ -263,7 +301,10 @@ export function injectPage(page, { config, template, buildHash, snippetDir }) {
   // Marker goes FIRST so the entire generated tail (seo block, later snippet
   // and late-pass insertions land downstream of it) is one strippable region
   // for computeBuildHash's stable view (scan.js) across reruns.
-  html = html.replace(/<\/head>/i, '<!-- freestruct -->\n' + seoInjection + '\n' + versionTag + '\n</head>');
+  // Sequence 3, spot 2 (issue #24): seoInjection is config/page-carried, so
+  // it rides a FUNCTION replacer - in string form any $& / $1..9 inside the
+  // injected head would be treated as replacement syntax and rewrite the page.
+  html = html.replace(/<\/head>/i, () => '<!-- freestruct -->\n' + seoInjection + '\n' + versionTag + '\n</head>');
 
   // Custom snippet passes: comments stripped, advertised placeholders
   // ({{siteName}}, {{siteUrl}}, {{buildHash}}, ...) substituted - FIX for
@@ -276,17 +317,19 @@ export function injectPage(page, { config, template, buildHash, snippetDir }) {
     return snippet.replace(/<!--[\s\S]*?-->/g, '');
   }
 
-  // Custom header injection before </head>
+  // Snippet bodies (issue #24): snippet/config-carried text always rides
+  // function replacers - a literal $ sequence in a snippet must print
+  // literally, never interfere with the surrounding document.
   const header = readSnippet('inject-header.html');
-  if (header) html = html.replace(/<\/head>/i, header + '\n</head>');
+  if (header) html = html.replace(/<\/head>/i, () => header + '\n</head>');
 
   // Custom body-start injection after <body>
   const bodyStart = readSnippet('inject-body-start.html');
-  if (bodyStart) html = html.replace(/<body[^>]*>/i, '$&' + bodyStart);
+  if (bodyStart) html = html.replace(/<body[^>]*>/i, (m) => m + bodyStart);
 
   // Custom footer injection before </body>
   const footer = readSnippet('inject-footer.html');
-  if (footer) html = html.replace(/<\/body>/i, footer + '\n</body>');
+  if (footer) html = html.replace(/<\/body>/i, () => footer + '\n</body>');
 
   if (config.minify) html = minifyHtml(html);
 

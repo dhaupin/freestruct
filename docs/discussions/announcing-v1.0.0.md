@@ -3,23 +3,11 @@ version: 1.0.0
 permalink: /discussions/announcing-v1.0.0
 layout: none
 title: "Announcing freestruct v1.0.0"
-description: Draft announcement post for the v1.0.0 Discussions release thread
+description: The v1.0.0 Discussions release post, per the Creadev family release-post convention
 comments: false
 nav_order: 21
 ---
 
-# Announcing freestruct v1.0.0
-
-_The draft announcement post for Discussions. Technical, changelog-style.
-Copy the code block below into the community announcement category when
-v1.0.0 is cut (version truth today: 1.0.0 - the manual npm bootstrap is
-already done; the tag is all that owner-gates the release).
-Prose follows the repo content-style contract: direct, dry, no em dashes, no
-marketing language._
-
----
-
-~~~md
 # freestruct v1.0.0
 
 freestruct is a post-build SEO layer for static doc sites. v1.0.0 is the
@@ -123,7 +111,7 @@ Exit codes are part of the documented contract: 0 ok, 1 config fatal,
 
 ## Quality layer
 
-The engine's behavior is pinned by a committed fixture battery (49 tests,
+The engine's behavior is pinned by a committed fixture battery (52 tests,
 red-checked before each change), a docs audit with seven gates, template
 sync checks, a tarball e2e that installs the packed package on a fresh
 machine, and a crashtest pack that attacks the built docs the way a static
@@ -136,4 +124,3 @@ host serves them. CI runs all of it on every push.
 - CLI reference: https://freestruct.creadev.org/guides/cli
 - Changelog: https://github.com/dhaupin/freestruct/blob/main/CHANGELOG.md
 - Issues: https://github.com/dhaupin/freestruct/issues
-~~~

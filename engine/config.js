@@ -20,7 +20,7 @@ export const KNOWN_CONFIG_KEYS = Object.freeze([
   'site', 'twitter', 'og', 'author', 'jsonLd', 'basePath', 'outputDir', 'minify', 'runHooks',
   'generateSitemap', 'generateFeed', 'generate404', 'generateRobots',
   'readingTime', 'lastModified', 'lazyLoad', 'linkCheck', 'searchIndex',
-  'cacheBusting',
+  'cacheBusting', 'hooks', 'indexNow', 'ogImageGeneration',
 ]);
 
 // Flags that EXISTED and no longer do anything. We warn loudly, never guess.
@@ -80,6 +80,101 @@ export function collectConfigDiagnostics(config, configName) {
   if (config.site) {
     if (config.site.name === undefined) warnings.push('site.name missing - page titles will compose without a site name');
     if (config.site.url === undefined) warnings.push('site.url missing - canonical/sitemap/feed urls will be broken');
+  }
+
+  // og.image shape (issue #20): the back-compat string form is always fine;
+  // the object form accepts { src, width, height, alt, allowSvg }. Wrong
+  // shapes warn loudly here and the engine keeps its behavior honest (no
+  // image ships when src is not a usable string).
+  const ogImageShape = config.og?.image;
+  if (ogImageShape && typeof ogImageShape === 'string' && ogImageShape !== ''
+      && /\.svg$/i.test(ogImageShape.split(/[?#]/)[0])) {
+    warnings.push('og.image src "' + ogImageShape + '" is an SVG: most social scrapers cannot render it and the share preview blanks (ship a raster image, or switch to the object form { src: ..., allowSvg: true } to accept it)');
+  }
+  if (ogImageShape !== undefined && ogImageShape !== null && typeof ogImageShape === 'object') {
+    if (Array.isArray(ogImageShape)) {
+      warnings.push('og.image must be a string or a { src, width, height, alt } object, not an array - no image ships');
+    } else {
+      if (typeof ogImageShape.src !== 'string' || ogImageShape.src === '') {
+        warnings.push('og.image object is missing a string src - no image ships (the plain string form still works)');
+      } else if (/\.svg$/i.test(String(ogImageShape.src).split(/[?#]/)[0])
+          && ogImageShape.allowSvg !== true) {
+        warnings.push('og.image src "' + ogImageShape.src + '" is an SVG: most social scrapers cannot render it and the share preview blanks (ship a raster image, or set allowSvg: true to accept it)');
+      }
+      const KNOWN_OGIMAGE_KEYS = ['src', 'width', 'height', 'alt', 'allowSvg'];
+      const unknownOg = Object.keys(ogImageShape).filter(k => !KNOWN_OGIMAGE_KEYS.includes(k));
+      if (unknownOg.length > 0) {
+        warnings.push('unknown og.image companion key(s): "' + unknownOg.join('", "') + '" (known: ' + KNOWN_OGIMAGE_KEYS.join(', ') + ')');
+      }
+      if (ogImageShape.width !== undefined && ogImageShape.width !== '') {
+        const w = Number(ogImageShape.width);
+        if (!Number.isFinite(w) || w <= 0) warnings.push('og.image.width must be a positive number - it will be dropped');
+      }
+      if (ogImageShape.height !== undefined && ogImageShape.height !== '') {
+        const h = Number(ogImageShape.height);
+        if (!Number.isFinite(h) || h <= 0) warnings.push('og.image.height must be a positive number - it will be dropped');
+      }
+      if (ogImageShape.alt !== undefined && typeof ogImageShape.alt !== 'string' && typeof ogImageShape.alt !== 'number') {
+        warnings.push('og.image.alt must be a string or number - it will be dropped');
+      }
+      if (ogImageShape.allowSvg !== undefined && typeof ogImageShape.allowSvg !== 'boolean') {
+        warnings.push('og.image.allowSvg must be a boolean');
+      }
+    }
+  }
+
+  // hooks shape (issue #21): hooks is an object keyed by hook seam; each
+  // seam takes one string command or a list of them. Unknown seams and
+  // non-string entries warn loudly here, and the runner treats both
+  // honestly (non-strings are skipped, unknown seams have no runner).
+  if (config.hooks !== undefined && (typeof config.hooks !== 'object' || config.hooks === null || Array.isArray(config.hooks))) {
+    warnings.push('hooks must be a { postBuild: [...] } object, not ' + (Array.isArray(config.hooks) ? 'an array' : typeof config.hooks));
+  } else if (config.hooks) {
+    const KNOWN_HOOK_SEAMS = ['postBuild'];
+    for (const seam of Object.keys(config.hooks)) {
+      if (KNOWN_HOOK_SEAMS.includes(seam)) continue;
+      warnings.push('unknown hooks seam "' + seam + '" (known: ' + KNOWN_HOOK_SEAMS.join(', ') + ')');
+    }
+    const postBuild = config.hooks.postBuild;
+    if (postBuild !== undefined && !Array.isArray(postBuild) && typeof postBuild !== 'string') {
+      warnings.push('hooks.postBuild must be a string command or a list of string commands');
+    } else if (Array.isArray(postBuild)) {
+      for (const entry of postBuild) {
+        if (typeof entry !== 'string' || entry === '') {
+          warnings.push('every hooks.postBuild entry must be a non-empty string command');
+          break;
+        }
+      }
+    }
+  }
+
+  // indexNow shape (issue #19): true (generate-once-and-persist) or
+  // { key: '<32-hex>' }. A wrong-shaped key warns here and the indexnow
+  // subcommand refuses it too - no silently-dead submission command.
+  if (config.indexNow !== undefined && config.indexNow !== null && config.indexNow !== false) {
+    if (config.indexNow === true) {
+      // generate-once-and-persist path: shape is fine
+    } else if (typeof config.indexNow === 'string' || typeof config.indexNow === 'object') {
+      const key = typeof config.indexNow === 'string' ? config.indexNow : config.indexNow.key;
+      if (!/^[a-f0-9]{32}$/.test(String(key || ''))) {
+        warnings.push('indexNow key must be 32 lowercase hex chars (the IndexNow key contract) - the key file will not ship');
+      }
+      if (typeof config.indexNow === 'object') {
+        const unknownIdx = Object.keys(config.indexNow).filter(k => k !== 'key');
+        if (unknownIdx.length > 0) {
+          warnings.push('unknown indexNow key(s): "' + unknownIdx.join('", "') + '"');
+        }
+      }
+    } else {
+      warnings.push('indexNow must be true or { key: "<32-hex>" }');
+    }
+  }
+
+  // ogImageGeneration shape (issue #22): a { template, font?, width?,
+  // height? } object. Runtime resolution (engine/ogimage.js) warns on
+  // missing templates; here we catch the key-level shape mistakes.
+  if (config.ogImageGeneration !== undefined && (typeof config.ogImageGeneration !== 'object' || config.ogImageGeneration === null || Array.isArray(config.ogImageGeneration))) {
+    warnings.push('ogImageGeneration must be a { template, font, width, height } object, not ' + (Array.isArray(config.ogImageGeneration) ? 'an array' : typeof config.ogImageGeneration));
   }
 
   for (const w of warnings) {

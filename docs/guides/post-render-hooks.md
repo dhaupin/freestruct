@@ -95,6 +95,27 @@ cacheBusting:
       command: node scripts/my-custom-injection.js
 ```
 
+And there is a first-class **postBuild seam** for anything that chains after
+the whole pass (custom schema injection scripts, audits, image
+post-processing, IndexNow submissions):
+
+```yaml
+runHooks: true # commands stay dormant without it
+
+hooks:
+  postBuild:
+    - node scripts/faqp-schema.mjs
+    - npm run seo:audit
+```
+
+PostBuild hooks inherit the purge security contract: nothing executes
+without `runHooks: true`, each command gets a 30s timeout with inherited
+output, and the `$SITE_URL` / `$BUILD_HASH` / `$OUTPUT_DIR` placeholders are
+substituted (plus `FREESTRUCT_SITE_URL` / `FREESTRUCT_BUILD_HASH` /
+`FREESTRUCT_OUTPUT_DIR` env vars on the child, so scripts never have to do
+string surgery). A nonzero hook exit fails the whole build with exit code
+4.
+
 ## Best Practice: Comment Your Modifications
 
 **When you modify HTML in your build pipeline, tell your team.**

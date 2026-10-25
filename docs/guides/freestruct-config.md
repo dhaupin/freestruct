@@ -166,6 +166,90 @@ cacheBusting:
 runHooks: true  # required to enable
 ```
 
+The same opt-in also gates the general `hooks.postBuild` seam (issue #21):
+
+```yaml
+runHooks: true
+
+hooks:
+  postBuild:
+    - node scripts/faqp-schema.mjs
+    - npm run seo:audit
+```
+
+PostBuild commands run after the whole pass (purges included) with a 30s
+timeout, the `$SITE_URL` / `$BUILD_HASH` / `$OUTPUT_DIR` placeholders and the
+matching `FREESTRUCT_*` env vars, and a nonzero exit fails the build with
+exit code 4. Unknown hook seams and non-string entries are loud config
+warnings, never silently ignored.
+
+## Notify Options
+
+### indexNow
+
+IndexNow is a one-POST notify protocol shared by Bing, Seznam and Yandex; a
+docs site that re-crawls one hour after shipping beats one that waits
+next-crawl-day. Two config shapes:
+
+```yaml
+# generate a 32-hex key once and persist it next to the config
+indexNow: true
+
+# or bring your own already-registered key
+indexNow:
+  key: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaab1
+```
+
+The run emits `<key>.txt` into the output dir (the keyLocation ownership
+proof search engines probe) and, on the generate-once path, persists the key
+to `indexnow-key.txt` next to the config - commit that file so the
+keyLocation stays stable across runs. A wrong-shaped key is a loud config
+warning and the key file never ships.
+
+Submission is a SEPARATE, post-deploy step:
+
+```bash
+npx freestruct indexnow --dry-run   # print the request body, no network
+npx freestruct indexnow             # POST the baked sitemap URL list
+```
+
+Deploy first: keyLocation must resolve live before a submission, otherwise
+the engines reject the ownership signal. The command reads only the baked
+`sitemap.xml`, surfaces the HTTP status in its output (200/202 accepted),
+and exits `0` accepted / `1` failure / `3` missing output dir or sitemap.
+Note that the run itself never submits - it only ships the key file.
+
+## Image Generation Options
+
+### ogImageGeneration
+
+Per-page OG image generation (issue #22): instead of one shared banner,
+freestruct renders a branded 1200x630 image per page from a template using
+the title/description it already extracts, and wires `og:image`,
+`twitter:image` and the issue #20 companions to the fresh PNG (missing-only:
+pages with their own og set keep it wholesale).
+
+```yaml
+ogImageGeneration:
+  template: og-template.svg    # configDir-relative; 1200x630 SVG
+  font: ./brand/brand-bold.ttf # optional TTF/OTF loaded into the rasterizer
+  width: 1200                  # optional (default 1200)
+  height: 630                  # optional (default 630)
+```
+
+The template carries three placeholders, XML-escaped before substitution:
+`{{ogTitle}}`, `{{ogDescription}}`, `{{ogUrl}}` - layout, colors and text
+wrapping are yours to design (text elements rely on the configured font;
+system fonts are unreliable in build sandboxes).
+
+Rasterization is honest: PNG cannot be made in pure Node, so the engine
+loads the OPTIONAL `@resvg/resvg-js` package (`npm install --save-dev
+@resvg/resvg-js`) and, when it is absent, generation loud-skips per run -
+never silently, never half-shipping. Deterministic: identical page meta
+renders identical bytes, so the content-derived build hash stays honest.
+Noindex pages receive no share preview; output lands in `og/<flattened-slug>.png`
+with `og:image:width`/`height`/`alt` companions riding along.
+
 ## Path Options
 
 ### basePath
@@ -266,6 +350,34 @@ no `og:image` or `twitter:image` tag ships at all - a bare image tag pointing
 at the site root is a broken social card, not a fallback. Relative image
 paths are joined onto `site.url`; absolute HTTP(S) values pass through
 unchanged. Values that reach the head are HTML-attribute-escaped first.
+
+`og.image` takes two shapes:
+
+```yaml
+# string form - same as ever
+og.image: /assets/og-image.png
+
+# object form ({ src, width, height, alt, allowSvg }) - the shared prestruct
+# shape; additionally emits the companion tags scrapers size previews with:
+og.image:
+  src: /assets/og-image.png
+  width: 1200
+  height: 630
+  alt: Docs banner
+```
+
+The object form ships `og:image:width`, `og:image:height` and
+`og:image:alt` next to `og:image` (the string form stays companion-free).
+Wrong shapes warn loudly and stay honest (no image ships from a missing
+`src`); unknown companion keys name themselves as config warnings.
+
+SVG sources are a trap: most social scrapers cannot render them and the
+share preview blanks. An `.svg` src (string or object form) refuses silently
+no more - it warns on every run, `og.image.allowSvg: true` accepts it
+explicitly, and `--strict` fails the build until the trap is answered.
+
+Per-page `ogImage` overrides replace the whole image set for that page
+(companion tags included) - they ride the same warning ladder.
 
 ## Template Placeholders
 

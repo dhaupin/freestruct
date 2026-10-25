@@ -55,6 +55,50 @@ exist are never clobbered - each one is reported as `skip (exists)` and the
 run ends with the summary. This is the scripted version of the manual
 `cp -r node_modules/freestruct/init/docs .` from [Getting Started](/getting-started).
 
+### audit
+
+```bash
+npx freestruct audit
+npx freestruct audit --json
+npx freestruct audit some/other/output-dir
+```
+
+Audit verifies the BAKED output after any freestruct run (or after any
+SSG's build that already had freestruct applied): per-page head hygiene
+(title, description, canonical absolute, the core og/twitter set, svg
+og:image, JSON-LD parse + LocalBusiness recommended fields, h1 sanity), the
+404 noindex contract, and the site-level sitemap/robots checks. The first
+bare word after `audit` is a positional output-directory override. Exit
+codes: `0` clean, `1` findings (FAIL class), `3` when the directory is
+missing. `--json` prints a machine digest for CI annotations.
+
+Fail-vs-warn mapping is deliberate: tags the engine always injects and the
+404 noindex contract are the FAIL class; config-gated tags (og:image,
+twitter:site, twitter:image), set-coherence on pages that ship their own
+partial og set (missing-only keeps those by design), length bands, h1
+sanity, LocalBusiness recommended fields and on-disk og:image/JSON-LD asset
+existence are the WARN class.
+
+### indexnow
+
+```bash
+npx freestruct indexnow --dry-run
+npx freestruct indexnow
+npx freestruct indexnow some/other/output-dir
+```
+
+Reads the baked `sitemap.xml` from the output dir and POSTs its URL list to
+`api.indexnow.org` (the notify protocol shared by Bing, Seznam and Yandex).
+The first bare word after `indexnow` is a positional output-directory
+override. `--dry-run` prints the exact request body (host, key, urlList,
+keyLocation) without touching the network - the CI-friendly shape.
+
+Post-deploy semantics: the `<key>.txt` ownership file is emitted during the
+freestruct RUN, but a submission only counts after the output is live
+(keyLocation must resolve). Exit codes: `0` accepted (or `--dry-run`), `1`
+refusal or rejected submission (the HTTP status prints in the output), `1`
+for a fatal config error, `3` for a missing output dir.
+
 ### help
 
 ```bash
@@ -84,6 +128,7 @@ exit-code contract and exit `0`.
 | `1` | Config fatal (parse error, missing `site.url`/`site.name`) |
 | `2` | Template missing (no staged or packaged `inject-brand.html`) |
 | `3` | Output directory not found |
+| `4` | A `hooks.postBuild` command exited nonzero (issue #21: hooks fail the build) |
 
 ## Build hash
 

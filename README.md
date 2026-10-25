@@ -80,9 +80,10 @@ ls docs/_site/{sitemap.xml,robots.txt,feed.xml,404.html}
 ```
 
 If any of those fail, Freestruct tells you why: config errors, a missing
-template, and an empty output dir each fail loudly with their own exit code
-(`1` config, `2` template, `3` output dir; `--tolerant` downgrades fatals to
-exit 0 for CI tolerance).
+template, an empty output dir, and a failing `hooks.postBuild` command each
+fail loudly with their own exit code (`1` config, `2` template, `3` output
+dir, `4` hook failure; `--tolerant` downgrades fatals to exit 0 for CI
+tolerance).
 
 ### Useful flags and subcommands
 
@@ -97,6 +98,9 @@ npx freestruct validate         # config-only preflight; exit 1 on fatal errors
 npx freestruct init             # scaffold the starter kit into ./docs
                                 # (npx freestruct init mydir -> mydir/docs;
                                 #  existing files are never clobbered)
+npx freestruct audit            # verify the baked output (heads + sitemap/
+                                # robots/404-noindex); --json for CI digest;
+                                # exit 1 on FAIL findings (issue #18)
 ```
 
 ---
@@ -111,6 +115,11 @@ npx freestruct init             # scaffold the starter kit into ./docs
   literals are JSON-escaped (a raw `<` cannot close the script tag),
   `og:image`/`twitter:image` ship only when an image is configured, and an
   optional `author` key rides the Organization JSON-LD as a schema.org founder
+- `og.image` takes the back-compat string form or the structured
+  `{ src, width, height, alt }` object form, which also emits the
+  `og:image:width`/`height`/`alt` companions; SVG sources warn loudly on
+  every run (most scrapers cannot render them), `allowSvg: true` accepts
+  one explicitly, and `--strict` fails the build until it is answered
 - Page-level tuning survives the build: a `<!-- freestruct: {...} -->` comment
   overrides title/description/ogType/ogImage/twitterCard and adds
   `article:published_time`/`author`/`section`; custom `jsonLd` objects append
@@ -147,6 +156,24 @@ npx freestruct init             # scaffold the starter kit into ./docs
   and retired keys never die silently
 - Link validation (report-only by default, `--strict` to make fatal - our own
   docs CI runs `--strict` and it has already caught three production 404s)
+- `freestruct audit` verifies the baked output independently - per-page
+  head hygiene, the 404 noindex contract, sitemap/robots sanity - with an
+  exit code for CI (`0` clean, `1` findings, `--json` digest for
+  annotations); it reads only the output dir, so it checks any SSG's build
+  with freestruct applied
+- IndexNow support (issue #19): freestruct is the component that already
+  owns the sitemap, so the key file (the keyLocation ownership proof) ships
+  into the output during the run and `freestruct indexnow` POSTs the baked
+  URL list to api.indexnow.org afterwards - deploy first (keyLocation must
+  resolve), submission is the post-deploy step, and `--dry-run` prints the
+  request body for CI
+- Per-page OG image generation (issue #22): freestruct already extracts
+  each page's title/description, so it can render a branded 1200x630 PNG
+  per page from a consumer SVG template (`{{ogTitle}}`/`{{ogDescription}}`/
+  `{{ogUrl}}` placeholders) and wire og/twitter to it - missing-only keeps
+  pages with their own og set. Rasterization is honest: PNG needs a real
+  rasterizer, so the optional `@resvg/resvg-js` package is loaded lazily
+  and the run stays green with a loud skip when it is not installed
 - Post-render hooks with purge-command safety (disabled by default; see
   [Security](#security))
 
@@ -175,7 +202,10 @@ Full key list (unknown or retired keys produce warnings, not silence):
 | `linkCheck`                            | `true`         | Validate internal links (report-only; `--strict` makes them fatal)                                    |
 | `searchIndex`                          | `false`        | **Opt-in**: generate `search.json` for client-side search                                             |
 | `minify`                               | `false`        | Experimental HTML minifier (preserves `pre`/`script`/`style`/`textarea`)                              |
-| `runHooks`                             | `false`        | Gateway: only `true` lets `cacheBusting.purge` commands execute                                       |
+| `runHooks`                             | `false`        | Gateway: only `true` lets `cacheBusting.purge` and `hooks.postBuild` commands execute                 |
+| `hooks.postBuild`                      | *(unset)*      | Post-build command list chaining after the pass; disabled without `runHooks: true`; nonzero exit fails the build (exit 4) |
+| `indexNow`                             | *(unset)*      | IndexNow notify support: `true` (generate-once-and-persist key) or `{ key: "<32-hex>" }`; ships `<key>.txt` into the output and enables the `freestruct indexnow` post-deploy submission |
+| `ogImageGeneration`                    | *(unset)*      | Per-page OG image generation (`{ template, font?, width?, height? }`): renders a branded 1200x630 PNG per page from a consumer SVG template; needs the optional `@resvg/resvg-js` dev package (loud skip without it) |
 | `cacheBusting.assetQueryParam`         | `true`         | Append `?v={buildHash}` to linked assets                                                              |
 | `cacheBusting.hashInCanonicalUrl`      | `false`        | Append `?v={buildHash}` to canonical URLs                                                             |
 | `cacheBusting.purge`                   | *(unset)*      | Purge hook list (name + command); disabled without `runHooks: true`                                   |
@@ -205,7 +235,25 @@ cacheBusting:
 ```
 
 Use only trusted commands. Disabled by default. Available variables:
-`$SITE_URL`, `$BUILD_HASH`, `$OUTPUT_DIR`.
+`$SITE_URL`, `$BUILD_HASH`, `$OUTPUT_DIR` (as env vars on the child:
+`FREESTRUCT_SITE_URL`, `FREESTRUCT_BUILD_HASH`, `FREESTRUCT_OUTPUT_DIR`).
+
+The same gateway covers the general postBuild seam - commands that chain
+after the entire pass (custom schema injection, audits, IndexNow
+submissions). A nonzero hook exit is a build failure (exit code 4):
+
+```yaml
+# In freestruct.config.yml
+runHooks: true
+hooks:
+  postBuild:
+    - node scripts/faqp-schema.mjs
+    - npm run seo:audit
+```
+
+Purge errors are reported and the build continues (a failed CDN purge is
+not a bad sitemap); postBuild failures fail the build on purpose - chain
+only trusted commands there too.
 
 ---
 
@@ -288,6 +336,8 @@ complimentary - freestruct imports nothing from its siblings.
   apps; Freestruct ships and CI-runs its own pack
 - [vant](https://github.com/dhaupin/vant) - the prototype Freestruct was
   extracted from
+- **The workshop** - [Creadev.org](https://creadev.org) (freestruct is made
+  by Rook @ Creadev.org - the same home as the docs and site surfaces above)
 
 For agents: [AGENTS.md](AGENTS.md) is the orientation file (scope, house
 rules, gates). Humans and agents are welcome equally - see

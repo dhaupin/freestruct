@@ -1138,5 +1138,502 @@ test('purge hooks: runHooks: true executes the canary with truthful substitution
   } finally { rmDir(dir); }
 });
 
+// ---------- $-expansion trap (issue #24, latent hardening) ----------
+// Any config- or content-carried value that rides a STRING-form
+// String.replace() replacer is treated as replacement syntax: a $& / $' /
+// $1..9 in it corrupts the surrounding output instead of printing literally.
+// The engine now uses function replacers at every such spot; these pins keep
+// the class dead.
+
+test('purge hooks: $-syntax in a config-carried site url stays LITERAL in the executed command (issue #24)', () => {
+  const dir = scenario('main');
+  try {
+    const marker = path.join(dir, 'purge-marker.txt');
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      "  url: https://docs.example.com/$&/keep-literal/",
+      'runHooks: true',
+      'cacheBusting:',
+      '  purge:',
+      `    - command: node -e "require('fs').writeFileSync(process.argv[1], process.argv.slice(2).join('|'))" ${marker} "https://docs.example.com/$SITE_URL_PART" "$SITE_URL"`,
+    ].join('\n') + '\n');
+    runInject(dir);
+    assert.ok(fs.existsSync(marker), 'hook still runs under runHooks: true');
+    const partsOfMarker = fs.readFileSync(marker, 'utf8');
+    assert.ok(!partsOfMarker.includes('$SITE_URL'),
+      'the $-placeholder was never substituted - a literal $ value corrupted the placeholder substitution');
+    const markerParts = partsOfMarker.split('|');
+    assert.strictEqual(markerParts.length, 2, 'both canary fields arrived');
+    assert.strictEqual(markerParts[1], 'https://docs.example.com/$&/keep-literal/',
+      'config-carried $& prints LITERALLY into the executed command instead of expanding to the match');
+    assert.strictEqual(markerParts[0], 'https://docs.example.com/' + markerParts[1] + '_PART',
+      'placeholder substitution truthfully carried the $-bearing url');
+  } finally { rmDir(dir); }
+});
+
+// The pin payloads are assembled with concatenation so the SOURCE stays free
+// of replacement-syntax sequences (the file is itself a replacement carrier
+// by subject matter - keep no false positives inside test/run.js).
+const SNIPPET_DOLLAR = '$& $1 $.'.replace(/\./g, "'");
+
+test('custom snippets carrying $-syntax print literally and the page stays intact (issue #24)', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/_freestruct/inject-footer.html'),
+      '<span data-canary="' + SNIPPET_DOLLAR + '</span>');
+    runInject(dir);
+    const html = read(dir, 'docs/_site/index.html');
+    assert.includes(html, SNIPPET_DOLLAR, 'snippet $ sequences print literally');
+    assert.includes(html, '</body>', '</body> not swallowed by replacement-syntax expansion');
+    assert.ok((html.match(/<\/body>/g) || []).length === 1, 'exactly one </body> remains');
+  } finally { rmDir(dir); }
+});
+
+test('config-carried $ sequences in the seo block do not rewrite the document head (issue #24)', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: "$& Docs"',
+      '  url: https://docs.example.com',
+    ].join('\n') + '\n');
+    runInject(dir);
+    const html = read(dir, 'docs/_site/index.html');
+    assert.includes(html, '$& Docs', 'config value prints literally in the head');
+    assert.ok((html.match(/<\/head>/g) || []).length === 1, '</head> not rewritten by replacement syntax');
+  } finally { rmDir(dir); }
+});
+
+// ---------- structured og.image (issue #20) ----------
+// The string form stays back-compat. The object form { src, width, height,
+// alt, allowSvg } additionally emits the companions scrapers size previews
+// with, and the SVG trap (share previews blank) warns loudly / fails clean
+// under --strict.
+
+test('og.image object form emits width/height/alt companions; the string form stays back-compat (issue #20)', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'og:',
+      '  image:',
+      '    src: /banner.png',
+      '    width: 1200',
+      '    height: 630',
+      '    alt: Docs banner',
+    ].join('\n') + '\n');
+    runInject(dir);
+    const html = read(dir, 'docs/_site/index.html');
+    assert.includes(html, '<meta property="og:image" content="https://docs.example.com/banner.png">', 'src joined onto the site url like the string form');
+    assert.includes(html, '<meta property="og:image:width" content="1200">');
+    assert.includes(html, '<meta property="og:image:height" content="630">');
+    assert.includes(html, '<meta property="og:image:alt" content="Docs banner">');
+  } finally { rmDir(dir); }
+});
+
+test('og.image string form: no companion tags ship (back-compat shape, issue #20)', () => {
+  const dir = scenario('main');
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/index.html');
+    assert.includes(html, '<meta property="og:image" content="https://docs.example.com/og.png">');
+    assert.ok(!/og:image:(width|height|alt)/.test(html), 'string form stays companion-free');
+  } finally { rmDir(dir); }
+});
+
+test('og.image svg src warns loudly by default, allowSvg opts out, --strict fails the build (issue #20)', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'og:',
+      '  image: /previews/banner.svg',
+    ].join('\n') + '\n');
+    const out = runInject(dir);
+    assert.includes(out, 'SVG', 'the svg trap warns loudly by default');
+  } finally { rmDir(dir); }
+
+  const dir2 = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir2, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'og:',
+      '  image:',
+      '    src: /previews/banner.svg',
+      '    allowSvg: true',
+    ].join('\n') + '\n');
+    const out2 = runInject(dir2);
+    assert.ok(!/SVG/.test(out2), 'allowSvg: true is the way out');
+  } finally { rmDir(dir2); }
+
+  const dir3 = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir3, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'og:',
+      '  image: /previews/banner.svg',
+    ].join('\n') + '\n');
+    const res = spawnSync(process.execPath, [INJECT, '--strict'], { cwd: dir3, encoding: 'utf8' });
+    assert.strictEqual(res.status, 1, '--strict graduates the svg warning to a build failure');
+    assert.includes(res.stdout, 'SVG og:image');
+  } finally { rmDir(dir3); }
+});
+
+test('og.image shape diagnostics: unknown companion keys and bad values warn (issue #20)', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'og:',
+      '  image:',
+      '    src: /banner.png',
+      '    width: nan',
+      '    cardStyle: fancy',
+    ].join('\n') + '\n');
+    const out = runInject(dir);
+    assert.includes(out, 'unknown og.image companion key(s): "cardStyle"', 'unknown companion key names itself');
+    assert.includes(out, 'og.image.width must be a positive number', 'non-numeric width warns');
+  } finally { rmDir(dir); }
+});
+
+// ---------- general postBuild hooks (issue #21) ----------
+// The purge runner generalized into a first-class seam: hooks.postBuild
+// commands chain after the pass, behind the same runHooks opt-in. Nonzero
+// hook exits fail the build (expressed as exit code 4).
+
+test('postBuild hooks disabled by default: configured commands NEVER execute without runHooks (issue #21)', () => {
+  const dir = scenario('main');
+  try {
+    const marker = path.join(dir, 'hook-marker.txt');
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'hooks:',
+      `  postBuild: node -e "require('fs').writeFileSync(process.argv[1], 'ran')" ${marker}`,
+    ].join('\n') + '\n');
+    const out = runInject(dir);
+    assert.ok(!fs.existsSync(marker), 'the postBuild canary EXECUTED without runHooks');
+    assert.includes(out, 'PostBuild hooks disabled', 'the gate says so loudly');
+  } finally { rmDir(dir); }
+});
+
+test('postBuild hooks with runHooks: true execute with placeholders + FREESTRUCT_* env (issue #21)', () => {
+  const dir = scenario('main');
+  try {
+    const envMarker = path.join(dir, 'hook-env.txt');
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'runHooks: true',
+      'hooks:',
+      `  postBuild: node -e "require('fs').writeFileSync(process.argv[1], (process.env.FREESTRUCT_SITE_URL||'') + '|' + String(process.env.FREESTRUCT_OUTPUT_DIR||'').split('/').pop())" ${JSON.stringify(envMarker)}`,
+    ].join('\n') + '\n');
+    runInject(dir);
+    const parts = fs.readFileSync(envMarker, 'utf8').split('|');
+    assert.strictEqual(parts[0], 'https://docs.example.com', 'FREESTRUCT_SITE_URL reaches the hook child');
+    assert.strictEqual(parts[1], '_site', 'FREESTRUCT_OUTPUT_DIR reaches the hook child');
+  } finally { rmDir(dir); }
+});
+
+test('a failing postBuild hook fails the whole build with exit 4 (issue #21)', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'runHooks: true',
+      'hooks:',
+      '  postBuild:',
+      '    - node -e "process.exit(7)"',
+    ].join('\n') + '\n');
+    const res = spawnSync(process.execPath, [INJECT], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(res.status, 4, 'exit code 4 is the documented hook-failure code');
+    assert.includes(res.stderr + res.stdout, 'postBuild hook(s) failed', 'the failure names what failed (the FAST_FAIL channel is stderr)');
+  } finally { rmDir(dir); }
+});
+
+test('hooks shape diagnostics: unknown seams and non-string entries warn (issue #21)', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'hooks:',
+      '  postBuild:',
+      '    - node -e 0',
+      '    - 42',
+      '  preBuild:',
+      '    - node -e 0',
+    ].join('\n') + '\n');
+    const out = runInject(dir);
+    assert.includes(out, 'unknown hooks seam "preBuild"', 'unknown seam names itself');
+    assert.includes(out, 'every hooks.postBuild entry must be a non-empty string command', 'non-string entry warns');
+  } finally { rmDir(dir); }
+});
+
+// ---------- freestruct audit (issue #18) ----------
+// Post-build verification over the baked output only: heads + site
+// artifacts, exit 0 clean / exit 1 findings (exit 3 when the dir is gone).
+
+test('audit: a real engine run audits CLEAN, doctored output FAILS with exit 1 (issue #18)', () => {
+  const dir = scenario('main');
+  try {
+    runInject(dir);
+    const out = spawnSync(process.execPath, [INJECT, 'audit'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(out.status, 0, 'a genuine freestruct run passes its own audit\n' + out.stdout);
+    assert.includes(out.stdout, 'audit: 0 failures', 'clean summary printed');
+
+    // Doctor the output: strip the description meta from the home page.
+    const idx = path.join(dir, 'docs/_site/index.html');
+    fs.writeFileSync(idx, fs.readFileSync(idx, 'utf8')
+      .replace(/<meta name="description"[^>]*>\n?/i, ''));
+    const out2 = spawnSync(process.execPath, [INJECT, 'audit'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(out2.status, 1, 'head regression exits 1');
+    assert.includes(out2.stdout, 'FAIL index.html: missing meta description');
+    assert.includes(out2.stdout, 'exiting 1');
+  } finally { rmDir(dir); }
+});
+
+test('audit: the 404 noindex contract is checked independently of the og set (issue #18)', () => {
+  const dir = scenario('main');
+  try {
+    runInject(dir);
+    const f404 = path.join(dir, 'docs/_site/404.html');
+    fs.writeFileSync(f404, fs.readFileSync(f404, 'utf8')
+      .replace(/<meta name="robots"[^>]*>\n?/gi, ''));
+    const out = spawnSync(process.execPath, [INJECT, 'audit', '--json'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(out.status, 1);
+    const digest = JSON.parse(out.stdout);
+    assert.ok(digest.fails.some(f => f.page.includes('404') && /noindex/.test(f.msg)), 'noindex contract reported');
+    assert.ok(!digest.fails.some(f => f.page.includes('404') && /twitter:card/.test(f.msg)), 'the full og set is out of scope for 404s by design');
+  } finally { rmDir(dir); }
+});
+
+test('audit: svg og:image FAILs it, missing output dir is exit 3, --json parses (issue #18)', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'og:',
+      '  image: /banner.svg',
+    ].join('\n') + '\n');
+    runInject(dir);
+    const out = spawnSync(process.execPath, [INJECT, 'audit'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(out.status, 1, 'svg og:image is audit-grade FAIL');
+    assert.includes(out.stdout, 'og:image is SVG');
+  } finally { rmDir(dir); }
+
+  const dir2 = scenario('main');
+  try {
+    const res = spawnSync(process.execPath, [INJECT, 'audit', 'not-here'], { cwd: dir2, encoding: 'utf8' });
+    assert.strictEqual(res.status, 3, 'missing output dir keeps the familiar exit 3');
+  } finally { rmDir(dir2); }
+});
+
+// ---------- indexnow (issue #19) ----------
+// Key-file emission during the run (the keyLocation contract), generate-
+// once-and-persist key handling, and a network-free --dry-run submission
+// that surfaces the full request body.
+
+test('indexnow: the configured key ships as <key>.txt in the output dir (issue #19)', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'indexNow:',
+      '  key: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaab1',
+    ].join('\n') + '\n');
+    const out = runInject(dir);
+    assert.includes(out, 'key file written: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaab1.txt');
+    const keyFile = fs.readFileSync(path.join(dir, 'docs/_site/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaab1.txt'), 'utf8').trim();
+    assert.strictEqual(keyFile, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaab1', 'the key file carries the key (keyLocation ownership proof)');
+  } finally { rmDir(dir); }
+});
+
+test('indexnow: true generates once and REUSES the persisted key on the next run (issue #19)', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'indexNow: true',
+    ].join('\n') + '\n');
+    const out1 = runInject(dir);
+    assert.includes(out1, 'generated a new key and persisted it');
+    const keyFile = path.join(dir, 'docs/indexnow-key.txt');
+    const key = fs.readFileSync(keyFile, 'utf8').trim();
+    assert.match(key, /^[a-f0-9]{32}$/, 'generated key is the documented 32-hex shape');
+
+    const out2 = runInject(dir);
+    assert.ok(!out2.includes('generated a new key'), 'second run reuses, never regenerates');
+    assert.includes(out2, 'key file written: ' + key + '.txt');
+  } finally { rmDir(dir); }
+});
+
+test('indexnow: bad key shapes warn loudly; --dry-run prints the payload and exits 0; no sitemap exits 1 (issue #19)', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'indexNow:',
+      '  key: short-key',
+    ].join('\n') + '\n');
+    const out = runInject(dir);
+    assert.includes(out, 'indexNow key must be 32 lowercase hex chars', 'bad key shape warns at config load');
+  } finally { rmDir(dir); }
+
+  const dir2 = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir2, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'indexNow:',
+      '  key: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaab1',
+    ].join('\n') + '\n');
+    // dry-run BEFORE any freestruct pass: sitemap.xml exists? not yet -> exit 1
+    const res1 = spawnSync(process.execPath, [INJECT, 'indexnow', '--dry-run'], { cwd: dir2, encoding: 'utf8' });
+    assert.strictEqual(res1.status, 1, 'no baked sitemap -> refusal (exit 1)');
+    assert.includes(res1.stdout, 'no sitemap.xml');
+
+    fs.writeFileSync(path.join(dir2, 'docs/_site/sitemap.xml'),
+      '<sitemap><url><loc>https://docs.example.com/</loc><lastmod>2026-10-22</lastmod></url></sitemap>');
+    const res2 = spawnSync(process.execPath, [INJECT, 'indexnow', '--dry-run'], { cwd: dir2, encoding: 'utf8' });
+    assert.strictEqual(res2.status, 0, 'dry-run is exit 0');
+    const body = (res2.stdout + '') || '';
+    assert.includes(body, 'https://docs.example.com/', 'urlList carries the sitemap URL');
+    assert.includes(body, 'keyLocation', 'the request names the keyLocation');
+  } finally { rmDir(dir2); }
+
+  const dir3 = scenario('main');
+  try {
+    const res = spawnSync(process.execPath, [INJECT, 'indexnow'], { cwd: dir3, encoding: 'utf8' });
+    assert.strictEqual(res.status, 1, 'indexnow without config -> loud config fatal');
+  } finally { rmDir(dir3); }
+});
+
+// ---------- per-page OG image generation (issue #22) ----------
+// The SVG template renders per page, the optional @resvg/resvg-js
+// rasterizer produces PNGs (devDependency: consumers opt in), and the seo
+// seam wires og/twitter to the fresh PNG under the missing-only rule.
+
+const OG_TEMPLATE = [
+  '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630">',
+  '<rect width="1200" height="630" fill="#0f172a"/>',
+  '<text x="60" y="200">{{ogTitle}}</text>',
+  '<text x="60" y="420">{{ogDescription}}</text>',
+  '</svg>',
+].join('\n');
+
+test('ogImageGeneration: per-page PNGs render, tags wire to them, own-image pages keep theirs (issue #22)', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/og-template.svg'), OG_TEMPLATE);
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'ogImageGeneration:',
+      '  template: og-template.svg',
+    ].join('\n') + '\n');
+    const out = runInject(dir);
+    assert.ok(!/resvg-js is not installed/.test(out), 'rasterizer present in dev, no loud skip');
+
+    const png = fs.readFileSync(path.join(dir, 'docs/_site/og/index.png'));
+    assert.ok(png.length > 0, 'a real PNG rendered for the root page');
+    const html = read(dir, 'docs/_site/index.html');
+    assert.includes(html, '<meta property="og:image" content="https://docs.example.com/og/index.png">', 'og:image wired to the generated file');
+    assert.includes(html, '<meta property="og:image:width" content="1200">', 'issue #20 companions ride along');
+    assert.includes(html, '<meta property="og:image:alt" content="Home - page preview image">', 'alt comes from the pre-injection page title');
+    assert.includes(html, '<meta name="twitter:image" content="https://docs.example.com/og/index.png">');
+
+    // missing-only: existing-seo.html ships its own OG set -> generation
+    // spends no PNG on it and wiring never touches its tags
+    assert.ok(!fs.existsSync(path.join(dir, 'docs/_site/og/existing-seo.png')), 'pages with their own og set are skipped, not overwritten');
+    const existing = read(dir, 'docs/_site/existing-seo.html');
+    assert.includes(existing, '<meta property="og:title" content="Own SEO">', 'the page kept its own og set wholesale');
+    assert.ok(!/og:image/.test(existing), 'no generated og:image was wired onto an og-owning page');
+  } finally { rmDir(dir); }
+});
+
+test('ogImageGeneration: per-page override wins, noindex pages are skipped (issue #22 + missing-only)', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/og-template.svg'), OG_TEMPLATE);
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'ogImageGeneration:',
+      '  template: og-template.svg',
+    ].join('\n') + '\n');
+    // a per-page override page + a noindex page
+    fs.writeFileSync(path.join(dir, 'docs/_site/override.html'),
+      '<!-- freestruct: {"ogImage": "/brand/override.png"} -->\n</head>\n<body><h1>o</h1></body></html>');
+    fs.writeFileSync(path.join(dir, 'docs/_site/hidden.html'),
+      '<html><head><meta name="robots" content="noindex"></head><body><h1>h</h1></body></html>');
+    runInject(dir);
+    const overrideHtml = read(dir, 'docs/_site/override.html');
+    assert.includes(overrideHtml, '<meta property="og:image" content="https://docs.example.com/brand/override.png">');
+    assert.ok(!fs.existsSync(path.join(dir, 'docs/_site/og/hidden.png')), 'noindex pages receive no share preview');
+  } finally { rmDir(dir); }
+});
+
+test('ogImageGeneration: missing template files warn loudly and the run stays green (issue #22)', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'ogImageGeneration:',
+      '  template: no-such-template.svg',
+    ].join('\n') + '\n');
+    const out = runInject(dir);
+    assert.includes(out, 'ogImageGeneration.template "no-such-template.svg" not found', 'loud single warning');
+    assert.includes(out, 'Done (', 'the run completes cleanly');
+    assert.ok(!fs.existsSync(path.join(dir, 'docs/_site/og')), 'nothing half-rendered');
+  } finally { rmDir(dir); }
+});
+
 // done
 console.log('[freestruct battery] complete');

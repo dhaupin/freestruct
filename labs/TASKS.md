@@ -558,3 +558,58 @@ closed. What remains is owner action plus one bookkeeping sweep.
 **Reminder (current truth):** the pin wall enforces 1.0.0 everywhere - the
 first stable release, owner sweep applied 2026-10-22. The manual npm
 bootstrap is done; the tag is the only remaining owner gate.
+
+### Pass 22 - the issue sweep, all eight open items (done, on 1.0.0)
+
+Scope: every open issue at the time of the pass, phased smallest-first.
+Receipts:
+
+- **#17** - dead `prism-line-numbers.min.css` CDN link + the orphan
+  `.line-numbers` support CSS removed from `docs/_layouts/default.html`
+  (both no-op removals, verified in the built docs).
+- **#24** - every config/page-carried value now rides FUNCTION replacers:
+  `engine/hooks.js` purge substitution (shared
+  `substitutePlaceholders` helper) and the three `engine/seo.js`
+  insertion spots (`</head>` head injection, header/body-start/footer
+  snippets). Three battery pins pin the class dead (`$&`/`$1`/`$'` in
+  purge urls, snippet bodies, and `site.name` all print literally).
+- **#23** - the announcement file IS the post now (family convention,
+  crashtest-amended format; frontmatter contract kept, wrapper block
+  removed) + the direct Creadev.org workshop backlink in the root README.
+- **#20** - structured `og.image` object form `{ src, width, height, alt,
+  allowSvg }` with og:image companions; string form untouched
+  (back-compat); the SVG blank-card trap warns on every run
+  (config-level in `config.js`, per-page in `seo.js`), `allowSvg: true`
+  accepts it, `--strict` graduates the class to a build failure. Four
+  pins; config-guide + README updated.
+- **#21** - general `hooks.postBuild` seam in `engine/hooks.js` (same
+  runHooks gate, 30s timeout, `$`-placeholders + `FREESTRUCT_*` env on the
+  child); a nonzero hook exit fails the build with the new exit code 4
+  (documented in cli.md + README). Four pins; shape diagnostics in
+  config.js name unknown seams and non-string entries.
+- **#18** - `freestruct audit` subcommand, ported from the donated
+  prestruct#34 script into `engine/audit.js`: per-page head hygiene (core
+  og/twitter FAIL class + set-coherence WARN because missing-only means
+  SSG-owned partial sets are legitimate), 404 noindex contract, sitemap
+  and robots checks, `--json` digest, exit 0/1 (3 for a missing dir;
+  asset-existence checks are report-grade WARN by design). Three pins
+  including a clean run audits clean + doctored output fails.
+- **#19** - IndexNow: `engine/indexnow.js` (key resolution generate-once
+  and persist, `<key>.txt` emitted per run, sitemap reader, submission
+  POST), `freestruct indexnow [--dry-run] [outputDir]` subcommand, config
+  shape diagnostics (32-hex key contract). Four network-free pins; cli.md
+  + config guide + README document the post-deploy semantics.
+- **#22** - per-page OG image generation: `engine/ogimage.js` renders per
+  page from a consumer SVG template (`{{ogTitle}}`/`{{ogDescription}}`/
+  `{{ogUrl}}`, XML-escaped), rasterizes through the OPTIONAL
+  `@resvg/resvg-js` package (devDependency, consumers opt in; loud skip
+  when absent - pure Node cannot rasterize), wires og/twitter + #20
+  companions under missing-only (pages with their own og set keep it
+  wholesale; noindex pages get no share preview). Three pins; config
+  guide gained the Image Generation Options section.
+
+Counters: battery 49 -> 69 pins (all green), engine modules 9 -> 12
+(audit/ogimage/indexnow join; hooks.js grew the general seam). Gates
+re-run at the end of the pass: battery, lint:docs, sync:check, e2e.
+Next pass picks up: none of #17-#24 remain; the issue queue is empty and
+the version is owner-gated as ever.
