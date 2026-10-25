@@ -180,6 +180,11 @@ export function auditOutput({ outputDir, config, json = false, capture = false }
       if (!grabMeta(head, 'name', name)) fail(label, 'missing ' + name);
     }
     for (const name of TW_SET) {
+      // Symmetry with the engine's own late pass (seo.js): without a
+      // configured handle the injector ships neither twitter:site nor
+      // twitter:creator, so the audit grades those absences only when the
+      // handle exists. The 'config-gated' wording in the warning now holds.
+      if ((name === 'twitter:site' || name === 'twitter:creator') && !config.twitter?.username) continue;
       if (!grabMeta(head, 'name', name)) {
         warn(label, name + ' absent (config-gated or SSG-owned partial set; add a twitter username / og.image as needed)');
       }
