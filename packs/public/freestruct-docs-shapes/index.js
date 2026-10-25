@@ -9,7 +9,7 @@
 // crashtest's internals. Plain verdict records, honest skips - a shape the
 // run root cannot support is a REFUSED posture note, never a fake verdict.
 //
-// Five attacks, one contract each:
+// Eight attacks, one contract each:
 //
 //   hostile-traversal-404    encoded traversal shapes resist tree escapes and
 //                            answer clean 4xx; artifact responses are
@@ -319,6 +319,136 @@ export default {
           );
         }
         return refused('sitemap.xml / feed.xml shapes held: escaped entities, absolute loc values (nothing to poison)');
+      },
+    },
+
+    {
+      name: 'ldjson-close-canary',
+      description: 'every JSON-LD block in a served page head parses as JSON and carries no raw `</` inside the block text (the script-close class: a consumer value ending up unescaped into an LD block would close injected script tags early and smuggle in markup)',
+      async run(harness, ctx = {}) {
+        const route = routeOf(ctx);
+        // Same wire-truthed page set the canary-poison attack uses.
+        const sitemap = await get(harness, route, '/sitemap.xml');
+        let paths = [];
+        if (sitemap.text && sitemap.status === 200) {
+          paths = sitemapLocs(sitemap.text).map(locPath);
+        } else {
+          paths = ['/'];
+        }
+        const blocked = [];
+        let scriptsScanned = 0;
+        for (const path of paths) {
+          const page = await get(harness, route, path);
+          if (page.threw || !page.text || page.status !== 200) continue;
+          const blocks = [...page.text.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)];
+          scriptsScanned += blocks.length;
+          for (const block of blocks) {
+            const raw = block[1] ?? '';
+            if (/<\//.test(raw)) {
+              blocked.push(`${path}: raw </ inside a JSON-LD block body`);
+              continue;
+            }
+            try { JSON.parse(raw); } catch (e) {
+              blocked.push(`${path}: an LD+JSON block does not parse (${e.message})`);
+            }
+          }
+        }
+        if (blocked.length) {
+          return exhausted(
+            `JSON-LD script-close/parse contract broken: ${blocked.slice(0, 4).join(' | ')}${blocked.length > 4 ? ` (+${blocked.length - 4} more)` : ''}`,
+            { findings: blocked.length, blocks: scriptsScanned },
+          );
+        }
+        return refused(
+          `${paths.length} page(s) wired; ${scriptsScanned} JSON-LD block(s) scanned: all parse, none carries a raw </ (script-close class held)`,
+          { pages: paths.length, blocks: scriptsScanned },
+        );
+      },
+    },
+
+    {
+      name: 'noindex-extras-leak',
+      description: 'pages the crawler was told to skip (robots-noindex bodies and the 404 page) never carry the GENERATED extras freestruct adds beyond its core head set: hreflang alternates, feed autodiscovery links, site-verification metas, and the generated typed-article/breadcrumb JSON-LD blocks (their compact engine-serialized @type shape) stay off skipped pages - the core injected set including the template\'s built-in Organization/WebSite blocks stays contractual on the 404 (issue #11 full pipeline)',
+      async run(harness, ctx = {}) {
+        const route = routeOf(ctx);
+        // Wire-truth the skipped set exactly like the artifact-leak attack:
+        // a page is skipped only when its body carries the robots meta.
+        const sitemap = await get(harness, route, '/sitemap.xml');
+        const paths = sitemap.text && sitemap.status === 200 ? sitemapLocs(sitemap.text).map(locPath) : ['/'];
+        // Engine-shape fingerprints for the GENERATED extras: the generated
+        // article/breadcrumb blocks are JSON.stringify-serialized (`"@type":"..."`
+        // compact, no space), while the template's core Organization/WebSite
+        // blocks are template-spaced - so bare ld blocks on a skipped page
+        // read as the core set, and compact typed ones read as extras.
+        const leakMarkers = /(\"@type\":\"(Article|TechArticle|NewsArticle|BreadcrumbList)\")|\shreflang=|google-site-verification|msvalidate\.01|yandexVerification|pinterest-site-verification|application\/rss\+xml/i;
+        const leaks = [];
+        let skipped = 0;
+        for (const path of paths) {
+          const page = await get(harness, route, path);
+          if (page.threw || !page.text || page.status !== 200) continue;
+          if (!pageIsNoindex(page.text)) continue;
+          skipped++;
+          if (leakMarkers.test(page.text)) leaks.push(path);
+        }
+        // The generated-or-adopted 404 joins the skipped set by contract.
+        const nf404 = await get(harness, route, '/404.html');
+        if (!nf404.threw && nf404.text && nf404.status === 200 && pageIsNoindex(nf404.text)) {
+          skipped++;
+          if (leakMarkers.test(nf404.text)) leaks.push('/404.html');
+        }
+        if (leaks.length) {
+          return exhausted(
+            `generated extras shipped onto skipped pages: ${leaks.join(', ')} - the noindex exclusion class must hold for every generated head addition`,
+            { skipped },
+          );
+        }
+        if (!skipped) {
+          return refused('no robots-noindex page is wire-detectable at this target - the generated-extras oracle has nothing to attack', { skipped: 0 });
+        }
+        return refused(
+          `${skipped} skipped page(s) (robots-noindex + 404 body): no generated extras riding on them (typed article/breadcrumb blocks, hreflang, verification metas, feed alternates)`,
+          { skipped },
+        );
+      },
+    },
+
+    {
+      name: 'llms-shape-leak',
+      description: 'when the target generates llms.txt it lists the same page set sitemap.xml honors: a noindex URL inside it is the issue #5 leak class again, and every `## Docs` list entry must stay one line (flattened titles, closed on the same line)',
+      async run(harness, ctx = {}) {
+        const route = routeOf(ctx);
+        const llms = await get(harness, route, '/llms.txt');
+        if (llms.threw || llms.status !== 200 || !llms.text) {
+          return refused('this target does not generate llms.txt at the wire root - shape oracle skipped honestly', { status: llms.status });
+        }
+        const text = llms.text;
+        const finding = [];
+        // noindex wire-truth, same oracle as the artifact-leak attack.
+        const sitemap = await get(harness, route, '/sitemap.xml');
+        const paths = sitemap.text && sitemap.status === 200 ? sitemapLocs(sitemap.text).map(locPath) : [];
+        for (const path of paths) {
+          const page = await get(harness, route, path);
+          if (page.threw || !page.text || page.status !== 200 || !pageIsNoindex(page.text)) continue;
+          const pageName = path.replace(/^\//, '');
+          if (text.includes(path) || text.includes(pageName)) finding.push(`llms.txt lists the noindex page ${path}`);
+        }
+        // Entry shape: every `## Docs` list line opens, closes and flattens
+        // on one line; bare `- [` without a close bracket is EXACTLY what the
+        // newline-split class produces.
+        for (const line of text.split('\n')) {
+          if (/^-\s*\[/.test(line) && !/^\s*-\s*\[[^\]]*\]\([^)]*\)/.test(line)) {
+            finding.push(`llms.txt entry not closed on one line: "${line.slice(0, 48)}"`);
+          }
+        }
+        if (!/^\n*#/m.test(text)) finding.push('llms.txt ships no heading at all (never the summary contract, whether generated or hand-rolled)');
+        if (/\r/.test(text)) finding.push('llms.txt carries CR bytes (the flattening contract warns on newlines that must not split entries)');
+        if (finding.length) {
+          return exhausted(`llms.txt contract broken: ${finding.slice(0, 4).join(' | ')}`, { findings: finding.length });
+        }
+        return refused(
+          `llms.txt held: heading present, every entry single-line, none of ${paths.length} wired page(s) is a leak`,
+          { entries: (text.match(/^\s*-\s*\[/gm) || []).length },
+        );
       },
     },
   ],

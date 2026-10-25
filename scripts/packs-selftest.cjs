@@ -2,16 +2,23 @@
 // scripts/packs-selftest.cjs - teeth-proof for packs/public/freestruct-docs-shapes.
 //
 // Two temp trees, one pack, no lies:
-//   HARDENED - a real freestruct build (bin/freestruct.mjs on a 3-page
+//   HARDENED - a real freestruct build (bin/freestruct.mjs on a 5-page
 //              fixture) attacked through the honest static-host double
 //              (labs/static-site-target.js): every pack attack must answer
 //              REFUSED.
-//   VULNERABLE - the same tree deliberately regressed four ways:
+//   VULNERABLE - the same tree deliberately regressed seven ways:
 //                (1) 404.html loses its noindex meta (issue #11 regression),
 //                (2) sitemap.xml re-lists the noindex page (issue #5 leak),
 //                (3) sitemap.xml carries a raw unescaped & (issue #9 class),
 //                (4) the host double drops containment - traversal shapes
-//                    escape the tree (package.json / .env content leaks).
+//                    escape the tree (package.json / .env content leaks),
+//                (5) JSON-LD neutralization dropped: the hostile per-page
+//                    author ships raw (the `\u003c` neutralization gone),
+//                (6) generated extras back onto skipped pages: BreadcrumbList
+//                    on the 404, verification meta + hreflang on the noindex
+//                    page,
+//                (7) llms.txt leaks the noindex page and splits an entry in
+//                    two (the line-flattening contract dropped).
 //
 // The pack must hold the hardened tree (zero EXPLOITED) and trip every
 // planted regression on the vulnerable tree. Deterministic: same fixture,
@@ -45,11 +52,24 @@ function requires() {
 }
 
 const FIXTURE = {
-  config: 'site:\n  name: Fixture Docs\n  url: https://docs.creadev.org\nog:\n  image: /og.png\ntwitter:\n  username: freestructdoc\n',
+  // Opt-ins for the extras/llms/lms attacks: breadcrumb, verification,
+  // article.scoped, llms. The noindex + hostile-payload pages are the
+  // canaries the attack set leans on.
+  config: 'site:\n  name: Fixture Docs\n  url: https://docs.creadev.org\nog:\n  image: /og.png\ntwitter:\n  username: freestructdoc\nbreadcrumb: true\nverification:\n  google: gs-c-1\narticle:\n  scoped:\n    "**": TechArticle\nllms: true\n',
   pages: {
     'index.html': '<html><head><title>Fixture Docs - Home</title><meta name="description" content="home"></head><body><h1>Home</h1><p>Fresh fixture for the freestruct pack selftest.</p></body></html>',
-    'guides.html': '<html><head><title>Guides &amp; Walkthroughs: the deep dive</title><meta name="description" content="guides"></head><body><h1>Guides</h1><p>Everything about guides &amp; walkthroughs <a href="/guides.html">here</a>.</p></body></html>',
+    // Per-page hostile payload on the article-receiving page: the author
     'maintainer.html': '<html><head><title>Maintainer area</title><meta name="robots" content="noindex, nofollow"></head><body><h1>Maintainer</h1><p>Private maintainer notes.</p></body></html>',
+    // Per-page hostile payload on the article-receiving page: the author
+    // value carries the script-close shape raw; the generated TechArticle
+    // block must neutralize it (`\u003c`), and the vuln plant regresses
+    // exactly that neutralization
+    'guides.html': '<html><head><title>Guides &amp; Walkthroughs: the deep dive</title><meta name="description" content="guides"><!-- freestruct: {"author": "Docs Team </script><svg onload=leak>", "publishedTime": "2026-10-25"} --></head><body><h1>Guides</h1><p>Everything about guides &amp; walkthroughs <a href="/guides.html">here</a>.</p></body></html>',
+    // A page carrying its own ld - the missing-only canary for the gated
+    // generated blocks, incl. the ldjson-close-canary's own-ld page name.
+    'own-ld.html': '<html><head><title>Own LD</title><script type="application/ld+json">{"@type":"WebPage"}</script><meta name="description" content="own"></head><body><h1>Own</h1><p>carries its own JSON-LD</p></body></html>',
+    // Newline-corruption canary for the llms.txt single-line contract.
+    'weird.html': '<html><head><title>Bad\nTitle</title><meta name="description" content="two\nlines"></head><body><h1>Weird</h1><p>newlines in the facts</p></body></html>',
   },
 };
 
@@ -132,6 +152,19 @@ async function buildVulnerableTree(hardened) {
   // (4) escape targets OUTSIDE the tree, where travelsals land
   await writeFile(join(base, 'docs', '.env'), 'FIXTURE_API_KEY=leaky-seed-value\n');
   await writeFile(join(base, 'package.json'), '{"name":"fixture-vault","version":"1.0.0"}\n');
+  // (5) the script-close regression: the engine's LD neutralization dropped
+  // (the article author value ends up raw, carrying its `</script>` literal)
+  const guides = await readFile(join(site, 'guides.html'), 'utf8');
+  await writeFile(join(site, 'guides.html'), guides.replace(/\\u003c/g, '<'));
+  // (6) the generated-extras regression: BreadcrumbList back onto the 404,
+  // verification meta + hreflang back onto the noindex page
+  const nf404v = (await readFile(join(site, '404.html'), 'utf8')).replace('</head>', '<script type="application/ld+json">{"@type":"BreadcrumbList"}</script>\n</head>');
+  await writeFile(join(site, '404.html'), nf404v);
+  const maintainer = await readFile(join(site, 'maintainer.html'), 'utf8');
+  await writeFile(join(site, 'maintainer.html'), maintainer.replace('</head>', '<meta name="google-site-verification" content="leak">\n<link rel="alternate" hreflang="de" href="https://docs.creadev.org/de/">\n</head>'));
+  // (7) the llms regression: the noindex page listed + an entry split in two
+  const llms = await readFile(join(site, 'llms.txt'), 'utf8');
+  await writeFile(join(site, 'llms.txt'), llms.replace('## Docs\n', '## Docs\n- [maintainer](https://docs.creadev.org/maintainer.html): private\n- [Bad\n'));
   return { base, site };
 }
 
@@ -177,7 +210,7 @@ async function main() {
   await writeFile(hCfg, hardenedConfig());
   const hRows = runCampaign(crashBin, 'crashtest.config.js', hardened.site, hardened.base);
 
-  check('hardened: 5 pack attacks ran', hRows.length === 5, `${hRows.length} rows`);
+  check('hardened: 8 pack attacks ran', hRows.length === 8, `${hRows.length} rows`);
   check('hardened: every pack attack REFUSED', hRows.every((r) => r.verdict === 'REFUSED'),
     JSON.stringify(hRows.filter((r) => r.verdict !== 'REFUSED')));
 
@@ -189,7 +222,7 @@ async function main() {
   // Ledger rows key attacks by id ("module/attack"), not a separate field.
   const vExp = new Set(vRows.filter((r) => r.verdict === 'EXPLOITED').map((r) => r.id.split('/')[1]));
 
-  for (const attack of ['hostile-traversal-404', 'gen404-noindex-canary', 'noindex-artifact-leak', 'sitemap-xml-shape-canary']) {
+  for (const attack of ['hostile-traversal-404', 'gen404-noindex-canary', 'noindex-artifact-leak', 'sitemap-xml-shape-canary', 'ldjson-close-canary', 'noindex-extras-leak', 'llms-shape-leak']) {
     check(`vulnerable trips: ${attack}`, vExp.has(attack), [...vExp].join(','));
   }
 

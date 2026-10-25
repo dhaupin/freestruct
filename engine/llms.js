@@ -11,6 +11,15 @@ import path from 'path';
 import { pageUrlFor } from './urls.js';
 
 /**
+ * One line of plain text, whatever it was given: a newline (or CR) inside a
+ * title/description would split a list entry into two, silently corrupting
+ * the summary's shape. Whitespace is collapsed to single spaces.
+ */
+function oneline(value) {
+  return String(value).replace(/[\r\n]+/g, ' ').trim();
+}
+
+/**
  * Write llms.txt into the output dir. Pages only: indexable = non-404,
  * non-noindex (the same gate sitemap/feed honor, so noindex stays honored
  * everywhere). Missing-only: an existing llms.txt (hand-rolled or
@@ -23,13 +32,13 @@ export function generateLlms(indexablePages, config, outputDir) {
     return null;
   }
   const lines = [];
-  lines.push('# ' + config.site.name);
-  if (config.site.description) lines.push('', '> ' + config.site.description);
+  lines.push('# ' + oneline(config.site.name));
+  if (config.site.description) lines.push('', '> ' + oneline(config.site.description));
   lines.push('', '## Docs', '');
   for (const page of indexablePages) {
     const url = pageUrlFor(config, page.slug);
-    const title = page.title || page.slug;
-    const desc = page.description ? ': ' + page.description : '';
+    const title = oneline(page.title || page.slug);
+    const desc = page.description ? ': ' + oneline(page.description) : '';
     lines.push('- [' + title + '](' + url + ')' + desc);
   }
   fs.writeFileSync(target, lines.join('\n') + '\n');

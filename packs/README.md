@@ -65,6 +65,16 @@ serving of it:
 - **sitemap-xml-shape-canary** - `sitemap.xml` / `feed.xml` must parse as
   XML: no raw unescaped `&` or `<` inside `<loc>`/items (the issue #9
   regression class), loc values absolute.
+- **ldjson-close-canary** - every JSON-LD block in a served head parses,
+  and none carries a raw `</` in its text (the script-close class: the
+  `\u003c` neutralization must hold end-to-end on the wire).
+- **noindex-extras-leak** - skipped pages (robots-noindex bodies and the
+  404) never carry the generated extras freestruct adds beyond the core
+  set: JSON-LD blocks, hreflang alternates, feed autodiscovery links and
+  site-verification metas.
+- **llms-shape-leak** - when llms.txt generates, it lists the same page
+  set sitemap honors (a noindex URL is the issue #5 class again) and every
+  list entry stays one line.
 
 Zero dependencies, zero sockets; works against any static run root - the
 Freestruct repo dogfoods via its own `crashtest.config.js` at the repo root

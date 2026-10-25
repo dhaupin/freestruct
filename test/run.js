@@ -1997,5 +1997,79 @@ test('audit --external: the json digest parses with the warns merged; unknown au
   } finally { rmDir(dir); }
 });
 
+test('pass-hunt: the noindex 404 ships NO generated extras (breadcrumb/article/feed/verification/alternates stay off noindex pages)', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'breadcrumb: true',
+      'verification:',
+      '  google: goog-404',
+      'article:',
+      '  scoped:',
+      '    "**": TechArticle',
+      'locales:',
+      '  "/": en',
+      '  "/de/**": de',
+    ].join('\n') + '\n');
+    runInject(dir);
+    const p404 = read(dir, 'docs/_site/404.html');
+    for (const junk of ['BreadcrumbList', 'TechArticle', 'google-site-verification', 'hreflang=', 'rel="alternate" type="application/rss+xml"']) {
+      assert.ok(!p404.includes(junk), 'the 404 never gets ' + junk);
+    }
+    // and a noindex fixture page never gets them either (the original list-page class)
+    const hidden = read(dir, 'docs/_site/noindex.html');
+    assert.ok(!hidden.includes('BreadcrumbList'), 'noindex pages stay artifact-free');
+    // the regular pages keep the full generated set
+    const guide = read(dir, 'docs/_site/guide/index.html');
+    assert.ok(/BreadcrumbList/.test(guide), 'the regular page keeps its trail');
+    assert.includes(guide, '<meta name="google-site-verification" content="goog-404">');
+    assert.includes(read(dir, 'docs/_site/index.html'), '<link rel="alternate" type="application/rss+xml"');
+  } finally { rmDir(dir); }
+});
+
+test('pass-hunt: a Title with embedded newlines stays one llms.txt list entry (line-flattened)', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'llms: true',
+    ].join('\n') + '\n');
+    fs.writeFileSync(path.join(dir, 'docs/_site/weird.html'),
+      '<html><head><title>Bad\nTitle</title><meta name="description" content="two\nlines here"></head><body><h1>w</h1></body></html>');
+    runInject(dir);
+    const llms = read(dir, 'docs/_site/llms.txt');
+    const weirdLine = llms.split('\n').filter((l) => l.includes('/weird'));
+    assert.strictEqual(weirdLine.length, 1, 'exactly one list line for the newlined page (' + JSON.stringify(weirdLine) + ')');
+    assert.ok(weirdLine[0].includes('Bad Title'), 'the title flattens to single-space segments');
+    assert.ok(weirdLine[0].includes('two lines here'), 'the description flattens too');
+  } finally { rmDir(dir); }
+});
+
+test('pass-hunt: a hostile search.url (quote + tag) lands as an escaped JSON string, never as markup', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'search:',
+      '  url: \'https://docs.example.com/search?q=\"><svg onload=alert(1)>{search_term_string}\'',
+    ].join('\n') + '\n');
+    runInject(dir);
+    const root = read(dir, 'docs/_site/index.html');
+    assert.ok(/"@type": "SearchAction"/.test(root), 'the block ships');
+    assert.ok(root.includes('\\u003csvg'), 'every tag-open in the target is neutralized to \u003c');
+    assert.ok(!root.includes('<svg'), 'nothing imitating a tag ships raw');
+  } finally { rmDir(dir); }
+});
+
 // done
 console.log('[freestruct battery] complete');

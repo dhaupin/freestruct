@@ -1,0 +1,86 @@
+---
+version: 1.1.0
+permalink: /discussions/announcing-freestruct-v1.1.0
+layout: none
+title: "Announcing freestruct v1.1.0"
+description: The v1.1.0 Discussions release post, per the Creadev family release-post convention
+comments: false
+nav_order: 21
+---
+
+# freestruct v1.1.0
+
+freestruct is a post-build SEO layer for static doc sites. v1.1.0 is the first post-stable release: a subtitle of new surface that includes the entire issue sweep and the SEO-gap pass, everything battery-pinned. It is on npm now:
+
+```bash
+npm i -D freestruct
+```
+
+## What landed
+
+Three groups of work, in one release.
+
+**The verification layer.** `freestruct audit` verifies a BAKED output tree independently of the run that produced it, so it works after any SSG's build: per-page head hygiene (titles, descriptions, absolute canonicals, the core og/twitter set, the SVG share-preview trap, JSON-LD parse checks, h1 sanity), the 404 noindex contract, and the sitemap/robots artifacts. It prints a human report, prints a `--json` digest for CI annotations, and exits 1 on FAIL findings. A failing `hooks.postBuild` command now also fails the build with the documented exit code 4.
+
+**The consumer surface.** `og.image` takes the structured `{ src, width, height, alt }` form and ships its companion tags; SVG sources warn loudly and fail under `--strict`, because a broken share preview is worse than no tag. A slug-glob scoped config form now keys blocks per page: `jsonLd`, `og.scoped` and `article.scoped` all take exact keys (`/faq`), one-segment globs (`/blog/*`) and sub-tree globs (`/guides/**`), most specific first. `ogImageGeneration` renders a branded 1200x630 PNG per page from a consumer SVG template (opt-in through the optional `@resvg/resvg-js` rasterizer). IndexNow support ships end to end: `indexNow: true` emits the keyLocation ownership file during the run, and `freestruct indexnow` POSTs the baked sitemap to the API after deploy (`--dry-run` first, of course).
+
+**The SEO-gap pass.** Eight additions that finish the modern head, all opt-in, all missing-only:
+
+- **Feed autodiscovery** - every injected head carries the `rel="alternate" type="application/rss+xml"` link, since feed.xml shipped for a year with nothing pointing readers at it.
+- **SearchAction** - `search.url` drives the WebSite JSON-LD's potentialAction. The old hardcoded `?s=` default is gone: a search target for every consumer is a bug, not a feature, and no config now ships a bare WebSite block.
+- **Auto breadcrumbs** - `breadcrumb: true` builds a BreadcrumbList from each page's own position in the URL tree.
+- **Per-page article JSON-LD** - `article.scoped` emits typed Article / TechArticle / NewsArticle blocks from the page facts.
+- **Site verification** - `verification` with the engine-owned meta name spellings (`google-site-verification`, `msvalidate.01`, and friends).
+- **hreflang** - `locales` maps slug globs to language codes and stem-swaps the alternates in both directions, x-default included.
+- **llms.txt** - `llms: true` emits the AI-consumable docs summary over the same indexable page set sitemap and feed honor, so noindex stays honored everywhere.
+- **External link audit** - `freestruct audit --external` HEAD-checks up to 50 unique external hrefs (warn-grade, opt-in, needs a live network).
+
+## Config
+
+Still one file, `docs/freestruct.config.yml`. The two required lines are unchanged; the new keys slot in beside them:
+
+```yaml
+# docs/freestruct.config.yml
+site:
+  name: My Docs
+  url: https://example.com/docs
+  description: Documentation for my project
+
+# Discovery options - opt-in, missing-only, loudly diagnostic:
+search:
+  url: https://example.com/search?q={search_term_string}
+breadcrumb: true
+verification:
+  google: goog-code-123
+locales:
+  "/": en
+  "/de/**": de
+llms: true
+```
+
+Wrong-shaped values warn at load with the named fix and the run stays honest: a placeholder-less search URL ships no SearchAction, a list where one image belongs ships no image, and an unknown section title passes through with a `config warning` line.
+
+## The CLI
+
+```bash
+npx freestruct            # the full post-build pass
+npx freestruct validate   # config-only preflight
+npx freestruct audit      # verify the baked output; --json, --external
+npx freestruct indexnow   # post-deploy search-engine notify
+npx freestruct init       # scaffold the starter kit
+npx freestruct --strict   # broken links + SVG og:image fail the CI build
+```
+
+Exit codes remain part of the contract: 0 ok, 1 config fatal, 2 template missing, 3 output dir missing, 4 hook failure.
+
+## Quality layer
+
+The fixture battery grew from 49 pins at the 1.0.0 sweep's start to 89 now, with red-checked additions per change and the hunt passes that found and fixed the noindex-junk and line-flattening classes before any release. CI runs the standard gates (docs audit with seven gates, template sync lockstep, tarball e2e), plus crashtest two ways: the pack selftest proves the attack surface holds, and the docs deploy dogfoods a second campaign against the freshly built site. Packstruct's manifest lint holds the `/packs` spec from drifting. All of it runs on every push and PR.
+
+## Links
+
+- Repo and docs: https://github.com/dhaupin/freestruct / https://freestruct.creadev.org
+- Config reference: https://freestruct.creadev.org/guides/freestruct-config
+- CLI reference: https://freestruct.creadev.org/guides/cli
+- Changelog: https://github.com/dhaupin/freestruct/blob/main/CHANGELOG.md
+- Issues: https://github.com/dhaupin/freestruct/issues

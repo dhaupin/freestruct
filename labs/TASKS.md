@@ -699,9 +699,81 @@ config, all missing-only, all pinned:
 - Also fixed in passing: the `--external` work exposed a dispatch
   subtlety - an async cmdAudit could let a full inject pass execute on
   an audit invocation; runInject now refuses subcommand args outright.
-- Docs: config guide gains the Discovery Options section (search,
+-  Docs: config guide gains the Discovery Options section (search,
   breadcrumb, article, verification, locales, llms; llms also filed
   under the generate options family in spirit), README bullets + audit
   flags line, CHANGELOG 1.1.0 entry extended (the version is untagged,
   so the pass rides inside it), battery count mentions 75 -> 86.
   Counters: battery 75 -> 86 pins.
+
+### Pass 26 - docs staleness sweep + bug/edge/vuln hunt over the new surface (done)
+
+Docs: cli.md audit section (+ --external contract), cicd.md flag list,
+README/DEPLOY/lander battery counts. All seven lint:docs gates clean.
+
+The hunt found two REAL bugs, both fixed and pinned (battery +3):
+
+- **Noindex-page junk class**: the generated extras (breadcrumb,
+  article JSON-LD, the feed alternate, verification metas, hreflang
+  alternates) landed on noindex pages - the 404 first (it is processed
+  through the full pipeline by issue #11 contract, so the extras grep
+  was a fresh angle), and then the same class on robots-noindex regular
+  pages. Now `injectPage` gates ALL generated extras on
+  `page.is404 || htmlIsNoindex(html)` - the exact exclusion class
+  sitemap/feed/search/llms already honor - while the core injected set
+  (canonical, og, twitter, description) stays contractual on the 404.
+  Pin 1 asserts both the exclusions AND that the regular pages keep
+  the full set.
+- **llms.txt line corruption**: a title (or description) carrying an
+  embedded newline split a list entry into two lines, silently
+  corrupting the summary's shape. `oneline()` flattens \r/\n to single
+  spaces; pin 2 asserts the one-entry shape for a newlined title.
+
+The fuzz found the rest clean (all escape/seam contracts held):
+
+- SearchAction target with a quote + tag payload: every `'` -> `\"`,
+  every `<` -> `\u003c`; zero raw tag-opens ship (pin 3). The only
+  first-run miss was the shell grep's `[^}]*` footgun, not the engine.
+- verification meta with a quote + tag payload: attribute-escaped
+  correctly (`&quot;` ... `&lt;script&gt;`).
+- per-page hostile author into the article block: `\u003c/script>`
+  cannot close the script (the raw `>` inside JSON script text is
+  inert; only `<` opens tags).
+- hreflang with overlapping glob patterns ('**' + '/de/**'): no
+  self-referencing or duplicate alternates; x-default only from a
+  distinct root-document pattern.
+- audit --external scheme cap (http/https only), fetch targeting
+  (redirects cannot leave http), 8s timeout, 50-URL cap: acceptable by
+  design; warn-grade and opt-in are the posture guards.
+
+### Pass 26.5 - the pack coverage extension (done, same session)
+
+Owner question: "do we need more crashtest attacks to cover it all?" -
+coverage audit said yes, three wire-truth gaps against the shipped
+surface. Three new pack attacks + three planted regressions, selftest
+wired (hardened 8/8 REFUSED, vulnerable 7/7 trip):
+
+- `ldjson-close-canary`: every JSON-LD block in a served head parses
+  and carries no raw `</` in its text - the script-close class (the
+  per-page hostile author is the planted shape) escapes end-to-end to
+  the wire.
+- `noindex-extras-leak`: skipped pages (robots-noindex + the 404 body)
+  carry none of the GENERATED extras - keyed on the extras' engine
+  fingerprints (the compact `"@type":"..."` serialization of the
+  generated article/breadcrumb blocks, hreflang, verification metas,
+  the feed alternate). First draft banned bare `application/ld+json`
+  and EXPLOITED the hardened tree: the 404's core Organization/WebSite
+  template blocks are the issue #11 full-pipeline contract, not extras -
+  the pack oracle now encodes that boundary exactly (its engine-shape
+  fingerprint is the lane precedent, per canonical-query-poison).
+- `llms-shape-leak`: when the tree generates llms.txt it honors the
+  sitemap page set (noindex never listed) and every entry stays one
+  line (the newline-split class from pass 26 is a trip case).
+- Selftest fixture opt-ins: breadcrumb, verification, article.scoped,
+  llms + hostile-payload canary pages. The vulnerable plants: (5) the
+  `\u003c` neutralization drop, (6) extras back onto skipped pages,
+  (7) llms leak + split entry.
+- Packs README attack inventory updated (5 -> 8 attacks). Counters:
+  battery unchanged at 89 pins (the pack attacks live at the wire, not
+  in the battery); pack claims in packs/README now truth-aligned.
+

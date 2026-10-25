@@ -58,4 +58,6 @@
 - title: Discussions
   items:
     - title: Announcements
+      url: /discussions/announcing-freestruct-v1.1.0
+    - title: The v1.0.0 stable release
       url: /discussions/announcing-freestruct-v1.0.0

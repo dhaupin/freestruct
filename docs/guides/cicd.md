@@ -170,6 +170,10 @@ npx freestruct audit
 
 # Machine digest for CI annotations / scriptable gates
 npx freestruct audit --json
+
+# Also HEAD-check up to 50 unique external hrefs (needs a live network;
+# dead links are WARN rows, not build failures)
+npx freestruct audit --external
 ```
 
 A stronger default for the PR build: `npx freestruct --strict` at build

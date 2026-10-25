@@ -7,7 +7,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { hasSeoType } from './scan.js';
+import { hasSeoType, htmlIsNoindex } from './scan.js';
 import { pageUrlFor, slugMatchesGlob, globSpecificity } from './urls.js';
 
 function minifyHtml(html) {
@@ -412,7 +412,15 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
   // auto-emit ONLY for pages that ship no JSON-LD of their own AND get no
   // configured jsonLd block at all (missing-only, and a scoped jsonLd key
   // counts as the consumer's explicit per-page choice - no double block).
-  if (!hasSeoType(html, 'jsonld') && config.jsonLd === undefined) {
+  // 404 pages keep the FULL pipeline's per-page tags (issue #11: the 404 is
+  // finished like every page), but the generated extras are probe-junk on a
+  // noindex page: a breadcrumb trail for a 404, typed article schema, hreflang
+  // alternates, the feed alternate and verification metas all say nothing to
+  // a crawler that has been told to skip the page. The extras therefore skip
+  // 404s AND robots-noindex pages (the same exclusion class sitemap/feed/
+  // search/llms already honor); the core injected set stays everywhere.
+  const noindexExtrasGate = page.is404 === true || htmlIsNoindex(html);
+  if (!noindexExtrasGate && !hasSeoType(html, 'jsonld') && config.jsonLd === undefined) {
     const articleType = articleTypeForPage(page, config);
     if (articleType) {
       const block = {
@@ -511,7 +519,7 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
   // but nothing in any head pointed feed readers at it. One line in every
   // injected head - gated on the page not carrying an alternate/rss link of
   // its own, in either attribute order (missing-only, as always).
-  if (config.generateFeed !== false
+  if (config.generateFeed !== false && !noindexExtrasGate
       && !/(rel\s*=\s*["']alternate["'][^>]*type\s*=\s*["']application\/(rss|atom)\+xml["'])/i.test(html)
       && !/(type\s*=\s*["']application\/(rss|atom)\+xml["'][^>]*rel\s*=\s*["']alternate["'])/i.test(html)) {
     seoInjection += '\n<link rel="alternate" type="application/rss+xml" title="' + escAttr(siteName) + ' feed" href="' + escAttr(pageUrlFor(config, '/feed.xml')) + '">';
@@ -521,7 +529,7 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
   // provider -> code map drops straight into site-owned meta tags, with the
   // engine-owned name spellings (search engines match on name, not content).
   const VERIFICATION_META_NAMES = { google: 'google-site-verification', bing: 'msvalidate.01', yandex: 'yandexVerification', pinterest: 'pinterest-site-verification' };
-  if (config.verification && typeof config.verification === 'object' && !Array.isArray(config.verification)) {
+  if (config.verification && !noindexExtrasGate && typeof config.verification === 'object' && !Array.isArray(config.verification)) {
     const verificationMetas = [];
     for (const [provider, code] of Object.entries(config.verification)) {
       const metaName = VERIFICATION_META_NAMES[provider];
@@ -535,7 +543,7 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
   // hreflang/i18n alternates (SEO-gap pass, config.locales): slug-stem swap
   // alternates for pages inside a locale tree; skipped entirely when the
   // page carries any hreflang of its own (the SSG or the author owns it).
-  if (config.locales && typeof config.locales === 'object' && !Array.isArray(config.locales)
+  if (config.locales && !noindexExtrasGate && typeof config.locales === 'object' && !Array.isArray(config.locales)
       && !/(\shreflang\s*=)/i.test(html)) {
     const alternates = hreflangAlternatesFor(page, config);
     if (alternates) {

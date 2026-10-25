@@ -60,6 +60,7 @@ run ends with the summary. This is the scripted version of the manual
 ```bash
 npx freestruct audit
 npx freestruct audit --json
+npx freestruct audit --external
 npx freestruct audit some/other/output-dir
 ```
 
@@ -70,7 +71,12 @@ og:image, JSON-LD parse + LocalBusiness recommended fields, h1 sanity), the
 404 noindex contract, and the site-level sitemap/robots checks. The first
 bare word after `audit` is a positional output-directory override. Exit
 codes: `0` clean, `1` findings (FAIL class), `3` when the directory is
-missing. `--json` prints a machine digest for CI annotations.
+missing. `--json` prints a machine digest for CI annotations. `--external`
+also HEAD-checks up to 50 unique external hrefs found in the baked pages
+(one GET retry for HEAD-refusing CDNs, 8s timeout each, so it needs a live
+network); dead links come back as rows in the WARN class (bots rightly get
+403/429, so they are report-grade, not build failures) and ride the `--json`
+digest's `warns` array.
 
 Fail-vs-warn mapping is deliberate: tags the engine always injects and the
 404 noindex contract are the FAIL class; config-gated tags (og:image,

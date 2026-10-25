@@ -132,7 +132,7 @@ VitePress, Astro, Eleventy - or anything that emits HTML.
 ## For agents too
 
 Freestruct is agent-hardened and CI-proven. The boring trust facts are
-pinned by an 86-test battery and run on every push:
+pinned by an 89-test battery and run on every push:
 
 - `exit 0` quietly means the tree finished; `1 / 2 / 3 / 4` name exactly
   which step failed (config, template, output dir, hook failure)
