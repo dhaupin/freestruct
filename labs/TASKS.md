@@ -1035,3 +1035,26 @@ battery grew 100 -> 102:
   1.1.0 line + hardening bullet.
 - Gates: battery 102/102, docs audit, sync lockstep, validate.
 
+### Pass 26.16 - the typo'd-flag class (done, same session, post-26.15)
+
+The full-surface walk's remaining finding; battery 102 -> 103:
+
+- **Unknown dash-word flags rode as output dirs (fixed):**
+  `freestruct --definitely-not-a-flag` was accepted as a positional
+  override and the full pass ran wherever the default resolved - exit 0,
+  Build hash printed, everything. Dash-shaped args outside the known set
+  now fail with `unknown flag(s) ... - run freestruct --help`, exit 1
+  (the config-fatal class; subcommands keep their own validation).
+  Pinned: the typo trips loudly, the known-flag path stays green.
+- **Version truth verified:** package.json, init/VERSION, README's
+  current-release line, the CHANGELOG heading and the v1.1.0
+  announcement all agree at 1.1.0 (battery pin + manual grep).
+- **Upstream report:** the 26.15/26.16 quiet-mistake classes filed as
+  dhaupin/prestruct#54 (source-tree poisoning + flag-as-positional,
+  with the fix shapes and pin pointers).
+- Trail aligned at 103: AGENTS house table, README trail, CHANGELOG
+  1.1.0 line; the announcement's quality layer updated (103 pins + the
+  two closed classes).
+- Gates: battery 103/103, docs audit, sync lockstep, packs selftest,
+  tarball e2e.
+

@@ -2327,5 +2327,18 @@ test('pass-hunt: a built tree with none of the sentinels still injects (the guar
   } finally { rmDir(dir); }
 });
 
+test('pass-hunt: a typo\'d flag rides as NO directory (Pass 26.16)', () => {
+  const dir = scenario('main');
+  try {
+    const res = runInjectFailing(dir, ['--definitely-not-a-flag']);
+    assert.strictEqual(res.status, 1, 'unknown dash-words fail loudly, never as a positional output dir');
+    assert.includes(res.stderr, 'unknown flag(s)', 'the refusal names the flag');
+    assert.includes(res.stderr, 'freestruct --help', 'the refusal spells the usage hint');
+    // Control: the known flags still pass clean.
+    runInject(dir);
+    assert.ok(read(dir, 'docs/_site/index.html').includes('freestruct-build'), 'the known-flag path still runs the full pass');
+  } finally { rmDir(dir); }
+});
+
 // done
 console.log('[freestruct battery] complete');

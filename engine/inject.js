@@ -56,6 +56,13 @@ const _flags = _argv.filter(a => FLAG_VALUES.has(a));
 const COMMANDS = new Set(['validate', 'init', 'help', 'audit', 'indexnow']);
 const _firstArg = _argv.find(a => !a.startsWith('--'));
 const _positional = _firstArg && !COMMANDS.has(_firstArg) ? _firstArg : undefined;
+// Pass 26.16: dash-shaped args are FLAGS, never output dirs. The audit and
+// indexnow subcommands validate their own flags; the default run must do the
+// same for its set, instead of letting a typo'd flag ride as a positional
+// and inject somewhere the user never meant (the same quiet-mistake class
+// the source-tree guard closes).
+const KNOWN_DEFAULT_DASHES = ['-h', '--help', '--version', '--strict', '--tolerant'];
+const unknownDashArgs = _argv.filter(a => a.startsWith('-') && !KNOWN_DEFAULT_DASHES.includes(a));
 
 export const EXIT_OK = 0;
 export const EXIT_CONFIG = 1;
@@ -171,6 +178,11 @@ export function runInject(options = {}) {
   // them (with --external the only path that lives past the import, this
   // guard is what keeps the engine from re-injecting mid-audit).
   if (_firstArg && COMMANDS.has(_firstArg)) return;
+  // Unknown dash-words are typos, not directories: fail with the usage hint
+  // instead of riding as a positional (Pass 26.16).
+  if (unknownDashArgs.length) {
+    fail('unknown flag(s): ' + unknownDashArgs.join(' ') + ' - run freestruct --help for the flag list', EXIT_CONFIG);
+  }
   const cwd = options.cwd || process.cwd();
   console.log('freestruct: Loading config...');
 
