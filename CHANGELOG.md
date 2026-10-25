@@ -6,7 +6,29 @@ All notable changes to freestruct will be documented here.
 
 The first post-stable release: the all-items issue sweep (#17-#24 plus the
 #25 follow-on only here by owner direction) and the CI tooling that came
-with it. Every item below is battery-pinned; the battery grew 49 -> 75.
+with it, plus the SEO-gap pass landed inside this same untagged version.
+Every item below is battery-pinned; the battery grew 49 -> 75 -> 86.
+
+The SEO-gap pass (eight additions, all opt-in, missing-only, pinned):
+
+- Feed autodiscovery: every injected head carries the
+  `rel="alternate" type="application/rss+xml"` link; page-owned
+  alternates win
+- SearchAction: `search.url` replaces the hardcoded `?s=` potentialAction
+  default (no config = a bare WebSite block); a URL without the
+  `{search_term_string}` placeholder warns and ships nothing
+- Auto BreadcrumbList (`breadcrumb: true`): trail from the URL tree, root
+  gets none, manual JSON-LD pages untouched
+- Per-page article JSON-LD (`article.scoped`): typed Article /
+  TechArticle / NewsArticle from the page facts
+- Site verification metas (`verification`): engine-owned provider name
+  spellings, unknown providers warn
+- hreflang alternates (`locales`): slug-stem swaps across locale trees,
+  including x-default from a configured root-document pattern
+- `llms.txt` emission (`llms: true`): the AI-consumable docs summary over
+  the sitemap/feed page set, missing-only
+- `freestruct audit --external`: opt-in HEAD-check (GET retry) of up to
+  50 unique external hrefs, warn-grade, json-digest merged
 
 - `freestruct audit`: independent baked-output verification - per-page head
   hygiene (attribute-order-tolerant, missing-only-aware FAIL/WARN mapping),

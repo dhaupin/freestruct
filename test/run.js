@@ -1788,5 +1788,214 @@ test('og.scoped: a list-valued variant warns loudly and ships NO image - never s
   } finally { rmDir(dir); }
 });
 
+// ---------- SEO-gap pass (feed link / SearchAction / breadcrumb / article /
+// hreflang / verification / llms / audit --external) ----------
+// Eight consumer surface additions, one battery pin each: config-gated,
+// missing-only, engine-owned shapes.
+
+test('feed autodiscovery: injected pages carry the rss alternate link (SEO-gap pass)', () => {
+  const dir = scenario('main');
+  try {
+    runInject(dir);
+    const root = read(dir, 'docs/_site/index.html');
+    assert.includes(root, '<link rel="alternate" type="application/rss+xml" title="Foo Docs feed" href="https://docs.example.com/feed.xml">');
+    const guide = read(dir, 'docs/_site/guide/index.html');
+    assert.includes(guide, '<link rel="alternate" type="application/rss+xml"');
+  } finally { rmDir(dir); }
+});
+
+test('feed autodiscovery: a page with its own rss alternate stays silent (missing-only)', () => {
+  const dir = scenario('main', {
+    'docs/_site/own-feed.html':
+      '<html><head><title>O</title><link rel="alternate" type="application/rss+xml" href="/old.xml"></head><body><h1>o</h1></body></html>',
+  });
+  try {
+    runInject(dir);
+    const own = read(dir, 'docs/_site/own-feed.html');
+    assert.ok(!own.includes('Foo Docs feed'), 'the engine never adds its feed link beside the page-owned one');
+  } finally { rmDir(dir); }
+});
+
+test('SearchAction: no search.url ships NO potentialAction (the hardcoded ?s= default is gone)', () => {
+  const dir = scenario('main');
+  try {
+    runInject(dir);
+    const root = read(dir, 'docs/_site/index.html');
+    assert.ok(!/potentialAction/.test(root), 'the WebSite block stays bare without config.search.url');
+    assert.includes(root, '"@type": "WebSite"', 'the WebSite block itself still ships');
+  } finally { rmDir(dir); }
+});
+
+test('SearchAction: the configured url lands with the placeholder', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'search:',
+      '  url: https://docs.example.com/search?q={search_term_string}',
+    ].join('\n') + '\n');
+    runInject(dir);
+    const root = read(dir, 'docs/_site/index.html');
+    assert.includes(root, '"@type": "SearchAction"');
+    assert.includes(root, '"target": "https://docs.example.com/search?q={search_term_string}"');
+    assert.includes(root, '"query-input": "required name=search_term_string"');
+  } finally { rmDir(dir); }
+});
+
+test('SearchAction: a url without the placeholder warns loudly and omits the block (fresh tree)', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'search:',
+      '  url: https://docs.example.com/search',
+    ].join('\n') + '\n');
+    const out = runInject(dir);
+    assert.includes(out, 'search.url must contain the {search_term_string} placeholder', 'the schema.org contract is named');
+    assert.ok(!/potentialAction/.test(read(dir, 'docs/_site/index.html')), 'a broken search target never ships');
+  } finally { rmDir(dir); }
+});
+
+test('breadcrumb: true builds BreadcrumbList from the URL tree; root ships none; own jsonLd pages stay silent', () => {
+  const dir = scenario('main', {
+    'docs/_site/own-ld.html':
+      '<html><head><title>L</title><script type="application/ld+json">{"@type":"WebPage"}</script></head><body><h1>l</h1></body></html>',
+  });
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'breadcrumb: true',
+    ].join('\n') + '\n');
+    runInject(dir);
+    const root = read(dir, 'docs/_site/index.html');
+    assert.ok(!/BreadcrumbList/.test(root), 'the root page gets no one-element breadcrumb');
+    const guide = read(dir, 'docs/_site/guide/index.html');
+    assert.ok(/BreadcrumbList/.test(guide), 'the deep page gets the trail');
+    assert.includes(guide, '"item":"https://docs.example.com/"', 'the trail starts at the site root');
+    assert.includes(guide, '"item":"https://docs.example.com/guide"', 'the trail names the owning directory');
+    const own = read(dir, 'docs/_site/own-ld.html');
+    assert.ok(!/BreadcrumbList/.test(own), 'a page with its own JSON-LD stays untouched');
+  } finally { rmDir(dir); }
+});
+
+test('verification: provider codes land as engine-owned meta names; unknown providers warn', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'verification:',
+      '  google: goog-code-123',
+      '  bing: bing-code-456',
+      '  antler: who-owns-this',
+    ].join('\n') + '\n');
+    const out = runInject(dir);
+    assert.includes(out, 'unknown verification provider "antler"', 'the provider list is named');
+    const root = read(dir, 'docs/_site/index.html');
+    assert.includes(root, '<meta name="google-site-verification" content="goog-code-123">');
+    assert.includes(root, '<meta name="msvalidate.01" content="bing-code-456">', 'bing rides the engine-owned name');
+    assert.ok(!/antler/.test(root), 'unknown providers ship no tag');
+  } finally { rmDir(dir); }
+});
+
+test('llms: true emits llms.txt over the indexable pages; noindex stays honored; an existing file is untouched', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'llms: true',
+    ].join('\n') + '\n');
+    runInject(dir);
+    const llms = read(dir, 'docs/_site/llms.txt');
+    assert.includes(llms, '# Foo Docs');
+    assert.includes(llms, '- [', 'pages list as markdown links');
+    assert.ok(!llms.includes('/noindex'), 'noindex pages never ship into the summary');
+    fs.writeFileSync(path.join(dir, 'docs/_site/llms.txt'), 'hand-rolled');
+    const out = runInject(dir);
+    assert.includes(out, 'llms.txt exists - leaving it untouched');
+    assert.strictEqual(read(dir, 'docs/_site/llms.txt'), 'hand-rolled');
+  } finally { rmDir(dir); }
+});
+
+test('locales: hreflang alternates stem-swap across the locale trees; pages with own hreflang stay silent', () => {
+  const dir = scenario('main', {
+    'docs/_site/de/deep/index.html':
+      '<html><head><title>D</title></head><body><h1>d</h1></body></html>',
+    'docs/_site/own-lang.html':
+      '<html><head><title>L</title><link rel="alternate" hreflang="sv" href="/sv/"></head><body><h1>l</h1></body></html>',
+  });
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'locales:',
+      '  "/": en',
+      '  "/de/**": de',
+    ].join('\n') + '\n');
+    runInject(dir);
+    const root = read(dir, 'docs/_site/index.html');
+    assert.includes(root, '<link rel="alternate" hreflang="de" href="https://docs.example.com/de/">', 'the root swaps onto the locale tree');
+    const deep = read(dir, 'docs/_site/de/deep/index.html');
+    assert.ok(/hreflang="en" href="https:\/\/docs.example.com\/deep\/"/.test(deep), 'the stem swap works both directions');
+    assert.ok(!/(\shreflang=)/.test(read(dir, 'docs/_site/own-lang.html').replace(/hreflang="sv"/, '')), 'a page carrying its own hreflang never gets more added');
+    const ownHlCount = (read(dir, 'docs/_site/own-lang.html').match(/hreflang=/g) || []).length;
+    assert.strictEqual(ownHlCount, 1, 'exactly the page-owned alternate ships');
+  } finally { rmDir(dir); }
+});
+
+test('article.scoped: TechArticle lands on the subtree with the page facts; invalid types warn and ship nothing', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'article:',
+      '  scoped:',
+      '    "/guide/**": TechArticle',
+      '    "/": Manual',
+    ].join('\n') + '\n');
+    const out = runInject(dir);
+    assert.includes(out, 'article.scoped "/" must be "Article", "TechArticle" or "NewsArticle"', 'the invalid type names itself');
+    const guide = read(dir, 'docs/_site/guide/index.html');
+    assert.ok(/"@type":"TechArticle"/.test(guide), 'the tree gets the typed block');
+    assert.ok(/"url":"https:\/\/docs.example.com\/guide\/?"/.test(guide), 'the block carries the page canonical');
+    const root = read(dir, 'docs/_site/index.html');
+    assert.ok(!/("Article"|"TechArticle"|"NewsArticle")/.test(root), 'an invalid type ships no block on any page');
+  } finally { rmDir(dir); }
+});
+
+test('audit --external: the json digest parses with the warns merged; unknown audit flags fail loudly', () => {
+  const dir = scenario('main');
+  try {
+    runInject(dir);
+    const out = spawnSync(process.execPath, [INJECT, 'audit', '--json', '--external'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(out.status, 0, 'external mode on a tree without external links stays clean\n' + out.stdout + out.stderr);
+    const digest = JSON.parse(out.stdout);
+    assert.strictEqual(digest.ok, true);
+    assert.ok(Array.isArray(digest.warns), 'the warns array merges the audit + external rows');
+    const bad = spawnSync(process.execPath, [INJECT, 'audit', '--bad'], { cwd: dir, encoding: 'utf8' });
+    assert.ok(bad.status !== 0, 'unknown flags fail');
+    assert.includes(bad.stdout + bad.stderr, 'only --json and --external are supported flags');
+  } finally { rmDir(dir); }
+});
+
 // done
 console.log('[freestruct battery] complete');

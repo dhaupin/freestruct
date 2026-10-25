@@ -15,7 +15,7 @@
 // CLI (Phase 0/2 contract):
 //   --version   print the package.json version and exit 0 (works configless;
 //               resolved one level up: engine/ is the package root's sibling dir)
-//   validate | init [dir] | audit [--json] [outputDir] | help  subcommands
+//   validate | init [dir] | audit [--json] [--external] [outputDir] | help  subcommands
 //   --strict    opt-in: broken internal links exit 1 instead of
 //               shipping green
 //   --tolerant  opt-out for CI tolerance: fatal config errors log and exit 0
@@ -41,8 +41,9 @@ import { generateSitemap, generateRobots, generateFeed } from './xmllike.js';
 import { generate404, pipeline404 } from './notfound.js';
 import { checkLinks } from './linkcheck.js';
 import { generateSearchIndex } from './search.js';
+import { generateLlms } from './llms.js';
 import { runPurgeHooks, runPostBuildHooks } from './hooks.js';
-import { auditOutput } from './audit.js';
+import { auditOutput, auditExternalLinks } from './audit.js';
 import { resolveIndexNowKey, emitIndexNowKeyFile, submitIndexNow, isValidIndexNowKey } from './indexnow.js';
 import { resolveOgImageGeneration, renderPageOgImage } from './ogimage.js';
 
@@ -91,11 +92,13 @@ freestruct -- post-build SEO layer for static doc sites
   freestruct init [dir]     Scaffold the consumer kit (starter config +
                             template copies) into <dir>/docs; the default dir
                             is the cwd. Existing files are never clobbered.
-  freestruct audit [--json] [outputDir]
+  freestruct audit [--json] [--external] [outputDir]
                             Verify the BAKED output (per-page head hygiene +
                             sitemap/robots/404-noindex contract) without
                             touching it; exit 0 clean / 1 findings. Works
-                            against any SSG's build (issue #18).
+                            against any SSG's build (issue #18). --external
+                            also HEAD-checks up to 50 unique external hrefs
+                            (warn-grade; needs a live network).
   freestruct indexnow [--dry-run] [outputDir]
                             POST the baked sitemap URL list to api.indexnow.
                             org (Bing/Seznam/Yandex). POST-deploy step: the
@@ -163,6 +166,11 @@ function cmdInit(dirArg) {
 const STRICT = _flags.includes('--strict');
 
 export function runInject(options = {}) {
+  // Subcommand exclusivity: validate/init/help/audit/indexnow dispatch and
+  // exit during the module body - the full pass must never run alongside
+  // them (with --external the only path that lives past the import, this
+  // guard is what keeps the engine from re-injecting mid-audit).
+  if (_firstArg && COMMANDS.has(_firstArg)) return;
   const cwd = options.cwd || process.cwd();
   console.log('freestruct: Loading config...');
 
@@ -281,6 +289,12 @@ export function runInject(options = {}) {
     // opt-in search index (owner decision: search.json is opt-in as of Phase 2)
     if (config.searchIndex === true) generateSearchIndex(indexablePages, config, outputDir);
 
+    // opt-in llms.txt (SEO-gap pass, config.llms): the AI-consumable docs
+    // summary, built from the same indexable page set sitemap/feed honor
+    // (noindex stays honored everywhere). Missing-only: an existing file
+    // is never overwritten.
+    if (config.llms === true) generateLlms(indexablePages, config, outputDir);
+
     // --strict: report-only classes become build failures (Phase 0 contract)
     if (STRICT) {
       const problems = [];
@@ -340,13 +354,14 @@ if (_firstArg === 'help' || _argv.includes('--help')) { printHelp(); process.exi
 // output dir is the familiar exit 3. The config is discovered the same way
 // the run walks up from cwd (it maps basePath for the on-disk asset checks);
 // a configless audit just runs without the disk-mapping extras.
-function cmdAudit() {
+async function cmdAudit() {
   const auditArgs = _argv.slice(_argv.indexOf('audit') + 1);
   const useJson = auditArgs.includes('--json');
+  const useExternal = auditArgs.includes('--external');
   const explicitDir = auditArgs.find(a => !a.startsWith('--'));
 
-  if (useJson && auditArgs.filter(a => a.startsWith('--')).some(a => a !== '--json')) {
-    fail('audit: only --json is a supported flag (got ' + auditArgs.filter(a => a.startsWith('--')).join(' ') + ')');
+  if (auditArgs.filter(a => a.startsWith('--')).some(a => a !== '--json' && a !== '--external')) {
+    fail('audit: only --json and --external are supported flags (got ' + auditArgs.filter(a => a.startsWith('--')).join(' ') + ')');
   }
 
   let config = null;
@@ -367,8 +382,23 @@ function cmdAudit() {
     fail('Output directory not found: ' + outputDir, EXIT_OUTPUT);
   }
 
-  const { fails } = auditOutput({ outputDir, config, json: useJson });
-  process.exit(fails.length > 0 ? 1 : EXIT_OK);
+  const result = auditOutput({ outputDir, config, json: useJson && !useExternal, capture: useJson && useExternal });
+  // The no-external path exits HERE, synchronously, exactly like the pre-
+  // --external audit: a sync-crashing auditOutput must never let the
+  // engine's own full pass run on an audit invocation.
+  if (!useExternal) process.exit(result.fails.length > 0 ? 1 : EXIT_OK);
+  // External mode is the only async path: collect the network warn rows
+  // after the local audit, then decide the exit code.
+  const { warns: externalWarns } = await auditExternalLinks({ outputDir, json: useJson });
+  if (useJson) {
+    console.log(JSON.stringify({ ok: result.fails.length === 0, pages: result.pages, fails: result.fails, warns: [...result.warns, ...externalWarns] }));
+  } else {
+    const totalWarns = result.warns.length + externalWarns.length;
+    console.log(result.fails.length === 0
+      ? '[freestruct] audit: 0 failures, ' + totalWarns + ' warning(s) - clean'
+      : '[freestruct] audit: ' + result.fails.length + ' failure(s), ' + totalWarns + ' warning(s) - exiting 1');
+  }
+  process.exit(result.fails.length > 0 ? 1 : EXIT_OK);
 }
 
 // ---------- indexnow subcommand (issue #19) ----------
@@ -419,7 +449,7 @@ async function cmdIndexNow() {
 
 if (_firstArg === 'validate') cmdValidate();
 if (_firstArg === 'init') cmdInit(_argv[_argv.indexOf('init') + 1]);
-if (_firstArg === 'audit') cmdAudit();
+if (_firstArg === 'audit') cmdAudit().catch((e) => fail('audit: ' + (e && e.message ? e.message : e)));
 if (_firstArg === 'indexnow') { cmdIndexNow(); }
 
 // Main-module detection: npm's .bin shim is a symlink, but import.meta.url

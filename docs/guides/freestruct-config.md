@@ -483,6 +483,94 @@ You can override config values via environment variables:
 FREESTRUCT_URL=https://staging.example.com npx freestruct
 ```
 
+## Discovery Options
+
+### search
+
+The SearchAction target for the built-in WebSite JSON-LD. The schema.org
+contract needs the `{search_term_string}` placeholder in the URL - anything
+else warns loudly and ships no potentialAction block at all (the old
+hardcoded `?s=` default is retired: without a `search` config the WebSite
+block stays bare).
+
+```yaml
+search:
+  url: https://example.com/search?q={search_term_string}
+```
+
+### breadcrumb
+
+Opt-in auto BreadcrumbList JSON-LD built from each page's own position in
+the URL tree: the site root first, then one `ListItem` per URL segment, with
+the page's own title on the tail item. The root page (no segments) ships
+none, and pages that carry JSON-LD of their own stay untouched
+(missing-only).
+
+```yaml
+breadcrumb: true
+```
+
+### article
+
+Per-page article JSON-LD type, scoped by the same slug globs as `jsonLd`.
+Pages in the matching subtree get one `Article` / `TechArticle` /
+`NewsArticle` block built from the page's own title, URL, description and
+og image, plus the per-page comment facts (`author` rides as
+`article:author`, `publishedTime` as `datePublished`). Skipped for pages
+that already carry JSON-LD or that receive a scoped `jsonLd` block.
+
+```yaml
+article:
+  scoped:
+    "/guides/**": TechArticle
+```
+
+An invalid type warns at load and ships no block for that key.
+
+### verification
+
+Site-ownership verification metas, keyed by provider. The engine owns the
+meta `name` spellings (`google-site-verification`, `msvalidate.01` for
+Bing, `yandexVerification`, `pinterest-site-verification`); unknown
+providers warn and ship no tag, and a page carrying the same meta keeps its
+own (missing-only).
+
+```yaml
+verification:
+  google: goog-code-123
+  bing: bing-code-456
+```
+
+### locales
+
+hreflang alternates for multilingual sites, keyed by slug glob to a
+language code. A page's own language comes from the most specific matching
+pattern; every sibling pattern contributes one alternate where the page's
+slug would land with that tree's stem swapped in (`/de/**` + the guide page
+= the `/de/guide` alternate, and back). A configured root-document pattern
+adds the `x-default` alternate. This is a stem-swap calculation, not a file
+inventory: a page that does not exist in a sibling language still gets its
+alternate, and its 404 is the SSG's problem. Pages carrying any hreflang of
+their own stay untouched.
+
+```yaml
+locales:
+  "/": en
+  "/de/**": de
+```
+
+### llms
+
+Opt-in `llms.txt` emission (the AI-consumable docs-summary convention):
+one H1, the site description as a blockquote, then one markdown link per
+indexable page with its description. Built from the same page set
+sitemap.xml and feed.xml honor, so noindex stays honored everywhere.
+Missing-only: an existing `llms.txt` is never overwritten.
+
+```yaml
+llms: true
+```
+
 ## Related
 
 - [Getting Started](/getting-started) - First-run installation and quick start

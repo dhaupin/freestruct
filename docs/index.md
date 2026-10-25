@@ -66,6 +66,12 @@ yours. Nothing overwritten, nothing guessed.
   PNG per page from your SVG template (needs the optional
   `@resvg/resvg-js` package; loud skip without it), wired under
   missing-only.
+- **Discovery extras** - Opt-in keys that finish the modern head:
+  `search` for the SearchAction sitelinks JSON-LD, `breadcrumb: true` for
+  auto BreadcrumbList, `article.scoped` for per-page article JSON-LD,
+  `verification` for site-ownership metas, `locales` for hreflang
+  alternates, and `llms: true` for the AI-consumable `llms.txt` summary.
+  All missing-only; all pinned.
 - **Loud diagnostics** - When something is off you get the named cause and
   an exit code that says which step failed (1 config, 2 template, 3 output
   dir, 4 hook failure), never a mystery crash. `--tolerant` keeps
@@ -126,10 +132,10 @@ VitePress, Astro, Eleventy - or anything that emits HTML.
 ## For agents too
 
 Freestruct is agent-hardened and CI-proven. The boring trust facts are
-pinned by a 41-test battery and run on every push:
+pinned by an 86-test battery and run on every push:
 
-- `exit 0` quietly means the tree finished; `1 / 2 / 3` name exactly which
-  step failed
+- `exit 0` quietly means the tree finished; `1 / 2 / 3 / 4` name exactly
+  which step failed (config, template, output dir, hook failure)
 - fresh-install behavior is proven by the tarball e2e: real pack, real
   install, real quick start
 - an adversarial crashtest pack attacks our own built docs in CI on every

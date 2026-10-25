@@ -14,6 +14,10 @@
 //   - the SVG og:image trap stays a FAIL here (audit-grade; the run-warning
 //     ladder from issue #20 is the pre-build enforcement point)
 //   - the 404 check is the noindex contract only (issue #11's shape)
+//   - external http(s) links: opt-in via --external (SEO-gap pass) - the
+//     baked tree is audited for the network, not the default audit; HEAD
+//     with a GET retry (some CDNs refuse HEAD), resolution failures and
+//     HTTP >= 400 come back as WARN rows (report-grade: bots get 403/429)
 
 import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
 import path from 'path';
@@ -90,10 +94,12 @@ function urlToDisk(urlValue, { outputDir, config }) {
 
 /**
  * Audit a baked output directory. Returns { fails, warns, pages, sitemapLocs }.
- * Prints a human report by default, or a JSON digest with `json: true`.
+ * Prints a human report by default, or a JSON digest with `json: true`;
+ * `capture: true` (used when external checks ride along in json mode) skips
+ * printing and hands the caller the raw result.
  * NEVER exits: the caller owns the exit code (0 clean / 1 findings).
  */
-export function auditOutput({ outputDir, config, json = false }) {
+export function auditOutput({ outputDir, config, json = false, capture = false }) {
   const fails = [];
   const warns = [];
   const fail = (page, msg) => fails.push({ page, msg });
@@ -230,6 +236,9 @@ export function auditOutput({ outputDir, config, json = false }) {
 
   // ---------- report ----------
 
+  if (capture) {
+    return { fails, warns, pages: pages.length, sitemapLocs };
+  }
   if (json) {
     console.log(JSON.stringify({ ok: fails.length === 0, pages: pages.length, fails, warns }));
   } else {
@@ -243,4 +252,79 @@ export function auditOutput({ outputDir, config, json = false }) {
     }
   }
   return { fails, warns, pages: pages.length, sitemapLocs };
+}
+
+// ---------- external links (opt-in, SEO-gap pass) ----------
+
+const EXTERNAL_LIMIT = 50;
+
+/** Collect external http(s) href URLs from the baked pages, deduped, with referencing pages. */
+function collectExternalLinks({ outputDir, pages }) {
+  const byUrl = new Map();
+  for (const filePath of pages) {
+    let rel;
+    try { rel = path.relative(outputDir, filePath).replace(/\\/g, '/'); } catch (e) { rel = filePath; }
+    const html = readFileSync(filePath, 'utf8');
+    for (const m of html.matchAll(/href\s*=\s*["'](https?:\/\/[^"'\s]+)["']/gi)) {
+      const url = m[1].replace(/&amp;/g, '&');
+      if (!byUrl.has(url)) byUrl.set(url, []);
+      byUrl.get(url).push(rel);
+    }
+  }
+  return byUrl;
+}
+
+/** HEAD with a GET retry (some CDNs refuse HEAD); returns the problem string or null. */
+async function headCheck(url) {
+  const tryOnce = async (method) => {
+    const res = await fetch(url, {
+      method,
+      redirect: 'follow',
+      signal: AbortSignal.timeout(8000),
+      headers: { 'user-agent': 'freestruct-audit (+https://github.com/dhaupin/freestruct)' },
+    });
+    return res.status >= 400 ? 'HTTP ' + res.status + (res.statusText ? ' ' + res.statusText : '') : null;
+  };
+  try {
+    return await tryOnce('HEAD');
+  } catch (headErr) {
+    try {
+      return await tryOnce('GET');
+    } catch (getErr) {
+      const cause = (getErr && getErr.cause && getErr.cause.code) ? getErr.cause.code : getErr.message;
+      return 'unreachable (' + cause + ')';
+    }
+  }
+}
+
+/**
+ * External-link audit (opt-in): dedupe the tree's external hrefs, HEAD-check
+ * up to EXTERNAL_LIMIT unique URLs, report every failure as a WARN row
+ * (report-grade by design: bots get 403/429 legitimately). NEVER exits.
+ */
+export async function auditExternalLinks({ outputDir, json = false }) {
+  const empty = { warns: [], checked: 0 };
+  if (!existsSync(outputDir)) return empty;
+  const pages = walkHtml(outputDir);
+  const byUrl = collectExternalLinks({ outputDir, pages });
+  if (byUrl.size === 0) return empty;
+  const capped = [...byUrl.keys()].slice(0, EXTERNAL_LIMIT);
+  const results = await Promise.all(capped.map(async (url) => [url, await headCheck(url)]));
+  const warns = [];
+  for (const [url, problem] of results) {
+    if (!problem) continue;
+    const referencing = byUrl.get(url);
+    const label = referencing.length > 1
+      ? referencing[0] + ' (+' + (referencing.length - 1) + ' more page(s))'
+      : referencing[0];
+    warns.push({ page: label, msg: 'external link ' + url + ': ' + problem });
+  }
+  if (byUrl.size > EXTERNAL_LIMIT) {
+    warns.push({ page: 'external', msg: 'checked only the first ' + EXTERNAL_LIMIT + ' unique external urls of ' + byUrl.size });
+  }
+  if (!json && warns.length > 0) {
+    console.log('[freestruct] external link check: ' + capped.length + ' unique url(s) probed');
+    for (const w of warns) console.log('  WARN ' + w.page + ': ' + w.msg);
+  }
+  return { warns, checked: capped.length };
 }

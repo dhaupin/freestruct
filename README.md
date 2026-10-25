@@ -100,6 +100,8 @@ npx freestruct init             # scaffold the starter kit into ./docs
                                 #  existing files are never clobbered)
 npx freestruct audit            # verify the baked output (heads + sitemap/
                                 # robots/404-noindex); --json for CI digest;
+                                # --external also probes up to 50 unique
+                                # external hrefs (warn-grade, needs network);
                                 # exit 1 on FAIL findings (issue #18)
 ```
 
@@ -111,10 +113,23 @@ npx freestruct audit            # verify the baked output (heads + sitemap/
 
 - Injects missing title, description, canonical, Open Graph, Twitter cards, and
   JSON-LD (missing-only: existing tags are left alone)
+- Feed autodiscovery: every injected head carries the
+  `rel="alternate" type="application/rss+xml"` link (a page-owned one wins,
+  missing-only) so feed readers find feed.xml without knowing the URL
 - Attribute-safe everywhere: og/twitter values are HTML-escaped, JSON-LD
   literals are JSON-escaped (a raw `<` cannot close the script tag),
   `og:image`/`twitter:image` ship only when an image is configured, and an
   optional `author` key rides the Organization JSON-LD as a schema.org founder
+- `search`, `breadcrumb`, `article`, `verification` and `locales`:
+  the SearchAction target for the WebSite JSON-LD (no more hardcoded
+  `?s=` default), auto BreadcrumbList from the URL tree, scoped per-page
+  `Article`/`TechArticle`/`NewsArticle` blocks, provider-keyed site
+  verification metas, and hreflang stem-swap alternates for multilingual
+  trees - all opt-in, missing-only, and loudly diagnostic (see the
+  Discovery Options in the config reference)
+- `llms: true` emits the AI-consumable `llms.txt` summary over the same
+  indexable page set sitemap and feed honor (noindex stays honored;
+  an existing file is never overwritten)
 - `og.image` takes the back-compat string form or the structured
   `{ src, width, height, alt }` object form, which also emits the
   `og:image:width`/`height`/`alt` companions; SVG sources warn loudly on
@@ -312,7 +327,7 @@ The first post-stable release, carried by the all-items issue sweep
   function replacers ($-expansion cannot corrupt output), plus the
   docs-layout dead-CSS removal
 - CI - packstruct manifest lint joined the push/PR battery alongside the
-  crashtest pack selftest; the battery grew 49 -> 75 pins
+  crashtest pack selftest; the battery grew 49 -> 75 -> 86 pins
 
 ## v1.0.0
 

@@ -21,6 +21,7 @@ export const KNOWN_CONFIG_KEYS = Object.freeze([
   'generateSitemap', 'generateFeed', 'generate404', 'generateRobots',
   'readingTime', 'lastModified', 'lazyLoad', 'linkCheck', 'searchIndex',
   'cacheBusting', 'hooks', 'indexNow', 'ogImageGeneration',
+  'search', 'breadcrumb', 'verification', 'llms', 'locales', 'article',
 ]);
 
 // Flags that EXISTED and no longer do anything. We warn loudly, never guess.
@@ -215,6 +216,74 @@ export function collectConfigDiagnostics(config, configName) {
       }
       if (v === null || Array.isArray(v) || (typeof v !== 'string' && typeof v !== 'object')) {
         warnings.push('og.scoped "' + key + '" must be an og image string or a { src, width, height, alt, allowSvg } object (a list of images is not a variant - one page matches one image) - no image ships from this key');
+      }
+    }
+  }
+
+  // Per-page JSON-LD type override shape (SEO-gap pass): a slug-glob map
+  // keyed like og.scoped; the page-level value decides WHAT article type a
+  // page gets when it does not already carry LD+JSON.
+  if (config.article?.scoped !== undefined && (typeof config.article.scoped !== 'object' || config.article.scoped === null || Array.isArray(config.article.scoped))) {
+    warnings.push('article.scoped must be a slug-glob map of LD+JSON type strings ("Article", "TechArticle", "NewsArticle"), not ' + (Array.isArray(config.article.scoped) ? 'an array' : typeof config.article.scoped));
+  } else if (config.article?.scoped && typeof config.article.scoped === 'object') {
+    for (const [key, v] of Object.entries(config.article.scoped)) {
+      if (!/^\//.test(key) && !key.includes('*')) {
+        warnings.push('article.scoped keys must be slug globs (starting with "/", optionally with * / **) - skipping "' + key + '"');
+      }
+      if (!['Article', 'TechArticle', 'NewsArticle'].includes(String(v))) {
+        warnings.push('article.scoped "' + key + '" must be "Article", "TechArticle" or "NewsArticle" (got "' + String(v) + '") - the page gets no article type');
+      }
+    }
+  }
+
+  // search shape (SEO-gap pass): { url: ... } - the SearchAction target.
+  // The {search_term_string} placeholder in the URL is the schema.org
+  // contract; anything else turns the potentialAction block into a broken
+  // search target, so the shape diagnostic warns below.
+  if (config.search !== undefined && config.search !== null && (typeof config.search !== 'object' || Array.isArray(config.search))) {
+    warnings.push('search must be a { url: "..." } object');
+  } else if (config.search?.url !== undefined) {
+    if (typeof config.search.url !== 'string' || config.search.url === '') {
+      warnings.push('search.url must be a non-empty string URL with a {search_term_string} placeholder');
+    } else if (!config.search.url.includes('{search_term_string}')) {
+      warnings.push('search.url must contain the {search_term_string} placeholder or the SearchAction block is a broken search target - omitted');
+    }
+  }
+
+  // breadcrumb shape (SEO-gap pass): true opts the page into auto-built
+  // BreadcrumbList LD+JSON from the page's own position in the URL tree.
+  if (config.breadcrumb !== undefined && typeof config.breadcrumb !== 'boolean') {
+    warnings.push('breadcrumb must be true (auto BreadcrumbList from URL structure)');
+  }
+
+  // verification shape (SEO-gap pass): map of provider -> content value.
+  if (config.verification !== undefined && config.verification !== null && (typeof config.verification !== 'object' || Array.isArray(config.verification))) {
+    warnings.push('verification must be an object of provider -> verification-string (google, bing, yandex, pinterest)');
+  } else if (config.verification) {
+    const KNOWN_VERIFICATION_PROVIDERS = ['google', 'bing', 'yandex', 'pinterest'];
+    for (const [provider, v] of Object.entries(config.verification)) {
+      if (!KNOWN_VERIFICATION_PROVIDERS.includes(provider)) {
+        warnings.push('unknown verification provider "' + provider + '" (known: ' + KNOWN_VERIFICATION_PROVIDERS.join(', ') + ') - no meta ships for it');
+      } else if (typeof v !== 'string' || v === '') {
+        warnings.push('verification.' + provider + ' must be a non-empty string verification code - no meta ships for it');
+      }
+    }
+  }
+
+  // llms shape (SEO-gap pass): true opts the run into emitting llms.txt in
+  // the output dir (the AI-consumable docs summary convention).
+  if (config.llms !== undefined && typeof config.llms !== 'boolean') {
+    warnings.push('llms must be true (emit llms.txt in the output dir)');
+  }
+
+  // locales shape (SEO-gap pass): map of slug glob -> language code. Pages
+  // that match a pattern get hreflang alternates pointing at its siblings.
+  if (config.locales !== undefined && config.locales !== null && (typeof config.locales !== 'object' || Array.isArray(config.locales))) {
+    warnings.push('locales must be a map of slug glob -> language code (e.g. "/de/**: de"), not ' + (Array.isArray(config.locales) ? 'an array' : typeof config.locales));
+  } else if (config.locales && typeof config.locales === 'object') {
+    for (const [pattern, lang] of Object.entries(config.locales)) {
+      if (typeof lang !== 'string' || lang === '') {
+        warnings.push('locales "' + pattern + '" must map to a non-empty language code string');
       }
     }
   }

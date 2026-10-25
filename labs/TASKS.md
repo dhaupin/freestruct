@@ -668,3 +668,40 @@ battery-pin sketch and built in the same pass.
   clarity (permalink and nav entry follow; the prestruct#48 convention
   pull proposes unwrapping family-wide). Earlier TASKS/CHANGELOG path
   references stay verbatim - they describe the tagged v1.0.0 state.
+
+### Pass 25 - the SEO-gap pass lands (done)
+
+All eight gaps from the post-1.1.0 audit table, one landing, all opt-in
+config, all missing-only, all pinned:
+
+- Feed autodiscovery: the injected head carries the rss alternate link
+  (`generateFeed` gate honored, page-owned alternates win). Pins: 2.
+- SearchAction: `search.url` drives the WebSite block's potentialAction
+  seam (`{{searchActionJson}}` - the hardcoded `?s=` default is GONE, a
+  latent consumer-facing bug in itself); a placeholder-less URL warns at
+  load and ships no block. Pins: 2.
+- Auto BreadcrumbList: `breadcrumb: true` builds the trail from the URL
+  tree (root ships none; manual JSON-LD pages stay silent).
+- Per-page article JSON-LD: `article.scoped` (same glob semantics) emits
+  typed Article/TechArticle/NewsArticle from the page facts; invalid
+  types warn and ship nothing.
+- Site verification metas: `verification` provider map, engine-owned
+  name spellings (`msvalidate.01` for Bing etc.), unknown providers
+  warn.
+- hreflang alternates: `locales` glob-to-language map, stem swaps in
+  both directions, x-default from a configured root-document pattern;
+  pages carrying any hreflang stay silent. Documented as a stem-swap
+  calculation, not a file inventory.
+- `llms.txt` (`llms: true`): new `engine/llms.js`, reads the same
+  indexable page set sitemap/feed honor, missing-only.
+- `freestruct audit --external`: opt-in HEAD-with-GET-retry check of up
+  to 50 unique external hrefs, warn-grade; json digest merges the rows.
+- Also fixed in passing: the `--external` work exposed a dispatch
+  subtlety - an async cmdAudit could let a full inject pass execute on
+  an audit invocation; runInject now refuses subcommand args outright.
+- Docs: config guide gains the Discovery Options section (search,
+  breadcrumb, article, verification, locales, llms; llms also filed
+  under the generate options family in spirit), README bullets + audit
+  flags line, CHANGELOG 1.1.0 entry extended (the version is untagged,
+  so the pass rides inside it), battery count mentions 75 -> 86.
+  Counters: battery 75 -> 86 pins.

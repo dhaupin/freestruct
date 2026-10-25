@@ -61,7 +61,7 @@ configured for the repository; the CNAME is `freestruct.creadev.org`
 
 Every push and pull request runs:
 
-1. `npm test` - the fixture battery (75 pins), including the version-truth
+1. `npm test` - the fixture battery (86 pins), including the version-truth
    pin that enforces the triple agreement (README / package.json /
    CHANGELOG) and the pinned **1.0.0** (owner call, 2026-10-22).
 2. Docs audit (`npm run lint:docs`) - frontmatter, links, nav symmetry,

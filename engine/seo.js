@@ -37,7 +37,123 @@ function minifyHtml(html) {
     .trim();
 }
 
+// ---------- SEO-gap pass helpers (feed link / SearchAction / breadcrumb / article / hreflang) ----------
+
+// The root-home stem is the root document; glob '**' retries use it too.
+const rootHomeSlug = '/';
+
+// Literal prefix of a locale pattern: the part every matched slug must start
+// with (glob patterns drop the glob tail; the root document retries to '').
+function stemForPattern(pattern) {
+  if (pattern === rootHomeSlug) return '';
+  if (typeof pattern === 'string') {
+    const star = pattern.indexOf('*');
+    if (star !== -1) return pattern.slice(0, star);
+    return pattern;
+  }
+  return rootHomeSlug;
+}
+
+// Root-home retries: a rest of '/
+' or '/' is the home page, not '//'.
+function slugForHomePage(slug) { return slug === rootHomeSlug ? rootHomeSlug : slug; }
+
+/**
+ * Per-page article LD+JSON type (SEO-gap pass): config.article.scoped is a
+ * slug-glob map of type strings; the most specific pattern matching the page
+ * wins (exact > glob), invalid types are skipped (config.js warned loudly
+ * at load).
+ */
+const ARTICLE_TYPES = Object.freeze(['Article', 'TechArticle', 'NewsArticle']);
+function articleTypeForPage(page, config) {
+  const scoped = config.article?.scoped;
+  if (!scoped || typeof scoped !== 'object' || Array.isArray(scoped)) return null;
+  let bestScore = -1;
+  let best = null;
+  for (const [pattern, v] of Object.entries(scoped)) {
+    if (!ARTICLE_TYPES.includes(String(v))) continue;
+    if (!slugMatchesGlob(pattern, page.slug)) continue;
+    const score = globSpecificity(pattern);
+    if (score > bestScore) { bestScore = score; best = String(v); }
+  }
+  return best;
+}
+
+/**
+ * Auto BreadcrumbList (SEO-gap pass): config.breadcrumb true builds the
+ * breadcrumb from the page's own position in the URL tree - the site root,
+ * then every URL segment in order, with the page's own title for the tail.
+ * The root page (no segments) gets nothing - a one-element breadcrumb is
+ * not a breadcrumb.
+ */
+function breadcrumbJsonLd(page, config) {
+  if (config.breadcrumb !== true) return null;
+  const segs = String(page.slug).split('/').filter(Boolean);
+  if (segs.length === 0) return null;
+  const items = [{ position: 1, name: config.site.name, url: pageUrlFor(config, rootHomeSlug) }];
+  let acc = '';
+  segs.forEach((seg, i) => {
+    acc += '/' + seg;
+    items.push({
+      position: i + 2,
+      name: (i === segs.length - 1 && page.title) ? page.title : seg.replace(/[-_]/g, ' '),
+      url: pageUrlFor(config, acc),
+    });
+  });
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((it) => ({
+      '@type': 'ListItem',
+      position: it.position,
+      name: it.name,
+      item: it.url,
+    })),
+  };
+}
+
+/**
+ * hreflang alternates for a page: the locales map keys slug globs to
+ * language codes; the most specific matching pattern decides the page's own
+ * language, the others give the replica slugs (the page's slug with the
+ * matched stem swapped for each sibling stem). This is a stem-SWAP guess,
+ * not a file-existence contract: a page that only exists in one language
+ * still gets the alternates entry, and its 404 is the SSG's problem.
+ */
+function hreflangAlternatesFor(page, config) {
+  const locales = config.locales;
+  if (!locales || typeof locales !== 'object' || Array.isArray(locales)) return null;
+  const entries = Object.entries(locales).filter(([, v]) => typeof v === 'string' && v !== '');
+  if (entries.length === 0) return null;
+  let bestScore = -1;
+  let ownPattern = null;
+  let ownLang = null;
+  for (const [pattern, lang] of entries) {
+    if (!slugMatchesGlob(pattern, page.slug)) continue;
+    const score = globSpecificity(pattern);
+    if (score > bestScore) { bestScore = score; ownPattern = pattern; ownLang = lang; }
+  }
+  if (!ownPattern) return null;
+  const ownStem = stemForPattern(ownPattern);
+  const stripLen = ownStem === rootHomeSlug ? 0 : ownStem.length;
+  let rest = String(page.slug).slice(stripLen);
+  if (!rest.startsWith('/')) rest = '/' + rest;
+  const out = [];
+  for (const [pattern, lang] of entries) {
+    if (lang === ownLang) continue;
+    const stem = stemForPattern(pattern);
+    const stemClean = stem === rootHomeSlug ? '' : stem.replace(/\/+$/, '');
+    out.push([lang, pageUrlFor(config, stemClean === '' ? (rest === '/' ? rootHomeSlug : rest) : slugForHomePage(stemClean + rest))]);
+  }
+  // x-default follows the root document's locale when one is configured.
+  const rootEntry = entries.find(([pattern]) => stemForPattern(pattern) === rootHomeSlug);
+  if (rootEntry && rootEntry[1] !== ownLang) {
+    out.push(['x-default', pageUrlFor(config, rest === '/' ? rootHomeSlug : rest)]);
+  }
+  return out.length ? out : null;
+} 
 // ---------- injection value escaping ----------
+
 
 // HTML-attribute escaping for config/page values that land inside
 // content="..." or href="...": a raw " in a site description silently
@@ -210,6 +326,16 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
       });
   }
 
+  // SearchAction (config.search.url, SEO-gap pass): the seam expands to ''
+  // (no potentialAction at all - the hardcoded ?s= default is gone) or to
+  // the configured search target. The {search_term_string} placeholder is
+  // required by the schema.org contract; config.js already warns loudly at
+  // load when it is missing (and the block then never ships).
+  const searchActionJson = (config.search?.url && config.search.url.includes('{search_term_string}'))
+    ? ',\n  "potentialAction": { "@type": "SearchAction", "target": "'
+      + escJson(config.search.url) + '", "query-input": "required name=search_term_string" }'
+    : '';
+
   const replacements = {
     '{{pageTitle}}': escAttr(pageTitle),
     '{{pageDescription}}': escAttr(pageDescription),
@@ -235,6 +361,8 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
       ? ',\n  "founder": { "@type": "Person", "name": "' + escJson(config.author.name) + '"'
         + (config.author.url ? ', "url": "' + escJson(config.author.url) + '"' : '') + ' }'
       : '',
+    // searchActionJson seam (SEO-gap pass): '' or the configured block
+    '{{searchActionJson}}': searchActionJson,
   };
 
   // Custom JSON-LD hook (config.jsonLd, issue #25): three accepted shapes -
@@ -276,6 +404,35 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
         const serialized = JSON.stringify(block).replace(/</g, '\\u003c');
         customJsonLd += '\n<script type="application/ld+json">\n' + serialized + '\n</script>\n';
       }
+    }
+  }
+
+  // Per-page Article/TechArticle LD+JSON (SEO-gap pass, config.article
+  // scoped) + auto BreadcrumbList (config.breadcrumb, SEO-gap pass): both
+  // auto-emit ONLY for pages that ship no JSON-LD of their own AND get no
+  // configured jsonLd block at all (missing-only, and a scoped jsonLd key
+  // counts as the consumer's explicit per-page choice - no double block).
+  if (!hasSeoType(html, 'jsonld') && config.jsonLd === undefined) {
+    const articleType = articleTypeForPage(page, config);
+    if (articleType) {
+      const block = {
+        '@context': 'https://schema.org',
+        '@type': articleType,
+        headline: pageTitle,
+        url: canonicalUrl,
+      };
+      const artAuthor = overrides?.author || config.author?.name;
+      if (artAuthor) block.author = { '@type': 'Person', name: String(artAuthor) };
+      if (overrides?.publishedTime) block.datePublished = String(overrides.publishedTime);
+      if (pageDescription) block.description = pageDescription;
+      if (ogImageFull) block.image = ogImageFull;
+      const serialized = JSON.stringify(block).replace(/</g, '\\u003c');
+      customJsonLd += '\n<script type="application/ld+json">\n' + serialized + '\n</script>\n';
+    }
+    const breadcrumbLd = breadcrumbJsonLd(page, config);
+    if (breadcrumbLd) {
+      const serialized = JSON.stringify(breadcrumbLd).replace(/</g, '\\u003c');
+      customJsonLd += '\n<script type="application/ld+json">\n' + serialized + '\n</script>\n';
     }
   }
 
@@ -348,6 +505,44 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
   if (!hasCanonical) {
     const canMatch = seo.match(/<link rel="canonical"[^>]*>/);
     if (canMatch) seoInjection += '\n' + canMatch[0];
+  }
+
+  // Feed autodiscovery (SEO-gap pass): feed.xml ships with honest dates,
+  // but nothing in any head pointed feed readers at it. One line in every
+  // injected head - gated on the page not carrying an alternate/rss link of
+  // its own, in either attribute order (missing-only, as always).
+  if (config.generateFeed !== false
+      && !/(rel\s*=\s*["']alternate["'][^>]*type\s*=\s*["']application\/(rss|atom)\+xml["'])/i.test(html)
+      && !/(type\s*=\s*["']application\/(rss|atom)\+xml["'][^>]*rel\s*=\s*["']alternate["'])/i.test(html)) {
+    seoInjection += '\n<link rel="alternate" type="application/rss+xml" title="' + escAttr(siteName) + ' feed" href="' + escAttr(pageUrlFor(config, '/feed.xml')) + '">';
+  }
+
+  // Site verification metas (SEO-gap pass, config.verification): the
+  // provider -> code map drops straight into site-owned meta tags, with the
+  // engine-owned name spellings (search engines match on name, not content).
+  const VERIFICATION_META_NAMES = { google: 'google-site-verification', bing: 'msvalidate.01', yandex: 'yandexVerification', pinterest: 'pinterest-site-verification' };
+  if (config.verification && typeof config.verification === 'object' && !Array.isArray(config.verification)) {
+    const verificationMetas = [];
+    for (const [provider, code] of Object.entries(config.verification)) {
+      const metaName = VERIFICATION_META_NAMES[provider];
+      if (!metaName || typeof code !== 'string' || code === '') continue; // config.js warned
+      if (html.includes('name="' + metaName + '"')) continue; // missing-only
+      verificationMetas.push('<meta name="' + metaName + '" content="' + escAttr(code) + '">');
+    }
+    if (verificationMetas.length) seoInjection += '\n' + verificationMetas.join('\n');
+  }
+
+  // hreflang/i18n alternates (SEO-gap pass, config.locales): slug-stem swap
+  // alternates for pages inside a locale tree; skipped entirely when the
+  // page carries any hreflang of its own (the SSG or the author owns it).
+  if (config.locales && typeof config.locales === 'object' && !Array.isArray(config.locales)
+      && !/(\shreflang\s*=)/i.test(html)) {
+    const alternates = hreflangAlternatesFor(page, config);
+    if (alternates) {
+      seoInjection += '\n' + alternates
+        .map(([lang, url]) => '<link rel="alternate" hreflang="' + escAttr(lang) + '" href="' + escAttr(url) + '">')
+        .join('\n');
+    }
   }
 
   const versionTag = '<meta name="freestruct-build" content="' + buildHash + '">';
