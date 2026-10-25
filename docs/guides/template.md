@@ -4,9 +4,11 @@ description: Copy this template when creating new docs pages - it shows all supp
 nav_order: 9
 ---
 
-<!-- # Example Page Template
+# Example Page Template
 
-This is the complete template for Freestruct docs. Copy it when creating new pages. -->
+<!-- This is the complete template for Freestruct docs. Copy it when creating new pages. -->
+
+This is the complete template for Freestruct docs. Copy it when creating new pages.
 
 ## Frontmatter
 
