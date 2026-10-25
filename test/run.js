@@ -2050,6 +2050,7 @@ test('absolute hrefs resolve at the output ROOT from nested pages; script/data s
       + '<a href="/no-such-route">gone</a>'
       + '<a href="data:image/svg+xml;utf8,<svg></svg>">icon</a>'
       + '<script>document.write("<a href=/ghost-script>js chrome</a>");</script>'
+      + '<pre><code><a href="fence-ghost">taught shape</a></code></pre>'
       + '</body></html>',
   });
   try {
@@ -2057,6 +2058,7 @@ test('absolute hrefs resolve at the output ROOT from nested pages; script/data s
     assert.includes(out, 'Link check: 2 broken links found', 'fixture ghost + the real miss - the nested root link resolves');
     assert.includes(out, '/no-such-route');
     assert.ok(!out.includes('/ghost-script'), 'inline script chrome stays out of the checker');
+    assert.ok(!out.includes('fence-ghost'), 'code-fence taught shapes stay out of the checker');
     assert.ok(!out.includes('data:image'), 'data: URI targets stay out of the checker');
   } finally { rmDir(dir); }
 });

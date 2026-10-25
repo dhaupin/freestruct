@@ -19,13 +19,16 @@ export function checkLinks(files, outputDir) {
   const broken = [];
 
   for (const file of files) {
-    // Script/style stripping (Pass 26.14): inline JS template strings
-    // ("<a href=" + url + ">" shapes) are NOT links - validating them
-    // inflates the broken list with the pipeline's own chrome. Scan the
-    // document with script/style payloads removed.
+    // Payload stripping (Pass 26.14): inline JS template strings
+    // ("<a href=" + url + ">" shapes) are NOT links; rouge-fenced code
+    // TEACHES link shapes (the style guide's <a href="guides/foo">) -
+    // neither is a route. Scan the document with script, style, pre and
+    // code payloads removed (real nav hrefs never live in any of them).
     const html = fs.readFileSync(file, 'utf8')
       .replace(/<script[\s\S]*?<\/script>/gi, '')
-      .replace(/<style[\s\S]*?<\/style>/gi, '');
+      .replace(/<style[\s\S]*?<\/style>/gi, '')
+      .replace(/<pre[\s\S]*?<\/pre>/gi, '')
+      .replace(/<code[\s\S]*?<\/code>/gi, '');
     const baseDir = path.dirname(file);
 
     const linkRegex = /href="([^"#]+)(?:#[^"]*)?"/g;
