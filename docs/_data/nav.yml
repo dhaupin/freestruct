@@ -8,7 +8,7 @@
 #   check-docs-links       - every URL listed here resolves to a page
 #   check-docs-nav         - every naviagted page is listed exactly once
 #
-# Shape (matches docs/_includes/header.html and docs/_layouts/default.html):
+# Shape (matches docs/_layouts/default.html):
 # - title: <section title>
 #   items:
 #     - title: <link text>
@@ -45,6 +45,31 @@
       url: /guides/freestruct-config
     - title: CLI Reference
       url: /guides/cli
+    - title: Environment Reference
+      url: /guides/environment
+    - title: Packs
+      url: /guides/packs
+
+- title: Playbooks
+  items:
+    - title: Playbooks
+      url: /playbooks/
+    - title: First run
+      url: /playbooks/first-run/
+    - title: Link triage
+      url: /playbooks/link-triage/
+    - title: Baked-output audit
+      url: /playbooks/baked-output-audit/
+    - title: Config validation
+      url: /playbooks/config-validation/
+    - title: Release gate
+      url: /playbooks/release-gate/
+    - title: Phone publish
+      url: /playbooks/phone-publish/
+    - title: Docs preview
+      url: /playbooks/docs-preview/
+    - title: Pin bump
+      url: /playbooks/pin-bump/
 
 - title: Contributions
   items:
@@ -59,6 +84,8 @@
   items:
     - title: Release Posts
       url: /discussions
+    - title: Announcing freestruct v1.2.0
+      url: /discussions/announcing-freestruct-v1.2.0/
     - title: Announcing freestruct v1.1.0
       url: /discussions/announcing-freestruct-v1.1.0/
     - title: Announcing freestruct v1.0.0

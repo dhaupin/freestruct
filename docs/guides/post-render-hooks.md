@@ -16,7 +16,7 @@ Your SSG builds -> Freestruct modifies -> deploy
            This is your hook
 ```
 
-Your static site generator (Jekyll, Hugo, Docusaurus) outputs HTML. Freestruct reads that HTML, gives you the full content in JavaScript, and lets you modify it before deploy.
+Your static site generator (Jekyll, Hugo, Docusaurus) outputs HTML. Freestruct reads that HTML and rewrites it before deploy. The examples below sketch what a postBuild script can do with the baked files - they are illustrations of the transformations, not an engine API you call from inside the injector.
 
 ## Why This Matters
 
@@ -68,53 +68,32 @@ html = html.replace(/<img (?!.*loading=)/g, '<img loading="lazy" ');
 
 ## Build Hook System
 
-The Freestruct build runs as a Node.js script. You can extend it by modifying inject.js:
+Freestruct gives you two real seams, and neither one asks you to fork the engine.
 
-```javascript
-// Add custom post-render logic in injectFile():
-function injectFile(filePath, config, template, outputDir, buildHash) {
-  let html = fs.readFileSync(filePath, 'utf8');
+**Template snippets** are the head/body hook surface. Drop a file in `docs/_freestruct/` and it is injected on the next run:
 
-  // YOUR CUSTOM LOGIC HERE
-  if (config.customHooks) {
-    for (const hook of config.customHooks) {
-      html = applyHook(html, hook);
-    }
-  }
+| File | Injected |
+|------|----------|
+| `inject-header.html` | Before `</head>` |
+| `inject-body-start.html` | After `<body>` |
+| `inject-footer.html` | Before `</body>` |
 
-  // ... rest of existing injection logic
-}
-```
+They substitute `{{siteName}}`, `{{siteUrl}}` and `{{buildHash}}` (see [Custom Injection](/guides/custom-injection)), so conditional markup and site-aware links live in plain HTML, no engine edit required.
 
-Or use the **purge hooks** system to run arbitrary shell commands:
-
-```yaml
-cacheBusting:
-  purge:
-    - name: custom-inject
-      command: node scripts/my-custom-injection.js
-```
-
-And there is a first-class **postBuild seam** for anything that chains after
-the whole pass (custom schema injection scripts, audits, image
-post-processing, IndexNow submissions):
+**`hooks.postBuild`** chains arbitrary shell commands after the whole pass - custom schema injection scripts, audits, image post-processing, IndexNow submissions:
 
 ```yaml
 runHooks: true # commands stay dormant without it
 
 hooks:
   postBuild:
-    - node scripts/faqp-schema.mjs
+    - node scripts/faq-schema.mjs
     - npm run seo:audit
 ```
 
-PostBuild hooks inherit the purge security contract: nothing executes
-without `runHooks: true`, each command gets a 30s timeout with inherited
-output, and the `$SITE_URL` / `$BUILD_HASH` / `$OUTPUT_DIR` placeholders are
-substituted (plus `FREESTRUCT_SITE_URL` / `FREESTRUCT_BUILD_HASH` /
-`FREESTRUCT_OUTPUT_DIR` env vars on the child, so scripts never have to do
-string surgery). A nonzero hook exit fails the whole build with exit code
-4.
+PostBuild hooks inherit the purge security contract: nothing executes without `runHooks: true`, each command gets a 30s timeout with inherited output, and the `$SITE_URL` / `$BUILD_HASH` / `$OUTPUT_DIR` placeholders are substituted (plus `FREESTRUCT_SITE_URL` / `FREESTRUCT_BUILD_HASH` / `FREESTRUCT_OUTPUT_DIR` env vars on the child, so scripts never have to do string surgery). A nonzero hook exit fails the whole build with exit code 4.
+
+For anything the snippets cannot express, a postBuild script reads the baked HTML directly and rewrites it - the output tree is plain files by then.
 
 ## Best Practice: Comment Your Modifications
 

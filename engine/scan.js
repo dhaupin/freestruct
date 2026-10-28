@@ -150,6 +150,10 @@ export function computeBuildHash(config, pages) {
   const stable = (html) => html
     .replace(/<meta[^>]*name="(freestruct-build|last-modified|reading-time|robots)"[^>]*>/gi, '')
     .replace(/<!-- freestruct -->[\s\S]*?(?=<\/head>)/i, '')
+    // Body-start/footer snippets (marker-wrapped by seo.js) are the tool's own
+    // output; strip them too or a rerun's body text differs from run 1 and the
+    // content-derived hash churns every pass.
+    .replace(/<!-- freestruct:snippet -->[\s\S]*?<!-- \/freestruct:snippet -->/gi, '')
     .replace(/\?v=[0-9a-f]{8}/g, '')
     .replace(/ loading="lazy"/g, '');
   for (const page of pages.filter(p => !p.is404).sort((a, b) => (a.rel < b.rel ? -1 : a.rel > b.rel ? 1 : 0))) {

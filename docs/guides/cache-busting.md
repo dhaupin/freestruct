@@ -55,9 +55,6 @@ cacheBusting:
   # Enable if your CDN doesn't invalidate on deploy
   hashInCanonicalUrl: false
 
-  # Hash generation (default: true - always on)
-  hash: true
-
   # Optional: run purge commands after injection
   # MUST set runHooks: true to enable (disabled by default for security)
   purge:
@@ -112,7 +109,7 @@ The purge hooks feature runs commands from your `freestruct.config.yml` via `exe
 Best practices:
 - Use environment variables for secrets (not hardcoded in config)
 - Review all purge commands before running
-- Consider disabling in CI: set `enablePurge: false`
+- Consider disabling in CI by leaving `runHooks` unset (the gateway is off by default)
 
 ### Examples
 

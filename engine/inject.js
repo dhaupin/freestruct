@@ -36,7 +36,7 @@ import { pathToFileURL, fileURLToPath } from 'url';
 
 import { loadConfig } from './config.js';
 import { getHtmlFiles, buildPages, computeBuildHash, htmlIsNoindex, hasSeoType } from './scan.js';
-import { injectPage, addReadingTime, addLastModified, addLazyLoading } from './seo.js';
+import { injectPage, addReadingTime, addLastModified, addLazyLoading, addTableWrap } from './seo.js';
 import { generateSitemap, generateRobots, generateFeed } from './xmllike.js';
 import { generate404, pipeline404 } from './notfound.js';
 import { checkLinks } from './linkcheck.js';
@@ -308,6 +308,9 @@ export function runInject(options = {}) {
     if (config.readingTime !== false) for (const page of latePages) addReadingTime(page.file);
     if (config.lastModified !== false) for (const page of latePages) addLastModified(page.file);
     if (config.lazyLoad !== false) for (const page of latePages) addLazyLoading(page.file);
+    // table guard (issue #35): wrap wide tables so every downstream site is
+    // mobile-safe by construction. Default-on; `tableWrap: false` opts out.
+    if (config.tableWrap !== false) for (const page of latePages) addTableWrap(page.file);
 
     // noindex is honored by default (owner decision, issue #5):
     // noindex pages never ship into sitemap/feed/search
@@ -317,8 +320,13 @@ export function runInject(options = {}) {
     if (config.generateRobots !== false) generateRobots(config, outputDir);
     if (config.generateFeed !== false) generateFeed(indexablePages, config, outputDir);
 
-    // link check over regular pages (404 targets excluded by design)
-    const brokenLinks = config.linkCheck !== false ? checkLinks(sitePages.map(p => p.file), outputDir) : [];
+    // link check over regular pages (404 targets excluded by design).
+    // basePath threads through so root-absolute hrefs on a baseurl'd site
+    // (which carry the deploy prefix) resolve against the tree, not the
+    // prefix as a directory (issue #32).
+    const brokenLinks = config.linkCheck !== false
+      ? checkLinks(sitePages.map(p => p.file), outputDir, config.basePath)
+      : [];
 
     // opt-in search index (owner decision: search.json is opt-in as of Phase 2)
     if (config.searchIndex === true) generateSearchIndex(indexablePages, config, outputDir);
@@ -378,8 +386,12 @@ export function runInject(options = {}) {
 // (the pre-change --version module-level check had the same shape). Library
 // importers pass no such argv and simply skip all of these.
 if (_flags.includes('--version')) { printVersion(); process.exit(0); }
-// `help` is the subcommand; --help is the flag alias (both print the same text)
-if (_firstArg === 'help' || _argv.includes('--help')) { printHelp(); process.exit(EXIT_OK); }
+// `help` is the subcommand; --help and -h are the flag aliases (all print the
+// same text). -h must be handled HERE: it is listed in KNOWN_DEFAULT_DASHES,
+// so without this branch it passes the unknown-flag guard and then rides as
+// the positional output dir (the run then dies with "Output directory not
+// found: .../-h").
+if (_firstArg === 'help' || _argv.includes('--help') || _argv.includes('-h')) { printHelp(); process.exit(EXIT_OK); }
 // ---------- audit subcommand (issue #18) ----------
 
 // `freestruct audit [outputDir] [--json]`: verify the BAKED output (heads +

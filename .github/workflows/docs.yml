@@ -1,3 +1,11 @@
+# Deploy Docs - a THIN caller of the canonical reusable lane (issue #31).
+#
+# The runbook that used to live here inline (checkout, ruby, jekyll, node,
+# freestruct --strict, crashtest dogfood, pinned+cached pagefind, Pages
+# upload, deploy) now lives in .github/workflows/docs-lane.yml as a
+# workflow_call. This repo dogfoods its own lane with the defaults, so the
+# push path is the same run; the other rig projects can call the same lane
+# and thin their hand-copies to a file this size.
 name: Deploy Docs
 
 on:
@@ -15,86 +23,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.4'
-
-      - name: Install Ruby deps
-        working-directory: docs
-        run: bundle install
-
-      # Inline cd + step-level working-directory as belt-and-suspenders (jekyll-leg safety).
-      - name: Build Jekyll
-        run: cd docs && bundle exec jekyll build
-
-      - name: Setup Node
-        uses: actions/setup-node@v7
-        with:
-          node-version: '22'
-          cache: npm
-
-      - name: Install freestruct deps
-        run: npm ci --no-audit --no-fund
-
-      # --strict: broken links fail the build (the #4 graduation).
-      - name: Run freestruct strict
-        run: node bin/freestruct.mjs --strict
-
-      # Cached by the pinned gate sha - the github install costs ~7m cold
-      # (measured), the campaign ~1s; a cache hit skips the minutes entirely.
-      - name: Restore crashtest (docs dogfood installer cache)
-        id: ct
-        uses: actions/cache@v6
-        with:
-          path: node_modules/crashtest
-          key: crashtest-dc80a7c7a42e58a532b8ad624b79de2742d1ccbb
-      - name: Install crashtest (cache misses only)
-        if: ${{ steps.ct.outputs['cache-hit'] != 'true' }}
-        run: npm install --no-save --no-audit --no-fund github:dhaupin/crashtest#dc80a7c7a42e58a532b8ad624b79de2742d1ccbb
-      - name: Crashtest the built docs
-        run: node node_modules/crashtest/bin/crashtest.js run
-
-      # Pinned + cached: the pagefind npm package resolves a platform
-      # BINARY at install and cost the runner 355s cold (measured); keyed on
-      # the version, a cache hit skips that entirely (same pattern as the
-      # crashtest installer cache).
-      # The runner's native binary lives in the SCOPED companion package
-      # (@pagefind/<platform>) - cache BOTH, or a cache hit ships a runner
-      # that can't find its binary (measured in CI: the npx fallback died
-      # with 'Failed to install either of [pagefind_extended, pagefind]').
-      - name: Restore pagefind (indexer cache)
-        id: pf
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules/pagefind
-            node_modules/@pagefind
-          key: pagefind-1.5.2-v2
-      - name: Install Pagefind (cache misses only, pinned)
-        if: ${{ steps.pf.outputs['cache-hit'] != 'true' }}
-        run: npm install --no-save --no-audit --no-fund pagefind@1.5.2
-      - name: Index search
-        run: node node_modules/pagefind/lib/runner/bin.cjs --site docs/_site
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v5
-        with:
-          path: docs/_site
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v5
+  docs:
+    # freestruct dogfoods its own lane: no inputs means the defaults
+    # (docs/, docs/_site, ruby 3.4, node 22, pagefind 1.5.2, `node
+    # bin/freestruct.mjs --strict`).
+    uses: ./.github/workflows/docs-lane.yml

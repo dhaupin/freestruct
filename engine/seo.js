@@ -11,30 +11,30 @@ import { hasSeoType, htmlIsNoindex } from './scan.js';
 import { pageUrlFor, slugMatchesGlob, globSpecificity } from './urls.js';
 
 function minifyHtml(html) {
-  // Conservative HTML minifier - removes unnecessary whitespace
-  // Preserves content inside <pre>, <textarea>, <script>, <style> tags
-  let inBlock = false;
-  let result = '';
-  let i = 0;
-  while (i < html.length) {
-    if (html.slice(i, i + 5) === '<pre>') inBlock = true;
-    else if (html.slice(i, i + 10) === '<textarea') inBlock = true;
-    else if (html.slice(i, i + 8) === '<script>') inBlock = true;
-    else if (html.slice(i, i + 7) === '<style>') inBlock = true;
-    else if (html.slice(i, i + 6) === '</pre>') inBlock = false;
-    else if (html.slice(i, i + 11) === '</textarea>') inBlock = false;
-    else if (html.slice(i, i + 9) === '</script>') inBlock = false;
-    else if (html.slice(i, i + 8) === '</style>') inBlock = false;
-
-    if (inBlock) result += html[i];
-    else if (html[i] === '\n' || html[i] === '\r' || html[i] === '\t') { /* skip */ }
-    else result += html[i];
-    i++;
-  }
-  return result
+  // Conservative HTML minifier - removes unnecessary whitespace OUTSIDE
+  // verbatim blocks. The <pre>/<script>/<style>/<textarea> CONTENT is
+  // preserved byte-for-byte (README's contract): whitespace there is
+  // significant (code fences, inline JS with `//` comments, CSS), so the
+  // collapse must never reach inside a block. Blocks are matched with their
+  // attribute forms (`<pre class="highlight">`, `<script type="...">`) - the
+  // old open-tag literals only caught a bare `<pre>`.
+  const blockRe = /<(pre|script|style|textarea)\b[^>]*>[\s\S]*?<\/\1\s*>/gi;
+  const shrink = (s) => s
+    .replace(/\r/g, '')
+    .replace(/[ \t]*\n[ \t]*/g, '')
     .replace(/>\s+</g, '><')
-    .replace(/\s+/g, ' ')
-    .trim();
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{2,}/g, '\n');
+  const parts = [];
+  let last = 0;
+  let m;
+  while ((m = blockRe.exec(html)) !== null) {
+    if (m.index > last) parts.push(shrink(html.slice(last, m.index)));
+    parts.push(m[0]);
+    last = blockRe.lastIndex;
+  }
+  if (last < html.length) parts.push(shrink(html.slice(last)));
+  return parts.join('').trim();
 }
 
 // ---------- SEO-gap pass helpers (feed link / SearchAction / breadcrumb / article / hreflang) ----------
@@ -54,8 +54,7 @@ function stemForPattern(pattern) {
   return rootHomeSlug;
 }
 
-// Root-home retries: a rest of '/
-' or '/' is the home page, not '//'.
+// Root-home retries: a rest of '/' or '' is the home page, not '//'.
 function slugForHomePage(slug) { return slug === rootHomeSlug ? rootHomeSlug : slug; }
 
 /**
@@ -239,10 +238,39 @@ function readPageOverrides(html, page) {
  * pages that ship their own OG/Twitter/JSON-LD/canonical/description keep them.
  * Page-level freestruct comments refine the injected tags (see PERPAGE_KEYS).
  */
+// Marker-wrapped custom snippets: the wrapper makes the injected region
+// identifiable so a RERUN can drop the previous copy before re-adding it
+// (without this, each pass stacked another snippet and, for body/footer
+// snippets, changed the body text - churning the content-derived build hash
+// every run). The wrapper is freestruct's own; snippet content comments are
+// already stripped by readSnippet.
+const SNIPPET_OPEN = '<!-- freestruct:snippet -->';
+const SNIPPET_CLOSE = '<!-- /freestruct:snippet -->';
+
+/**
+ * Remove every region a PREVIOUS freestruct run wrote into a page, so a
+ * second pass re-derives it instead of stacking duplicates. Two tool-owned
+ * regions: the generated head tail (the `<!-- freestruct -->` marker through
+ * `</head>`: seo block, version tag, header snippet) and the marker-wrapped
+ * body-start/footer snippets. Both are entirely freestruct's, so removing
+ * them is safe; consumer/SSG content never lives inside either.
+ */
+function stripInjectedRegions(html) {
+  return html
+    .replace(/<!-- freestruct -->[\s\S]*?(?=<\/head>)/i, '')
+    // The snippets are inserted with NO surrounding newlines (the snippet
+    // files' own trailing newline rides INSIDE the markers), so this removal
+    // restores the page to its pre-injection bytes and a rerun is byte-identical.
+    .replace(/<!-- freestruct:snippet -->[\s\S]*?<!-- \/freestruct:snippet -->/gi, '');
+}
+
 export function injectPage(page, { config, template, buildHash, snippetDir, injectWarnings, generatedImages }) {
   let html = page.html;
   const siteName = config.site.name;
   const siteUrl = config.site.url;
+  // Rerun hygiene first: drop the previous pass's output so this pass derives
+  // the same result (idempotent reruns) rather than duplicating snippets.
+  html = stripInjectedRegions(html);
   const overrides = readPageOverrides(html, page);
 
   // Headless-page diagnostics (Pass 26.13): every injected surface anchors
@@ -340,12 +368,17 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
 
   // Add cache-busting query param to assets (css, js, images, fonts, ...)
   if (config.cacheBusting?.assetQueryParam !== false) {
-    const assetExts = '.css.js.png.jpg.jpeg.gif.svg.webp.ico.woff.woff2.ttf.otf.wasm.json';
+    // A real extension SET, matched case-insensitively. The old
+    // `assetExts.includes(ext)` was a substring test, so '/x.cs' ('.cs' is a
+    // substring of '.css'), '/x.tt' ('.ttf'), '/x.j' ('.js') all got busted
+    // while a genuine '/img.PNG' was missed.
+    const assetExts = new Set(['.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico', '.woff', '.woff2', '.ttf', '.otf', '.wasm', '.json']);
     html = html.replace(/(href|src)=\"([^\"]+)\"/gi,
       (match, attr, url) => {
         const cleanUrl = url.replace(/\?v=[^"]*/, '');
-        const ext = cleanUrl.substring(cleanUrl.lastIndexOf('.'));
-        if (assetExts.includes(ext)) {
+        const dot = cleanUrl.lastIndexOf('.');
+        const ext = dot === -1 ? '' : cleanUrl.slice(dot).toLowerCase();
+        if (assetExts.has(ext)) {
           return attr + '=\"' + cleanUrl + '?v=' + buildHash + '\"';
         }
         return match;
@@ -615,13 +648,14 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
   const header = readSnippet('inject-header.html');
   if (header) html = html.replace(/<\/head>/i, () => header + '\n</head>');
 
-  // Custom body-start injection after <body>
+  // Custom body-start injection after <body>. Marker-wrapped so a rerun can
+  // drop the previous copy (stripInjectedRegions) instead of stacking it.
   const bodyStart = readSnippet('inject-body-start.html');
-  if (bodyStart) html = html.replace(/<body[^>]*>/i, (m) => m + bodyStart);
+  if (bodyStart) html = html.replace(/<body[^>]*>/i, (m) => m + SNIPPET_OPEN + bodyStart + SNIPPET_CLOSE);
 
-  // Custom footer injection before </body>
+  // Custom footer injection before </body> (marker-wrapped, same reason).
   const footer = readSnippet('inject-footer.html');
-  if (footer) html = html.replace(/<\/body>/i, () => footer + '\n</body>');
+  if (footer) html = html.replace(/<\/body>/i, () => SNIPPET_OPEN + footer + SNIPPET_CLOSE + '</body>');
 
   if (config.minify) html = minifyHtml(html);
 
@@ -660,7 +694,69 @@ export function addLazyLoading(filePath) {
   let html = fs.readFileSync(filePath, 'utf8');
   html = html.replace(/(<img[^>]*(?<!loading)=)[^>]*>/gi, (match) => {
     if (match.includes('loading=')) return match;
-    return match.replace(/>$/, ' loading="lazy">');
+    // Insert BEFORE the closing `>` (and before a self-closing `/>`), never
+    // between the slash and the bracket - the old `/>`-unaware append left a
+    // dangling `/ loading="lazy">` on `<img ... />` (valid-ish to a browser,
+    // malformed markup everywhere else).
+    return match.replace(/\s*\/?>$/, ' loading="lazy">');
   });
   fs.writeFileSync(filePath, html);
+}
+
+/**
+ * Wrap every <table> in a scroll container so a wide table scrolls inside its
+ * own box instead of pinning the whole page to the table's min-content width
+ * (issue #35: on a ~426px phone a wide docs table clipped the H1, the nav and
+ * everything else). The wrapper carries the class (for consumer theming) plus
+ * the scroll properties inline, so the guard holds by construction on any
+ * layout, including ones whose CSS predates the rule.
+ *
+ * Depth-aware so nested tables wrap once (the outermost); idempotent (a table
+ * already inside a table-ish wrapper is skipped, so runs never stack); and it
+ * leaves the tree untouched when there is no table to wrap (no rewrite, no
+ * spurious build-hash flip).
+ */
+export function addTableWrap(filePath) {
+  let html = fs.readFileSync(filePath, 'utf8');
+  if (!/<table[\s>]/i.test(html)) return;
+
+  // Depth-aware span scan: record [start, end) of each OUTERMOST table block.
+  const tagRe = /<table\b[^>]*>|<\/table\s*>/gi;
+  const spans = [];
+  let depth = 0;
+  let start = -1;
+  let m;
+  while ((m = tagRe.exec(html)) !== null) {
+    if (/^<\/table/i.test(m[0])) {
+      if (depth > 0) {
+        depth--;
+        if (depth === 0) spans.push([start, tagRe.lastIndex]);
+      }
+    } else {
+      if (depth === 0) start = m.index;
+      depth++;
+    }
+  }
+
+  // Skip a table whose immediate ancestor is already a table-style wrapper
+  // (ours from a prior pass, or a consumer's own .table-wrap/.table-responsive).
+  // "table" must be a DELIMITED class segment: "printable"/"portable" do not
+  // count, so a table after an unrelated div still wraps.
+  const wrapped = /<div\b[^>]*\bclass=["']([^"']*)["'][^>]*>\s*$/i;
+  const tableish = (cls) => cls.split(/\s+/).some((tok) => /^table([-_]|$)|[-_]table([-_]|$)/i.test(tok));
+  const todo = spans.filter(([s]) => {
+    const mm = html.slice(0, s).match(wrapped);
+    return !(mm && tableish(mm[1]));
+  });
+  if (todo.length === 0) return;
+
+  // Insert from the end backward so earlier offsets stay valid.
+  let out = html;
+  for (let i = todo.length - 1; i >= 0; i--) {
+    const [s, e] = todo[i];
+    out = out.slice(0, s)
+      + '<div class="fs-table-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%">'
+      + out.slice(s, e) + '</div>' + out.slice(e);
+  }
+  fs.writeFileSync(filePath, out);
 }

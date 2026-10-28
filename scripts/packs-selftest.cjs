@@ -39,10 +39,13 @@ const ROOT = join(dirname(__filename), '..');
 // A relative CRASHTEST_BIN (e.g. CI's node_modules/crashtest/bin/crashtest.js)
 // must be resolved against the CALLING cwd now - the campaigns later spawn
 // with temp-dir cwds, and a relative path would mysteriously vanish.
+// The repo-relative default lets a local `npm i --no-save github:dhaupin/
+// crashtest` satisfy the gate without an env var (the pre-publish `check`).
 const CRASHTEST_BINS = [
   process.env.CRASHTEST_BIN && requires()
     ? join(process.cwd(), process.env.CRASHTEST_BIN)
     : process.env.CRASHTEST_BIN,
+  join(ROOT, 'node_modules', 'crashtest', 'bin', 'crashtest.js'),
   '/home/daytona/crashtest/bin/crashtest.js',
 ].filter(Boolean);
 
@@ -200,8 +203,17 @@ const check = (name, ok, got) => {
 async function main() {
   const crashBin = CRASHTEST_BINS.find((p) => p && existsSync(p));
   if (!crashBin) {
-    console.error('packs-selftest: no dhaupin/crashtest checkout found (set CRASHTEST_BIN)');
-    process.exit(2);
+    // An explicitly requested checkout that is missing is still loud (a
+    // misconfig, exit 2). An ABSENT checkout on a local run is a named skip
+    // (exit 0): the pre-publish `check` gate must not depend on a
+    // github-tarball install, and CI always installs crashtest - so the
+    // teeth still run where it matters (issue #37).
+    if (process.env.CRASHTEST_BIN) {
+      console.error('packs-selftest: CRASHTEST_BIN set but not found: ' + process.env.CRASHTEST_BIN);
+      process.exit(2);
+    }
+    console.error('packs-selftest: skipped - no dhaupin/crashtest checkout found (set CRASHTEST_BIN, or npm i --no-save github:dhaupin/crashtest). CI installs it, so the teeth still run there.');
+    return;
   }
 
   // --- HARDENED: real build, honest double - everything must hold ---

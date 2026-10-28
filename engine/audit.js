@@ -5,7 +5,10 @@
 // and remapped onto freestruct's own contract:
 //   - meta extraction is attribute-order tolerant (per the donor's notes)
 //   - og:image / twitter:image / twitter:site/creator are config-gated in
-//     this engine (missing-only), so their absence is a WARN, not a FAIL
+//     this engine (missing-only), so their absence is a WARN, not a FAIL.
+//     The og:image / twitter:image absences are CONFIG-shaped (identical on
+//     every page), so they collapse to one line each with a page count
+//     (issue #28); twitter:site/creator are graded only when a handle is set.
 //   - the FAIL og/twitter class is the SHARED core (og:title/og:description,
 //     twitter:card/twitter:title); the rest of the injected set rides WARN
 //     because missing-only means SSG-tagged pages legitimately keep a
@@ -37,7 +40,11 @@ const LB_RECOMMENDED = ['name', 'url', 'image', 'logo', 'telephone', 'priceRange
 
 /** Attribute-order tolerant meta extraction: hits aligned multi-space output. */
 function grabMeta(head, attrHasKey, name) {
-  const keyRe = new RegExp(`<meta[^>]${attrHasKey}=["']${name}["'][^>]*>`, 'i');
+  // `<meta\b[^>]*` (not `<meta[^>]`) so a leading attribute - `<meta charset=...
+  // name="description">` - is found too. The single-char class made the audit
+  // false-FAIL "missing meta description" on any page whose description meta
+  // carried another attribute first.
+  const keyRe = new RegExp(`<meta\\b[^>]*\\b${attrHasKey}=["']${name}["'][^>]*>`, 'i');
   const tag = head.match(keyRe);
   if (!tag) return null;
   const content = tag[0].match(/content=["']([^"']*)["']/i);
@@ -87,8 +94,14 @@ function urlToDisk(urlValue, { outputDir, config }) {
     return null;
   }
   if (pathName.startsWith('/')) {
-    if (config?.basePath && pathName.startsWith(config.basePath)) {
-      pathName = pathName.slice(config.basePath.length);
+    // basePath normalization mirrors urls.js (issue #32 contract): the
+    // configured prefix may lack its leading slash, and a prefix must match a
+    // whole path segment ('/myproject' never strips '/myprojectx/...').
+    const bp = config?.basePath
+      ? ('/' + String(config.basePath).replace(/^\/+/, '')).replace(/\/+$/, '')
+      : '';
+    if (bp && (pathName === bp || pathName.startsWith(bp + '/'))) {
+      pathName = pathName.slice(bp.length);
     }
     return path.join(outputDir, pathName.replace(/^\//, ''));
   }
@@ -109,6 +122,19 @@ export function auditOutput({ outputDir, config, json = false, capture = false }
   const warns = [];
   const fail = (page, msg) => fails.push({ page, msg });
   const warn = (page, msg) => warns.push({ page, msg });
+
+  // Config-gated absences (issue #28): a condition that can only ever be
+  // true/false at the CONFIG level repeats identically on every page
+  // (og:image / twitter:image absent because no og.image is configured).
+  // Collect affected pages here and flush ONE line each with a count at the
+  // end, instead of N page-suffixed rows that bury the real findings.
+  // Page-shaped classes (title/description length, JSON-LD absence, h1
+  // sanity) still repeat - their findings genuinely differ per page.
+  const configGated = new Map(); // key -> Set(page labels)
+  const configGate = (key, label) => {
+    if (!configGated.has(key)) configGated.set(key, new Set());
+    configGated.get(key).add(label);
+  };
 
   // File-at-path hardening (Pass 26.13): a file at the outputDir path passes
   // existsSync, and walkHtml's readdirSync would arrive here uncaught.
@@ -174,7 +200,7 @@ export function auditOutput({ outputDir, config, json = false, capture = false }
       }
     }
     if (!grabMeta(head, 'property', 'og:image')) {
-      warn(label, 'og:image absent (no og.image configured? add one for share previews)');
+      configGate('og:image', label);
     }
     for (const name of TW_CORE) {
       if (!grabMeta(head, 'name', name)) fail(label, 'missing ' + name);
@@ -186,7 +212,11 @@ export function auditOutput({ outputDir, config, json = false, capture = false }
       // handle exists. The 'config-gated' wording in the warning now holds.
       if ((name === 'twitter:site' || name === 'twitter:creator') && !config.twitter?.username) continue;
       if (!grabMeta(head, 'name', name)) {
-        warn(label, name + ' absent (config-gated or SSG-owned partial set; add a twitter username / og.image as needed)');
+        // twitter:image is config-gated (no og.image -> the engine ships no
+        // twitter:image either): collapse it like og:image. The rest of the
+        // twitter set is SSG-owned-partial-set shaped and stays per-page.
+        if (name === 'twitter:image') configGate('twitter:image', label);
+        else warn(label, name + ' absent (config-gated or SSG-owned partial set; add a twitter username / og.image as needed)');
       }
     }
 
@@ -260,6 +290,34 @@ export function auditOutput({ outputDir, config, json = false, capture = false }
   }
 
   // ---------- report ----------
+
+  // Flush config-gated absences as ONE line each (issue #28), with the
+  // affected-page count. Deterministic order (og:image before twitter:image).
+  // The og:image wording stays truthful when the config DOES supply an image
+  // but not for every page (og.scoped, ogImageGeneration): the line then
+  // reads "absent on N page(s)" rather than the false "not configured".
+  const ogScopedCfg = config.og?.scoped;
+  const ogImageConfigured = Boolean(config.og?.image)
+    || Boolean(config.ogImageGeneration)
+    || Boolean(ogScopedCfg && typeof ogScopedCfg === 'object' && !Array.isArray(ogScopedCfg)
+      && Object.keys(ogScopedCfg).length > 0);
+  for (const [key, pages] of [...configGated.entries()].sort()) {
+    const n = pages.size;
+    let msg;
+    if (key === 'og:image') {
+      msg = ogImageConfigured
+        ? 'og:image absent on ' + n + ' page(s) - no og.image covers them (add one, or extend og.scoped)'
+        : 'og:image not configured - ' + n + ' page(s) affected (add one for share previews)';
+    } else {
+      // twitter:image ships alongside og:image (the injector derives it), so
+      // its absence tracks the same config state: "not configured" only when
+      // NO og image source exists at all, else "absent on N page(s)".
+      msg = ogImageConfigured
+        ? key + ' absent on ' + n + ' page(s) - no og.image covers them (add one, or extend og.scoped)'
+        : key + ' not configured - ' + n + ' page(s) affected (add a twitter username / og.image as needed)';
+    }
+    warn('config', msg);
+  }
 
   if (capture) {
     return { fails, warns, pages: pages.length, sitemapLocs };

@@ -1,0 +1,140 @@
+# engine-side canonical docs lane (issue #31): the runbook this repo's own
+# docs.yml used to inline, promoted to a reusable workflow_call so the other
+# rig copies (flowforge, gistory, eyestruct, crashtest, packstruct, prestruct)
+# can thin out to a caller instead of hand-porting 115 drifted lines.
+#
+# It is deliberately parameterized on the axes the hand-copies drifted on
+# (ruby, node, pagefind, freestruct source), with defaults that match THIS
+# repo's dogfood so freestruct itself calls it with no inputs.
+#
+# The receipts the inline version kept are preserved: pagefind is cached in
+# BOTH scopes (node_modules/pagefind AND the scoped @pagefind/<platform>
+# companion - a cache hit that ships only one loses the binary), and every
+# install is pinned (no floating versions = no random deploys).
+name: Docs lane (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      docs-path:
+        description: Path to the docs source (Jekyll site) inside the caller repo
+        type: string
+        default: docs
+      output-dir:
+        description: The built tree freestruct injects into (relative to repo root)
+        type: string
+        default: docs/_site
+      ruby-version:
+        description: Ruby version for the Jekyll build
+        type: string
+        default: '3.4'
+      node-version:
+        description: Node version for the freestruct run
+        type: string
+        default: '22'
+      pagefind-version:
+        description: Pinned pagefind version (the indexer binary resolves at install)
+        type: string
+        default: '1.5.2'
+      crashtest-ref:
+        description: Pinned crashtest ref for the docs dogfood campaign
+        type: string
+        default: dc80a7c7a42e58a532b8ad624b79de2742d1ccbb
+      freestruct-cmd:
+        description: How to run freestruct in the caller (this repo dogfoods its own bin; consumers pin the npm package)
+        type: string
+        default: node bin/freestruct.mjs
+      strict:
+        description: Pass --strict (broken internal links fail the build)
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ inputs.ruby-version }}
+
+      - name: Install Ruby deps
+        working-directory: ${{ inputs.docs-path }}
+        run: bundle install
+
+      # Inline cd + step-level working-directory as belt-and-suspenders (jekyll-leg safety).
+      - name: Build Jekyll
+        run: cd ${{ inputs.docs-path }} && bundle exec jekyll build
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: npm
+
+      - name: Install deps
+        run: npm ci --no-audit --no-fund
+
+      # --strict: broken links fail the build (the #4 graduation).
+      - name: Run freestruct
+        run: ${{ inputs.freestruct-cmd }} ${{ inputs.strict && '--strict' || '' }}
+
+      # Cached by the pinned gate sha - the github install costs ~7m cold
+      # (measured), the campaign ~1s; a cache hit skips the minutes entirely.
+      - name: Restore crashtest (docs dogfood installer cache)
+        id: ct
+        uses: actions/cache@v6
+        with:
+          path: node_modules/crashtest
+          key: crashtest-${{ inputs.crashtest-ref }}
+      - name: Install crashtest (cache misses only)
+        if: ${{ steps.ct.outputs['cache-hit'] != 'true' }}
+        run: npm install --no-save --no-audit --no-fund github:dhaupin/crashtest#${{ inputs.crashtest-ref }}
+      - name: Crashtest the built docs
+        run: node node_modules/crashtest/bin/crashtest.js run
+
+      # Pinned + cached: the pagefind npm package resolves a platform
+      # BINARY at install and cost the runner 355s cold (measured); keyed on
+      # the version, a cache hit skips that entirely (same pattern as the
+      # crashtest installer cache).
+      # The runner's native binary lives in the SCOPED companion package
+      # (@pagefind/<platform>) - cache BOTH, or a cache hit ships a runner
+      # that can't find its binary (measured in CI: the npx fallback died
+      # with 'Failed to install either of [pagefind_extended, pagefind]').
+      - name: Restore pagefind (indexer cache)
+        id: pf
+        uses: actions/cache@v6
+        with:
+          path: |
+            node_modules/pagefind
+            node_modules/@pagefind
+          key: pagefind-${{ inputs.pagefind-version }}-v2
+      - name: Install Pagefind (cache misses only, pinned)
+        if: ${{ steps.pf.outputs['cache-hit'] != 'true' }}
+        run: npm install --no-save --no-audit --no-fund pagefind@${{ inputs.pagefind-version }}
+      - name: Index search
+        run: node node_modules/pagefind/lib/runner/bin.cjs --site ${{ inputs.output-dir }}
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: ${{ inputs.output-dir }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

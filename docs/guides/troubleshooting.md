@@ -15,9 +15,7 @@ Common issues and solutions.
 Error: Cannot find module 'js-yaml'
 ```
 
-**Fix:** Freestruct runs through the Freestruct npm package, which ships
-`js-yaml` as its own dependency - install the package rather than the
-dependency by hand:
+**Fix:** Freestruct runs through the Freestruct npm package, which ships `js-yaml` as its own dependency - install the package rather than the dependency by hand:
 
 ```bash
 npm install --save-dev freestruct
@@ -25,8 +23,7 @@ npm install --save-dev freestruct
 yarn add -D freestruct
 ```
 
-Running the engine from a repo checkout instead? Install `js-yaml` there
-(`npm install js-yaml`) - that is the only case where it is a manual step.
+Running the engine from a repo checkout instead? Install `js-yaml` there (`npm install js-yaml`) - that is the only case where it is a manual step.
 
 ---
 
@@ -111,7 +108,7 @@ If CDN caches don't update:
 2. Verify asset URLs have new `?v=` param
 3. Manually purge CDN if needed
 
-The hash should change every build.
+The hash is content-derived: it flips when your page content (or config) changes, and stays identical on an unchanged rebuild. If a deploy changed nothing, the hash is meant to stay the same - busting happens exactly when there is new content to fetch.
 
 ---
 
@@ -135,22 +132,13 @@ This avoids Jekyll's `_includes/` folder.
 
 ## Debug Mode
 
-There is no separate debug mode - the default run already narrates to stdout
-(build hash, page count, per-file warnings and every artifact it writes). The
-layered tools:
+There is no separate debug mode - the default run already narrates to stdout (build hash, page count, per-file warnings and every artifact it writes). The layered tools:
 
-1. `npx freestruct validate` first: a config-only preflight that prints
-   diagnostics (unknown/retired key warnings included) without touching the
-   output tree
-2. `npx freestruct audit` on the baked output: it names every per-page head
-   gap (missing title/description/canonical, the 404 noindex contract,
-   sitemap/robots) with FAIL/WARN lines and exit 1 when something regressed
-3. Read the `[freestruct] config warning` and `[freestruct] page warning`
-   lines in the run output - nothing dies silently
-4. `npx freestruct --tolerant` reports fatal errors with exit `0` for CI
-   tolerance runs
-5. Verify config keys against the [Freestruct.config Reference](/guides/freestruct-config)
-   and the [CLI Reference](/guides/cli)
+1. `npx freestruct validate` first: a config-only preflight that prints diagnostics (unknown/retired key warnings included) without touching the output tree
+2. `npx freestruct audit` on the baked output: it names every per-page head gap (missing title/description/canonical, the 404 noindex contract, sitemap/robots) with FAIL/WARN lines and exit 1 when something regressed
+3. Read the `[freestruct] config warning` and `[freestruct] page warning` lines in the run output - nothing dies silently
+4. `npx freestruct --tolerant` reports fatal errors with exit `0` for CI tolerance runs
+5. Verify config keys against the [Freestruct.config Reference](/guides/freestruct-config) and the [CLI Reference](/guides/cli)
 
 ---
 

@@ -20,7 +20,7 @@ Freestruct supports custom injection hooks - template files in `docs/_freestruct
 
 ## Placeholders
 
-All hooks support these placeholders:
+All hooks substitute the same placeholder set the head template uses - the full list is in the [Freestruct.config Reference](/guides/freestruct-config) under Template Placeholders. The three you reach for most:
 
 - `{{siteName}}` - Site name from config
 - `{{siteUrl}}` - Site URL from config

@@ -18,9 +18,9 @@ nav_order: 13
 Freestruct now provides **two independent mechanisms**:
 
 1. **Automatic Hash Injection** (always on):
-   - SHA1 build hash generated per build from config + timestamp
+   - SHA1 build hash derived per build from config + sorted pre-injection page content
    - Injects `<meta name="freestruct-build" content="{hash}">` into every page
-   - Adds `?v={hash}` query param to canonical URLs
+   - Adds `?v={hash}` query params to asset URLs
    - No configuration needed - works out of the box
 
 2. **Purge Hooks** (optional):
@@ -33,6 +33,7 @@ Freestruct now provides **two independent mechanisms**:
          - name: cloudflare
            command: curl -X DELETE "https://api.cloudflare.com/..." -H "Authorization: Bearer $TOKEN"
      ```
+   - Gated behind `runHooks: true` (off by default)
    - Available variables: `$SITE_URL`, `$BUILD_HASH`, `$OUTPUT_DIR`
 
 ### Why It's Agnostic
@@ -43,8 +44,8 @@ Freestruct now provides **two independent mechanisms**:
 
 ### Verified Working
 - Build hash appears in page source
-- Canonical URLs include `?v={hash}` query param
-- Hash changes every build
+- Asset URLs include `?v={hash}` query params
+- The hash flips when page content changes (content-derived, not timestamped)
 
 ### Future Enhancements
 - Could add built-in Fastly/CloudFront providers (but shell hooks cover it)

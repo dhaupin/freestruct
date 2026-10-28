@@ -19,7 +19,10 @@ import os from 'os';
 import path from 'path';
 import { spawnSync } from 'child_process';
 import { pathToFileURL } from 'url';
+import { createRequire } from 'module';
 import { load as yamlLoad } from 'js-yaml';
+
+const require = createRequire(import.meta.url);
 
 const ROOT = path.resolve(new URL('.', import.meta.url).pathname, '..');
 const INJECT = path.join(ROOT, 'engine', 'inject.js');
@@ -106,9 +109,40 @@ test('package.json is ESM, node >= 20, and ships the house structure (bin + engi
   assert.strictEqual(pkg.main, 'engine/inject.js', 'main points at the engine');
 });
 
+test('publish gate: check composes the battery + audit + pack selftest, and prepublishOnly runs it (issue #37)', () => {
+  const pkg = JSON.parse(read('.', 'package.json'));
+  assert.strictEqual(pkg.scripts.check, 'npm test && npm run lint:docs && npm run packs:selftest',
+    'check composes the three fast gates');
+  assert.strictEqual(pkg.scripts.prepublishOnly, 'npm run check',
+    'prepublishOnly gates the publish on check');
+  // The heavyweight e2e leg stays a CI-side gate (publish.yml), not in check.
+  assert.ok(!/e2e/.test(pkg.scripts.check), 'the heavyweight e2e leg stays out of the local gate');
+  const publish = read('.', '.github/workflows/publish.yml');
+  assert.includes(publish, 'npm run check', 'publish.yml runs the composed gate');
+  assert.includes(publish, 'e2e-install.cjs', 'the tarball e2e stays a CI-side publish gate');
+});
+
+test('packs:selftest degrades gracefully without a crashtest checkout (named skip, exit 0 - issue #37)', () => {
+  // A local `npm run check` / `npm publish` has no crashtest install; the
+  // gate must skip with a named line, never hard-fail (CI always installs
+  // crashtest, so the teeth still run where it matters). CRASHTEST_BIN set
+  // but missing stays loud (exit 2) - a misconfig, not an absent checkout.
+  const res = spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'packs-selftest.cjs')], {
+    cwd: ROOT, encoding: 'utf8', env: { ...process.env, CRASHTEST_BIN: '' },
+  });
+  assert.strictEqual(res.status, 0, 'an absent checkout is exit 0 either way (skip or teeth proven)\n' + res.stderr);
+  // Fresh clone / CI battery: no crashtest -> named skip. A dev who happens
+  // to have one installed runs the real teeth (also exit 0) - both are fine.
+  assert.match(res.stderr, /skipped|teeth proven/, 'the gate names what it did');
+  const bad = spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'packs-selftest.cjs')], {
+    cwd: ROOT, encoding: 'utf8', env: { ...process.env, CRASHTEST_BIN: '/no/such/crashtest.js' },
+  });
+  assert.strictEqual(bad.status, 2, 'an explicitly-requested-but-missing checkout is still loud');
+});
+
 // ---------- version truth (issue #7) ----------
 
-test('README, package.json and CHANGELOG agree on one version (1.1.0 owner pin)', () => {
+test('README, package.json and CHANGELOG agree on one version (1.2.0 owner pin)', () => {
   const pkg = JSON.parse(read('.', 'package.json'));
   const readme = read('.', 'README.md');
   const changelog = read('.', 'CHANGELOG.md');
@@ -118,12 +152,109 @@ test('README, package.json and CHANGELOG agree on one version (1.1.0 owner pin)'
   assert.ok(changeVer, 'CHANGELOG must open with a "## [X.Y.Z]" version entry');
   assert.strictEqual(readmeVer, pkg.version, 'README version heading must equal package.json version');
   assert.strictEqual(changeVer, pkg.version, 'CHANGELOG top entry must equal package.json version');
-  // Owner call: the pin moved to 1.0.0 - the first stable release, and to
-  // 1.1.0 on 2026-10-25 with the first post-stable surface. The manual npm
-  // bootstrap is done; only the tag remains
-  // owner-gated (see labs/TASKS.md VERSION POLICY).
-  assert.strictEqual(pkg.version, '1.1.0', 'version pinned at 1.1.0 by owner call - see the VERSION POLICY in labs/TASKS.md first');
+  // Owner call: the pin moved to 1.0.0 - the first stable release, then to
+  // 1.1.0 on 2026-10-25 with the first post-stable surface, and to 1.2.0 on
+  // 2026-10-28 with the post-queue engine sweep. The manual npm bootstrap is
+  // done; only the tag remains owner-gated (see labs/TASKS.md VERSION POLICY).
+  assert.strictEqual(pkg.version, '1.2.0', 'version pinned at 1.2.0 by owner call - see the VERSION POLICY in labs/TASKS.md first');
 });
+
+// ---------- version-truth census (issue #41) ----------
+// package.json is THE single version source. Any living surface that names the
+// CURRENT version is a hand-synced second truth, and hand-sync dies quietly -
+// the release-day stale-README catch is the one-mortem this leg retires. The
+// leg derives the version from package.json and refuses every living surface
+// that drifted. LAWFUL others stay out of scope: range pins (^1.0.0) bind 1.x
+// compatibility, dated era rows (CHANGELOG sections, the release posts, the
+// pass log's dated entries) keep their era wording by design, and a workflow
+// comment naming another package's version is not ours to move.
+
+// The living surfaces that hand-copy the current version, each with the
+// claim's own regex (anchored to the claim line, so a dated era row - which
+// says "1.2.0" about the past - never matches). A claim's capture must equal
+// the root version or the leg names file/line/claim/truth.
+const VERSION_CLAIMS = [
+  { file: 'README.md', re: /^- Current release: \*\*(\d+\.\d+\.\d+)\*\*/m, label: 'README current-release line' },
+  { file: 'AGENTS.md', re: /everything ships under \*\*(\d+\.\d+\.\d+)\*\*/, label: 'AGENTS version pin' },
+  { file: 'CONTRIBUTING.md', re: /The version is pinned at (\d+\.\d+\.\d+)/, label: 'CONTRIBUTING version pin' },
+  { file: 'DEPLOY.md', re: /the pinned \*\*(\d+\.\d+\.\d+)\*\*/, label: 'DEPLOY battery line' },
+  { file: 'DEPLOY.md', re: /currently ships under one number, `(\d+\.\d+\.\d+)`/, label: 'DEPLOY version-truth paragraph' },
+  { file: 'labs/TASKS.md', re: /the pin wall enforces (\d+\.\d+\.\d+) everywhere/, label: 'labs/TASKS reminder line' },
+  { file: '.github/workflows/release.yml', re: /^#\s+git tag v(\d+\.\d+\.\d+)$/m, label: 'release.yml tag example' },
+];
+
+test('version census: the living version claims are non-empty and derive from package.json (#41)', () => {
+  const pkg = JSON.parse(read('.', 'package.json'));
+  assert.ok(/^\d+\.\d+\.\d+$/.test(pkg.version), 'package.json version must be a plain X.Y.Z the census can derive');
+  // The scaffold kit's version stamp is the "side truth" (freestruct ships no
+  // second package.json); it must equal the root exactly.
+  const side = read('.', 'init/VERSION').trim();
+  assert.strictEqual(side, pkg.version, 'init/VERSION drifted from package.json - the release commit moves them together');
+  // Every claim pattern must match at least once, or the census has silently
+  // stopped seeing a surface it is meant to guard (a broken regex must fail
+  // loudly, never degrade to a green pass).
+  for (const { file, re, label } of VERSION_CLAIMS) {
+    const m = read('.', file).match(re);
+    assert.ok(m, `census spec lost its shape: ${label} (${file}) did not match - fix the claim regex, do not drop the surface`);
+    assert.strictEqual(m[1], pkg.version, `${label} (${file}) carries ${m[1]}, package.json says ${pkg.version} - move them together or drop the number`);
+  }
+});
+
+test('version census: no living surface hand-copies a stale version (#41)', () => {
+  const root = JSON.parse(read('.', 'package.json')).version;
+  const stale = [];
+  for (const { file, re, label } of VERSION_CLAIMS) {
+    const body = read('.', file);
+    re.lastIndex = 0;
+    const g = new RegExp(re.source, re.flags.includes('g') ? re.flags : re.flags + 'g');
+    let m;
+    while ((m = g.exec(body)) !== null) {
+      if (m[1] !== root) {
+        const line = body.slice(0, m.index).split('\n').length;
+        stale.push(`${file}:${line} ${label} carries ${m[1]}, truth is ${root}`);
+      }
+    }
+  }
+  assert.deepEqual(stale, [], stale.length ? `stale version claims found:\n${stale.join('\n')}` : '');
+});
+
+// ---------- count census (issue #43) ----------
+// The version census above pins one class of hand-copied number; this pins the
+// other: counts a living page asserts about the repo (test-battery size, engine
+// module count). Both are DERIVED here from source, never hand-written, so a
+// doc line can only ever say the true number. A claim's regex is anchored to the
+// sentence that states the fact, so historical prose ("grew 49 -> 75 -> 103
+// pins") never matches. A broken regex fails loudly instead of going green.
+const ENGINE_MODULES = fs.readdirSync(path.join(ROOT, 'engine'))
+  .filter((f) => f.endsWith('.js') && f !== 'inject.js').length;
+const BATTERY_TESTS = (fs.readFileSync(path.join(ROOT, 'test', 'run.js'), 'utf8')
+  .match(/^test\(/gm) || []).length;
+
+const COUNT_CLAIMS = [
+  { file: 'docs/index.md', re: /a (\d+)-test battery/, derive: () => BATTERY_TESTS, label: 'homepage battery size' },
+  { file: 'AGENTS.md', re: /inject\.js` orchestrator \+ the (\w+) lib modules/, words: true, derive: () => ENGINE_MODULES, label: 'AGENTS engine module count' },
+  { file: 'AGENTS.md', re: /the fixture battery \((\d+) pins\)/, derive: () => BATTERY_TESTS, label: 'AGENTS battery size' },
+  { file: 'CONTRIBUTING.md', re: /one orchestrator \+ (\w+) modules/, words: true, derive: () => ENGINE_MODULES, label: 'CONTRIBUTING engine module count' },
+  { file: 'CONTRIBUTING.md', re: /the battery \((\d+) pins\)/, derive: () => BATTERY_TESTS, label: 'CONTRIBUTING battery size' },
+  { file: 'DEPLOY.md', re: /the fixture battery \((\d+) pins\)/, derive: () => BATTERY_TESTS, label: 'DEPLOY battery size' },
+];
+
+const NUM_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+  'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty'];
+
+test('count census: living count claims are derived from source, never hand-copied (#43)', () => {
+  assert.ok(BATTERY_TESTS > 0, 'the count census must see the battery');
+  assert.ok(ENGINE_MODULES > 0, 'the count census must see the engine modules');
+  for (const { file, re, words, derive, label } of COUNT_CLAIMS) {
+    const m = read('.', file).match(re);
+    assert.ok(m, `count census spec lost its shape: ${label} (${file}) did not match - fix the claim regex, do not drop the surface`);
+    const expected = derive();
+    const got = words ? NUM_WORDS.indexOf(m[1]) : Number(m[1]);
+    assert.ok(got >= 0, `${label} (${file}) names "${m[1]}", which is not a known number word`);
+    assert.strictEqual(got, expected, `${label} (${file}) says ${m[1]} (${got}); source says ${expected} - derive it, do not hand-copy`);
+  }
+});
+
 
 test('README quickstart YAML example actually parses (issue #8)', () => {
   const readme = read('.', 'README.md');
@@ -150,6 +281,57 @@ test('.github/workflows/*.yml are all parseable YAML (a dead SSG gate must never
     }
     assert.ok(parsed && typeof parsed === 'object' && ('jobs' in parsed), `${f} parses to a jobs-bearing workflow`);
   }
+});
+
+test('cache steps ride one pinned actions/cache major (the #29 straggler class)', () => {
+  const wfDir = path.join(ROOT, '.github', 'workflows');
+  const files = fs.readdirSync(wfDir).filter(f => f.endsWith('.yml'));
+  const versions = new Map();
+  for (const f of files) {
+    const text = fs.readFileSync(path.join(wfDir, f), 'utf8');
+    for (const m of text.matchAll(/uses:\s*actions\/cache@(v\d+)/g)) {
+      if (!versions.has(m[1])) versions.set(m[1], []);
+      versions.get(m[1]).push(f);
+    }
+  }
+  assert.ok(versions.size > 0, 'at least one actions/cache step is present');
+  assert.strictEqual(versions.size, 1, `every actions/cache step rides ONE major (found ${[...versions.entries()].map(([v, fs2]) => `${v} in ${fs2.join(',')}`).join('; ')})`);
+  const [major] = versions.keys();
+  assert.ok(Number(major.slice(1)) >= 6, `actions/cache is pinned at v6+ (found ${major})`);
+});
+
+test('docs layout: the rouge token block covers the common vocabulary (#30)', () => {
+  const layout = fs.readFileSync(path.join(ROOT, 'docs', '_layouts', 'default.html'), 'utf8');
+  assert.ok(/Rouge token colors/.test(layout), 'the rouge token block is present');
+  // bash/js fences emit these families; each must carry a rule or the fence
+  // renders half-painted (the #30 monochrome report).
+  for (const cls of ['nb', 'nf', 'nv', 's', 's1', 's2', 'sb', 'si', 'c', 'c1', 'k', 'kd', 'nt', 'gp']) {
+    assert.ok(new RegExp(`\\.highlight \\.${cls}\\b`).test(layout), `the token block styles .${cls}`);
+  }
+});
+
+test('docs lane is reusable: docs.yml is a thin caller of the workflow_call lane (#31)', () => {
+  const lanePath = path.join(ROOT, '.github', 'workflows', 'docs-lane.yml');
+  const callerPath = path.join(ROOT, '.github', 'workflows', 'docs.yml');
+  assert.ok(fs.existsSync(lanePath), 'the reusable docs lane ships');
+  const lane = yamlLoad(fs.readFileSync(lanePath, 'utf8'));
+  assert.ok(lane.on && 'workflow_call' in lane.on, 'the lane is on: workflow_call');
+  const inputs = lane.on.workflow_call.inputs || {};
+  for (const name of ['docs-path', 'output-dir', 'ruby-version', 'node-version', 'pagefind-version', 'crashtest-ref', 'freestruct-cmd', 'strict']) {
+    assert.ok(name in inputs, `the lane exposes the ${name} input`);
+  }
+  // The receipts the inline lane kept must survive the promotion: both pagefind
+  // scopes are cached, and the crashtest + pagefind installs stay pinned.
+  const laneText = fs.readFileSync(lanePath, 'utf8');
+  assert.match(laneText, /node_modules\/pagefind\n\s+node_modules\/@pagefind/, 'the pagefind cache carries BOTH scopes');
+  assert.match(laneText, /github:dhaupin\/crashtest#\$/, 'crashtest install stays pinned to the input ref');
+  assert.match(laneText, /pagefind@\$/, 'pagefind install stays pinned to the input version');
+
+  const caller = yamlLoad(fs.readFileSync(callerPath, 'utf8'));
+  const job = caller.jobs.docs;
+  assert.ok(job && typeof job.uses === 'string' && job.uses.endsWith('docs-lane.yml'),
+    'docs.yml dogfoods the lane via a uses: caller job (no inlined steps)');
+  assert.ok(!job.steps, 'the caller carries no steps (the runbook lives in the lane)');
 });
 
 // ---------- crashtest pack surface (packs/, the one-surface extension model) ----------
@@ -346,6 +528,21 @@ test('defaults: no author key means no JSON-LD founder; author ships Person with
     const html = read(bare, 'docs/_site/index.html');
     assert.ok(!html.includes('"founder"'), 'no founder without a configured author');
   } finally { rmDir(bare); }
+});
+
+test('init kit (issue #33): the starter config seeds the family identity - founder + maintainer JSON-LD, no unknown keys', () => {
+  // The shipped init kit config, verbatim, must scaffold ownership from birth.
+  const seeded = fs.readFileSync(path.join(ROOT, 'init', 'docs', 'freestruct.config.yml'), 'utf8');
+  const dir = scenario('main', { 'docs/ssr-config.yml': seeded });
+  try {
+    const stdout = runInject(dir);
+    assert.ok(!/unknown config key/.test(stdout), 'the seeded starter config is schema-clean');
+    const html = read(dir, 'docs/_site/index.html');
+    assert.includes(html, '"founder": { "@type": "Person", "name": "Creadev.org", "url": "https://creadev.org" }',
+      'the author block ships the family founder');
+    assert.includes(html, '"name":"your-github-handle"', 'the jsonLd maintainer placeholder reaches the page');
+    assert.includes(html, '"jobTitle":"My Docs maintainer"', 'the maintainer jobTitle is wired');
+  } finally { rmDir(dir); }
 });
 
 test('per-page freestruct comment overrides the injected tags and warns loudly', () => {
@@ -567,6 +764,135 @@ test('default run: idempotent - a second pass does not duplicate anything', () =
   } finally { rmDir(dir); }
 });
 
+test('rerun hygiene: body-start/footer snippets never duplicate and the build hash stays put (bug fix)', () => {
+  const dir = scenario('main');
+  try {
+    // The main fixture ships a header snippet; add the body-start + footer
+    // pair the bug reproduced with (they live in the BODY, so the old
+    // marker-only strip in computeBuildHash could not neutralize them).
+    fs.writeFileSync(path.join(dir, 'docs/_freestruct/inject-body-start.html'), '<div id="bs">BODYSTART</div>\n');
+    fs.writeFileSync(path.join(dir, 'docs/_freestruct/inject-footer.html'), '<div id="ft">FOOTER</div>\n');
+    const hashOf = () => read(dir, 'docs/_site/index.html').match(/<meta name="freestruct-build" content="([0-9a-f]{8})"/)[1];
+    const first = runInject(dir);
+    const hashA = hashOf();
+    runInject(dir);
+    runInject(dir);
+    const html = read(dir, 'docs/_site/index.html');
+    assert.strictEqual((html.match(/id="bs"/g) || []).length, 1, 'body-start snippet injected exactly once after a rerun');
+    assert.strictEqual((html.match(/id="ft"/g) || []).length, 1, 'footer snippet injected exactly once after a rerun');
+    assert.strictEqual((html.match(/<!-- freestruct -->/g) || []).length, 1, 'the generated head marker stays single');
+    assert.strictEqual((html.match(/<meta name="freestruct-build"/g) || []).length, 1, 'the build meta stays single');
+    assert.strictEqual(hashOf(), hashA, 'the content-derived hash does not churn across reruns');
+    void first;
+  } finally { rmDir(dir); }
+});
+
+test('minify: verbatim blocks survive byte-for-byte and attribute-form tags are protected (bug fix)', () => {
+  const dir = scenario('main', {
+    'docs/ssr-config.yml': [
+      'site:', '  name: Foo Docs', '  url: https://docs.example.com',
+      'minify: true',
+    ].join('\n') + '\n',
+    'docs/_site/code.html': [
+      '<html><head><title>Code</title></head><body>',
+      '<p>a</p>',
+      '<p>b</p>',
+      '<pre class="highlight"><code>def foo():',
+      '    return 1',
+      '</code></pre>',
+      '<script>',
+      '// keep this comment line',
+      'var x = 1;',
+      '</script>',
+      '</body></html>',
+    ].join('\n') + '\n',
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/code.html');
+    // <pre class="..."> (attribute form) must be detected: its inner newlines
+    // and indentation are significant and survive untouched.
+    assert.includes(html, 'def foo():\n    return 1', 'pre class="..." content preserved byte-for-byte');
+    // Inline JS with a // comment must not be collapsed onto one line (that
+    // would comment out the rest of the script).
+    assert.includes(html, '// keep this comment line\nvar x = 1;', 'inline script newlines preserved');
+    // Outside blocks, redundant whitespace is still removed (body region:
+    // late-pass head metas are appended after minify by design).
+    assert.includes(html, '<body><p>a</p>', 'inter-tag whitespace outside blocks is minified');
+  } finally { rmDir(dir); }
+});
+
+test('cache-busting: only real asset extensions are busted, case-insensitively (bug fix)', () => {
+  const dir = scenario('main', {
+    'docs/_site/exts.html': [
+      '<html><head><title>Exts</title></head><body>',
+      '<a href="/x.cs">cs</a>',
+      '<a href="/x.tt">tt</a>',
+      '<a href="/x.j">j</a>',
+      '<a href="/real.css">css</a>',
+      '<a href="/img.PNG">upper png</a>',
+      '</body></html>',
+    ].join('\n') + '\n',
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/exts.html');
+    // '.cs' / '.tt' / '.j' are NOT assets (old substring test busted them).
+    assert.ok(/href="\/x\.cs"/.test(html), 'a .cs href is not cache-busted');
+    assert.ok(/href="\/x\.tt"/.test(html), 'a .tt href is not cache-busted');
+    assert.ok(/href="\/x\.j"/.test(html), 'a .j href is not cache-busted');
+    assert.match(html, /href="\/real\.css\?v=[0-9a-f]{8}"/, 'a real .css href is busted');
+    assert.match(html, /href="\/img\.PNG\?v=[0-9a-f]{8}"/, 'an uppercase .PNG is busted (case-insensitive)');
+  } finally { rmDir(dir); }
+});
+
+test('linkcheck: single-quoted hrefs are checked too, so --strict catches them (bug fix)', () => {
+  const dir = scenario('main', {
+    'docs/_site/quotes.html': "<html><head><title>Q</title></head><body><a href='/gone-sq/'>sq</a><a href=\"/gone-dq/\">dq</a><a href='/ok/'>ok</a></body></html>\n",
+    'docs/_site/ok/index.html': '<html><head><title>Ok</title></head><body>ok</body></html>\n',
+  });
+  try {
+    const out = runInject(dir);
+    assert.includes(out, '/gone-sq/', 'a single-quoted broken link is reported');
+    assert.includes(out, '/gone-dq/', 'a double-quoted broken link is reported');
+    assert.ok(!/-> \/ok\//.test(out), 'a resolvable single-quoted link is not flagged');
+    const strict = runInjectFailing(dir, ['--strict']);
+    assert.strictEqual(strict.status, 1, '--strict fails on the single-quoted break');
+  } finally { rmDir(dir); }
+});
+
+test('cli: -h is a help alias like --help (bug fix - it used to ride as an output dir)', () => {
+  const dir = scenario('main');
+  try {
+    const res = spawnSync(process.execPath, [INJECT, '-h'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(res.status, 0, '-h exits 0');
+    assert.includes(res.stdout, 'freestruct -- post-build SEO layer', '-h prints the help text');
+    assert.ok(!/Output directory not found/.test(res.stdout + res.stderr), '-h never rides as a positional output dir');
+    // Control: a real typo'd flag still fails loudly (not silently as a dir).
+    const bad = runInjectFailing(dir, ['--definitely-not-a-flag']);
+    assert.strictEqual(bad.status, 1);
+  } finally { rmDir(dir); }
+});
+
+test('audit: a basePath without its leading slash still strips from the og:image on-disk check (bug fix)', () => {
+  const dir = scenario('main', {
+    'docs/ssr-config.yml': [
+      'site:', '  name: Foo Docs', '  url: https://docs.example.com',
+      'basePath: myproject',
+      'og:', '  image: /og.png',
+    ].join('\n') + '\n',
+  });
+  try {
+    // The real image sits at the tree root (served under /myproject/og.png);
+    // the audit must resolve the stripped path and NOT warn it is missing.
+    fs.writeFileSync(path.join(dir, 'docs/_site/og.png'), 'PNG');
+    const res = spawnSync(process.execPath, [INJECT, 'audit'], { cwd: dir, encoding: 'utf8' });
+    const out = res.stdout + res.stderr;
+    assert.ok(!/og:image points at .* which does not exist on disk/.test(out),
+      'basePath (no leading slash) is normalized before the on-disk resolve');
+  } finally { rmDir(dir); }
+});
+
 test('default run: custom snippets get comments stripped + placeholders substituted (FIXED issue #10)', () => {
   const dir = scenario('main');
   try {
@@ -592,6 +918,72 @@ test('default run: reading-time, last-modified and lazy-loading metas land on pa
     assert.match(html, /<img src="\/img\/hero.png\?v=[0-9a-f]{8}" alt="hero" loading="lazy">/);
     assert.match(html, /<img src="\/img\/banner.png\?v=[0-9a-f]{8}" alt="banner" loading="eager">/);
   } finally { rmDir(dir); }
+});
+
+test('lazy-loading: a self-closing <img/> stays well-formed (bug fix)', () => {
+  const dir = scenario('main', {
+    'docs/_site/selfclose.html': [
+      '<html><head><title>SelfClose</title></head><body>',
+      '<img src="/img/a.png"/>',
+      '<img src="/img/b.png" />',
+      '<img src="/img/c.png" alt="c">',
+      '</body></html>',
+    ].join('\n') + '\n',
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/selfclose.html');
+    // No dangling '/ loading=' artifact: the attribute lands before the close.
+    assert.ok(!/\/\s+loading="lazy"/.test(html), 'no malformed "/ loading=" artifact');
+    assert.match(html, /<img src="\/img\/a\.png\?v=[0-9a-f]{8}" loading="lazy">/, 'self-closing img repaired and lazied');
+    assert.match(html, /<img src="\/img\/b\.png\?v=[0-9a-f]{8}" loading="lazy">/, 'spaced self-closing img repaired and lazied');
+    assert.match(html, /<img src="\/img\/c\.png\?v=[0-9a-f]{8}" alt="c" loading="lazy">/, 'plain img still lazied');
+  } finally { rmDir(dir); }
+});
+
+test('table guard (issue #35): wide tables wrap in a scroll container, nested wrap once, idempotent, opt-out', () => {
+  const dir = scenario('main', {
+    'docs/ssr-config.yml': [
+      'site:', '  name: Foo Docs', '  url: https://docs.example.com',
+      '  description: A test docs site', '',
+    ].join('\n'),
+    'docs/_site/tables.html': '<html><head><title>Tables</title></head><body><h1>Tables</h1>'
+      + '<table><tr><td>plain</td></tr></table>'
+      + '<div class="printable"><table><tr><td>after printable</td></tr></table></div>'
+      + '<div class="table-wrap"><table><tr><td>already</td></tr></table></div>'
+      + '<table><tr><td>outer<table><tr><td>inner</td></tr></table></td></tr></table>'
+      + '</body></html>',
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/tables.html');
+    // 3 wrappers: plain, printable-neighbour, outer (the nested inner shares its outer's)
+    assert.strictEqual((html.match(/fs-table-wrap/g) || []).length, 3, 'exactly the outermost tables wrap');
+    assert.includes(html, '<div class="fs-table-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%"><table><tr><td>plain</td></tr></table></div>',
+      'the plain table is wrapped with the inline scroll container');
+    assert.includes(html, '<div class="printable"><div class="fs-table-wrap"',
+      'a table after an unrelated class="printable" div still wraps (delimited-segment match)');
+    assert.includes(html, '<div class="table-wrap"><table><tr><td>already</td></tr></table></div>',
+      'a consumer .table-wrap is left alone (no double container)');
+    assert.includes(html, 'outer<table>', 'the nested table stays inside its outer wrap');
+    // idempotent: a second pass must not stack wrappers
+    runInject(dir);
+    assert.strictEqual((read(dir, 'docs/_site/tables.html').match(/fs-table-wrap/g) || []).length, 3,
+      'a second run does not stack wrappers');
+  } finally { rmDir(dir); }
+
+  // opt-out + a table-less page is a no-op (no rewrite, no hash flip)
+  const dir2 = scenario('main', {
+    'docs/ssr-config.yml': [
+      'site:', '  name: Foo Docs', '  url: https://docs.example.com',
+      '  description: A test docs site', 'tableWrap: false', '',
+    ].join('\n'),
+    'docs/_site/tables.html': '<html><head><title>Tables</title></head><body><h1>T</h1><table><tr><td>x</td></tr></table></body></html>',
+  });
+  try {
+    runInject(dir2);
+    assert.ok(!read(dir2, 'docs/_site/tables.html').includes('fs-table-wrap'), 'tableWrap: false opts out');
+  } finally { rmDir(dir2); }
 });
 
 // ---------- artifacts ----------
@@ -813,6 +1205,7 @@ test('config disabling every feature: artifacts absent, page passthrough minimal
       'readingTime: false',
       'lastModified: false',
       'lazyLoad: false',
+      'tableWrap: false',
       'linkCheck: false',
       'searchIndex: false',
       'cacheBusting:',
@@ -1139,6 +1532,30 @@ test('purge hooks: runHooks: true executes the canary with truthful substitution
   } finally { rmDir(dir); }
 });
 
+test('purge hooks: the FREESTRUCT_* env vars reach the child (bug fix - README claimed them)', () => {
+  const dir = scenario('main');
+  try {
+    const marker = path.join(dir, 'purge-env.txt');
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      'runHooks: true',
+      'cacheBusting:',
+      '  purge:',
+      '    - name: envcanary',
+      `      command: node -e "require('fs').writeFileSync(process.argv[1], [process.env.FREESTRUCT_SITE_URL, process.env.FREESTRUCT_BUILD_HASH, process.env.FREESTRUCT_OUTPUT_DIR].join('|'))" ${marker}`,
+    ].join('\n') + '\n');
+    const out = runInject(dir);
+    const hash = (out.match(/freestruct: Done \(([0-9a-f]{0,8})\)/) || [])[1];
+    assert.ok(fs.existsSync(marker), 'the purge hook ran');
+    const parts = fs.readFileSync(marker, 'utf8').split('|');
+    assert.strictEqual(parts[0], 'https://docs.example.com', 'FREESTRUCT_SITE_URL reaches the child');
+    assert.strictEqual(parts[1], hash, 'FREESTRUCT_BUILD_HASH reaches the child');
+    assert.ok(parts[2].endsWith(path.join('docs', '_site')), 'FREESTRUCT_OUTPUT_DIR reaches the child');
+  } finally { rmDir(dir); }
+});
+
 // ---------- $-expansion trap (issue #24, latent hardening) ----------
 // Any config- or content-carried value that rides a STRING-form
 // String.replace() replacer is treated as replacement syntax: a $& / $' /
@@ -1419,6 +1836,24 @@ test('audit: a real engine run audits CLEAN, doctored output FAILS with exit 1 (
   } finally { rmDir(dir); }
 });
 
+test('audit: a valid description meta with a leading attribute is not a false FAIL (bug fix)', () => {
+  const dir = scenario('main');
+  try {
+    runInject(dir);
+    const idx = path.join(dir, 'docs/_site/index.html');
+    // Rewrite the description meta with another attribute FIRST (valid HTML);
+    // the audit's grabMeta must still find it (old single-char class did not).
+    const before = fs.readFileSync(idx, 'utf8');
+    assert.match(before, /<meta name="description"/, 'fixture page carries an injected description meta');
+    fs.writeFileSync(idx, before
+      .replace(/<meta name="description" content="([^"]*)"\s*\/?>/i,
+        '<meta charset="utf-8" name="description" content="$1">'));
+    const out = spawnSync(process.execPath, [INJECT, 'audit'], { cwd: dir, encoding: 'utf8' });
+    assert.ok(!/FAIL .*missing meta description/.test(out.stdout),
+      'a description meta carrying a leading attribute is still found\n' + out.stdout);
+  } finally { rmDir(dir); }
+});
+
 test('audit: duplicate head tags ride the FAIL class (never engine-caused - missing-only cannot duplicate)', () => {
   const dir = scenario('main');
   try {
@@ -1476,6 +1911,69 @@ test('audit: svg og:image FAILs it, missing output dir is exit 3, --json parses 
     const res = spawnSync(process.execPath, [INJECT, 'audit', 'not-here'], { cwd: dir2, encoding: 'utf8' });
     assert.strictEqual(res.status, 3, 'missing output dir keeps the familiar exit 3');
   } finally { rmDir(dir2); }
+});
+
+test('audit: config-gated absences collapse to one line each with a page count (issue #28)', () => {
+  const dir = scenario('main');
+  try {
+    // No og.image configured -> the engine ships no og:image / twitter:image
+    // anywhere; the audit must say so ONCE, not once per page.
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      '',
+    ].join('\n'));
+    runInject(dir);
+    const out = spawnSync(process.execPath, [INJECT, 'audit'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(out.status, 0, 'config-gated absence is report-grade\n' + out.stdout);
+    // ONE config line each, with a count - and no per-page og:image rows.
+    assert.includes(out.stdout, 'WARN config: og:image not configured - ', 'og:image collapses to one config line');
+    assert.includes(out.stdout, 'page(s) affected', 'the config line carries an affected-page count');
+    assert.includes(out.stdout, 'WARN config: twitter:image not configured - ', 'twitter:image collapses too');
+    assert.ok(!/WARN [^:]*\.html: og:image absent/.test(out.stdout), 'no per-page og:image noise');
+    assert.ok(!/WARN [^:]*\.html: twitter:image absent/.test(out.stdout), 'no per-page twitter:image noise');
+
+    // The count matches the non-404 page total (7 baked pages - 1 404).
+    const countMatch = out.stdout.match(/og:image not configured - (\d+) page\(s\)/);
+    assert.ok(countMatch, 'count present');
+    assert.strictEqual(countMatch[1], '6', 'the count is the real affected-page total');
+
+    // Page-shaped classes still repeat (the distinguishing test from the ask):
+    // a page shipping its own partial og set still warns per page.
+    assert.includes(out.stdout, 'og:url absent', 'SSG-partial-set coherence stays per-page');
+
+    // The JSON digest carries the collapsed rows on the config page key.
+    const jsonOut = spawnSync(process.execPath, [INJECT, 'audit', '--json'], { cwd: dir, encoding: 'utf8' });
+    const digest = JSON.parse(jsonOut.stdout);
+    assert.ok(digest.warns.some(w => w.page === 'config' && /og:image not configured/.test(w.msg)), 'digest carries the config row');
+  } finally { rmDir(dir); }
+});
+
+test('audit: og.scoped partial coverage keeps the collapsed line truthful (issue #28 edge)', () => {
+  const dir = scenario('main', {
+    'docs/ssr-config.yml': [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'og:',
+      '  scoped:',
+      '    "/guide/**": /guide.png',
+      '',
+    ].join('\n'),
+  });
+  try {
+    runInject(dir);
+    const out = spawnSync(process.execPath, [INJECT, 'audit'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(out.status, 0, 'scoped-partial absence stays report-grade\n' + out.stdout);
+    // og.image IS configured (via og.scoped) - the line must not claim
+    // otherwise, and must still collapse to one row with a count.
+    assert.includes(out.stdout, 'og:image absent on ', 'partial coverage reads as absent-on-N, not not-configured');
+    assert.ok(!/config: og:image not configured/.test(out.stdout), 'no false not-configured claim when og.scoped is set');
+    assert.includes(out.stdout, 'WARN config: twitter:image absent on ', 'twitter:image tracks the same config state');
+  } finally { rmDir(dir); }
 });
 
 // ---------- indexnow (issue #19) ----------
@@ -2138,6 +2636,65 @@ test('linkcheck route shapes: dir index + .htm sibling resolve, real misses repo
   } finally { rmDir(dir); }
 });
 
+test('linkcheck: root-absolute hrefs carry the basePath prefix and still resolve (issue #32)', () => {
+  const dir = scenario('main', {
+    'docs/ssr-config.yml': [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'basePath: /myrepo',
+      ''
+    ].join('\n'),
+    // nav + crosslinks are root-absolute WITH the deploy prefix (the
+    // Jekyll/baseurl shape that failed every --strict run)
+    'docs/_site/index.html':
+      '<html><head><title>Home</title></head><body><h1>Home</h1>'
+      + '<a href="/myrepo/guides/cli">CLI</a>'
+      + '<a href="/myrepo/">Home</a>'
+      + '</body></html>',
+    'docs/_site/guides/cli.html':
+      '<html><head><title>CLI</title></head><body><h1>CLI</h1>'
+      + '<a href="/myrepo/guides/cli">self</a>'
+      + '</body></html>',
+    // the main fixture's own page carries a deliberate ghost link; replace
+    // it so this pin isolates the basePath resolution question
+    'docs/_site/check-me.html':
+      '<html><head><title>Check me</title></head><body><h1>Check me</h1>'
+      + '<a href="/myrepo/">Home</a>'
+      + '</body></html>',
+  });
+  try {
+    const out = runInject(dir);
+    assert.includes(out, 'Link check: All links OK', 'prefixed root-absolute hrefs resolve against the tree');
+    // The same tree under --strict must pass: the whole point of the fix.
+    const res = spawnSync(process.execPath, [INJECT, '--strict'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(res.status, 0, `--strict must pass for a baseurl'd site\n${res.stdout}\n${res.stderr}`);
+  } finally { rmDir(dir); }
+});
+
+test('linkcheck: a root-absolute href with a DIFFERENT prefix stays broken (issue #32 strip is exact)', () => {
+  const dir = scenario('main', {
+    'docs/ssr-config.yml': [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'basePath: /myrepo',
+      ''
+    ].join('\n'),
+    'docs/_site/index.html':
+      '<html><head><title>Home</title></head><body><h1>Home</h1>'
+      + '<a href="/otherrepo/guides/cli">foreign prefix</a>'
+      + '</body></html>',
+  });
+  try {
+    const out = runInject(dir);
+    assert.ok(!out.includes('All links OK'), 'a foreign prefix is not silently stripped');
+    assert.includes(out, '/otherrepo/guides/cli', 'the offending href is named');
+  } finally { rmDir(dir); }
+});
+
 test('.htm and mixed-case extensions join the full pipeline (injection + sitemap + extension-stripped slugs)', () => {
   const dir = scenario('main', {
     'docs/_site/UPPER.HTML':
@@ -2338,6 +2895,225 @@ test('pass-hunt: a typo\'d flag rides as NO directory (Pass 26.16)', () => {
     runInject(dir);
     assert.ok(read(dir, 'docs/_site/index.html').includes('freestruct-build'), 'the known-flag path still runs the full pass');
   } finally { rmDir(dir); }
+});
+
+test('prose: unwrap-prose joins hard-wrapped paragraphs but never touches structure (#39)', () => {
+  const src = [
+    '---',
+    'title: t',
+    '---',
+    '',
+    'A paragraph that was hard-wrapped at the old',
+    'seventy-two column boundary keeps flowing.',
+    '',
+    '---',
+    '',
+    '- a bullet that also wrapped',
+    '  across two lines',
+    '  - a nested bullet stays nested',
+    '    and its wrap joins too',
+    '',
+    '| a | b |',
+    '|---|---|',
+    '',
+    '```bash',
+    'echo "this line stays',
+    'exactly as written"',
+    '```',
+    '',
+    '    indented code stays',
+    '    on its own two lines',
+    '',
+    '<div class="note">',
+    '<p>A multi-line HTML block',
+    'stays verbatim too.</p>',
+    '</div>',
+    '',
+  ].join('\n');
+  const f = path.join(os.tmpdir(), `freestruct-unwrap-${process.pid}-${++tmpSeq}.md`);
+  fs.writeFileSync(f, src);
+  try {
+    const res = spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'unwrap-prose.cjs'), f], { encoding: 'utf8' });
+    assert.strictEqual(res.status, 0, res.stderr);
+    const out = fs.readFileSync(f, 'utf8');
+    assert.includes(out, 'A paragraph that was hard-wrapped at the old seventy-two column boundary keeps flowing.', 'the wrapped paragraph joins into one line');
+    assert.includes(out, '- a bullet that also wrapped across two lines', 'a wrapped bullet joins');
+    assert.includes(out, '  - a nested bullet stays nested and its wrap joins too', 'a nested bullet stays nested and joins');
+    assert.includes(out, 'echo "this line stays\nexactly as written"', 'fenced code is never touched');
+    assert.includes(out, 'title: t', 'frontmatter is preserved');
+    // Indented code (4+ spaces) is structural: the two lines stay two lines.
+    assert.includes(out, '    indented code stays\n    on its own two lines', 'indented code survives unjoined');
+    // An HTML block runs verbatim to the blank line; its lines are not joined.
+    assert.includes(out, '<div class="note">\n<p>A multi-line HTML block\nstays verbatim too.</p>\n</div>', 'HTML block survives unjoined');
+    // A bare `---` rule later in the file must NOT open frontmatter (the
+    // labs/TASKS.md regression): prose after it still unwraps.
+    assert.includes(out, 'the old seventy-two', 'the later rule did not swallow the body');
+    assert.ok(out.split('\n')[0] === '---' && out.split('\n')[1] === 'title: t', 'frontmatter block intact');
+  } finally { try { fs.rmSync(f, { force: true }); } catch (e) { /* best-effort */ } }
+});
+
+// ---------- playbooks leg (#34) ----------
+// The playbooks leg is the family-scaffold shape guides/ does not carry: one
+// page per runbook recipe, each with a permalink under /playbooks/ and a row
+// in the index table. This pin holds the shape so a half-added recipe (page on
+// disk, no index row, or a nav entry with no page) cannot ship.
+
+test('docs: the playbooks leg ships one page per recipe, indexed and in the nav (#34)', () => {
+  const pbDir = path.join(ROOT, 'docs', 'playbooks');
+  assert.ok(fs.existsSync(pbDir), 'docs/playbooks/ exists (the playbooks leg)');
+  const pages = fs.readdirSync(pbDir).filter((f) => f.endsWith('.md')).sort();
+  assert.ok(pages.includes('index.md'), 'the leg carries an index page');
+  assert.ok(pages.length >= 9, `the leg ships the index plus the recipes (found ${pages.length} files)`);
+
+  const index = fs.readFileSync(path.join(pbDir, 'index.md'), 'utf8');
+  const fm = (t) => (t.match(/^---\n([\s\S]*?)\n---/) || [])[1] || '';
+  assert.includes(fm(index), 'permalink: /playbooks/', 'the index owns the /playbooks/ permalink');
+
+  for (const f of pages) {
+    if (f === 'index.md') continue;
+    const text = fs.readFileSync(path.join(pbDir, f), 'utf8');
+    const block = fm(text);
+    assert.includes(block, 'title:', `${f} carries a title`);
+    assert.includes(block, 'description:', `${f} carries a description`);
+    const perm = (block.match(/^permalink:\s*(\S+)/m) || [])[1];
+    assert.ok(perm && perm.startsWith('/playbooks/'), `${f} carries a /playbooks/ permalink (got ${perm})`);
+    assert.ok(index.includes(`](${perm})`), `the index table links ${f} by its permalink ${perm}`);
+  }
+
+  // The nav is the menu layer: the leg's pages are listed (the audit gate's
+  // reverse check also holds this, but the pin keeps it in the battery).
+  const nav = fs.readFileSync(path.join(ROOT, 'docs', '_data', 'nav.yml'), 'utf8');
+  assert.includes(nav, 'url: /playbooks/', 'the nav lists the playbooks leg');
+  assert.includes(nav, 'url: /playbooks/first-run/', 'the nav lists a recipe page');
+});
+
+// ---------- ship-from-download lane (#38) ----------
+// The generic phone publish lane is family-reusable (zero repo imports), so
+// these pins drive it through the runner seam: no npm, no network. The gate
+// itself (whatever prepublishOnly the staged tree carries) is proven
+// elsewhere; what is pinned here is that the lane assembles and refuses
+// correctly and that the token never lands on disk, in argv, or in the log.
+
+const { ship, tokenProblems, expandHome, TOKEN_ENV, TOKEN_ENV_ALIAS } = require(path.join(ROOT, 'scripts', 'ship-from-download.cjs'));
+
+function shipTmp() {
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'ship-lane-'));
+}
+function mkPkgTree(root, name = 'lib-x', version = '1.0.0', withLock = true) {
+  fs.mkdirSync(root, { recursive: true });
+  fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ name, version }));
+  if (withLock) fs.writeFileSync(path.join(root, 'package-lock.json'), '{}');
+}
+function fakeRunner(status = 0, statuses = null) {
+  const calls = [];
+  const run = (cmd, args, o) => {
+    calls.push({ cmd, args: [...args], o });
+    const key = args[0] === 'publish' ? 'publish' : 'install';
+    return { status: statuses && key in statuses ? statuses[key] : status };
+  };
+  run.calls = calls;
+  return run;
+}
+const GOOD_SHIP_TOKEN = 'npm_LIVE-AMPLE-HELLO-WORLD-0123456789abcdef';
+
+test('ship lane (#38): the token never lands in a file, in argv, or in the log', () => {
+  const base = shipTmp();
+  try {
+    mkPkgTree(path.join(base, 'src-tree'));
+    const run = fakeRunner(0, { install: 0, publish: 1 }); // publish fails, unlink still runs
+    const npmrc = path.join(base, 'dest', '.npmrc');
+    const r = ship({ target: path.join(base, 'src-tree'), root: path.join(base, 'dest'), token: GOOD_SHIP_TOKEN, run });
+    assert.strictEqual(r.code, 1, 'publish failure surfaces npm\'s code');
+    assert.strictEqual(fs.existsSync(npmrc), false, 'the staged .npmrc is unlinked in finally even on failure');
+    assert.strictEqual(run.calls.length, 2, 'install then publish');
+    assert.strictEqual(run.calls[1].o.env[TOKEN_ENV], GOOD_SHIP_TOKEN, 'the token rides the child ENV under the standard name');
+    assert.ok(!JSON.stringify(run.calls[1].args).includes(GOOD_SHIP_TOKEN), 'never in argv (ps-safe)');
+    assert.ok(!r.out.join('\n').includes(GOOD_SHIP_TOKEN), 'never in the log');
+  } finally { fs.rmSync(base, { recursive: true, force: true }); }
+});
+
+test('ship lane (#38): the staged .npmrc holds the ${NPM_TOKEN} expansion, never the raw token', () => {
+  const base = shipTmp();
+  try {
+    mkPkgTree(path.join(base, 'src-tree'));
+    let captured = null;
+    const origWrite = fs.writeFileSync;
+    fs.writeFileSync = (p, c, ...rest) => { if (String(p).endsWith('.npmrc')) captured = c; return origWrite(p, c, ...rest); };
+    try {
+      const r = ship({ target: path.join(base, 'src-tree'), root: path.join(base, 'dest'), token: GOOD_SHIP_TOKEN, run: fakeRunner(0) });
+      assert.strictEqual(r.code, 0);
+    } finally { fs.writeFileSync = origWrite; }
+    assert.ok(captured && captured.includes(`\${${TOKEN_ENV}}`), 'the .npmrc carries the env placeholder');
+    assert.ok(captured && !captured.includes(GOOD_SHIP_TOKEN), 'the raw token never hits the staged file');
+  } finally { fs.rmSync(base, { recursive: true, force: true }); }
+});
+
+test('ship lane (#38): named refusals, exit 2, nothing staged before the refusal', () => {
+  const base = shipTmp();
+  try {
+    mkPkgTree(path.join(base, 'src-tree'), 'crashtest', '1.2.0');
+    const noRoot = ship({ target: path.join(base, 'src-tree'), run: fakeRunner() });
+    assert.strictEqual(noRoot.code, 2, 'a missing --root is a precondition refusal');
+    // no name in package.json refuses before any copy
+    fs.mkdirSync(path.join(base, 'nameless'));
+    fs.writeFileSync(path.join(base, 'nameless', 'package.json'), JSON.stringify({ version: '1.0.0' }));
+    const bad = ship({ target: path.join(base, 'nameless'), root: path.join(base, 'dest-a'), token: GOOD_SHIP_TOKEN, run: fakeRunner() });
+    assert.strictEqual(bad.code, 2);
+    assert.includes(bad.out.join('\n'), 'BAD_PACKAGE_NAME');
+    assert.strictEqual(fs.existsSync(path.join(base, 'dest-a')), false, 'nothing copied on refusal');
+    // a non-empty root refuses and NEVER deletes
+    const root = path.join(base, 'dest-b');
+    fs.mkdirSync(root);
+    fs.writeFileSync(path.join(root, 'sentinel.txt'), 'do not touch');
+    const occupied = ship({ target: path.join(base, 'src-tree'), root, token: GOOD_SHIP_TOKEN, run: fakeRunner() });
+    assert.strictEqual(occupied.code, 2);
+    assert.includes(occupied.out.join('\n'), 'ROOT_OCCUPIED');
+    assert.includes(occupied.out.join('\n'), 'rm -rf', 'the refusal carries the exact command as advice');
+    assert.strictEqual(fs.existsSync(path.join(root, 'sentinel.txt')), true, 'the lane never deletes on its own');
+    // shared-storage roots (the EACCES-symlink class) refuse
+    for (const shared of ['/storage/emulated/0/Download/dest', '/sdcard/dest']) {
+      const r = ship({ target: path.join(base, 'src-tree'), root: shared, token: GOOD_SHIP_TOKEN, run: fakeRunner() });
+      assert.strictEqual(r.code, 2, shared);
+      assert.includes(r.out.join('\n'), 'SHARED_STORAGE_ROOT');
+    }
+  } finally { fs.rmSync(base, { recursive: true, force: true }); }
+});
+
+test('ship lane (#38): --clean removes ONLY the staged root, on every exit, and the retry closes', () => {
+  const base = shipTmp();
+  try {
+    const target = path.join(base, 'src-tree');
+    mkPkgTree(target);
+    const root = path.join(base, 'dest');
+    // publish fails -> --clean still removes the stage so the retry is not blocked
+    const r = ship({ target, root, token: GOOD_SHIP_TOKEN, run: fakeRunner(0, { install: 0, publish: 1 }), clean: true });
+    assert.strictEqual(r.code, 1);
+    assert.strictEqual(fs.existsSync(root), false, 'a failed run with --clean leaves nothing behind');
+    assert.includes(r.out.join('\n'), '--clean removed');
+    assert.strictEqual(fs.existsSync(target), true, '--clean never touches the --target');
+    // the retry loop closes: the SAME root stages fresh
+    const r2 = ship({ target, root, token: GOOD_SHIP_TOKEN, run: fakeRunner(0) });
+    assert.strictEqual(r2.code, 0, 'the same root stages fresh after a cleaned failure');
+    // default (no --clean) never deletes
+    const root2 = path.join(base, 'dest-keep');
+    const r3 = ship({ target, root: root2, token: GOOD_SHIP_TOKEN, run: fakeRunner(0) });
+    assert.strictEqual(r3.code, 0);
+    assert.strictEqual(fs.existsSync(root2), true, 'default keeps the staged root');
+  } finally { fs.rmSync(base, { recursive: true, force: true }); }
+});
+
+test('ship lane (#38): tokenProblems describes shape, never the value; exports are the standard names', () => {
+  assert.strictEqual(tokenProblems('npm_live-ok-hello-0123456789abcdef'), null, 'a well-formed npm_ token passes');
+  const gib = 'Zq7kxWmPv9hRt2LqBnJ4f';
+  for (const bad of [null, '', gib, gib.slice(0, 12)]) {
+    const msg = tokenProblems(bad) || '';
+    assert.ok(msg.length > 0, 'a malformed token gets a named diagnosis');
+    if (bad && bad.length > 4) assert.ok(!msg.includes(bad), 'the diagnosis never repeats the input verbatim');
+  }
+  assert.strictEqual(expandHome('~/web/x'), path.join(os.homedir(), 'web/x'), 'expandHome resolves ~');
+  assert.strictEqual(expandHome('/abs/x'), '/abs/x', 'absolute paths pass through');
+  assert.strictEqual(TOKEN_ENV, 'NPM_TOKEN', 'the standard npm env name is primary');
+  assert.strictEqual(TOKEN_ENV_ALIAS, 'NPM_SHIP_TOKEN', 'the generic fallback rides along');
 });
 
 // done

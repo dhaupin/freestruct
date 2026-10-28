@@ -49,7 +49,7 @@ export function runPurgeHooks(config, buildHash, outputDir) {
         console.log('  Purge hooks disabled (set runHooks: true to enable)');
         return;
       }
-      execSync(command, { stdio: 'inherit', timeout: 30000 });
+      execSync(command, { stdio: 'inherit', timeout: 30000, env: hookEnv({ siteUrl, buildHash, outputDir }) });
       console.log('  Command: ' + command.substring(0, 100) + '...');
       console.log('Purge hook ' + name + ': done');
     } catch (e) {
