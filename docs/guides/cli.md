@@ -89,9 +89,11 @@ Config-gated absences collapse to one line. When a warning can only ever be
 true or false at the config level - `og:image` and `twitter:image` are the
 two - it prints once at the end of the run with an affected-page count
 (`WARN config: og:image not configured - N page(s) affected`) instead of
-repeating on every page. Page-shaped warnings (title and description length,
-JSON-LD absence, h1 sanity, partial-set coherence) still repeat, because
-their findings genuinely differ per page.
+repeating on every page. When an og image IS configured but does not cover
+every page (`og.scoped` or `ogImageGeneration`), the line reads
+`og:image absent on N page(s)` instead. Page-shaped warnings (title and
+description length, JSON-LD absence, h1 sanity, partial-set coherence) still
+repeat, because their findings genuinely differ per page.
 
 ### indexnow
 

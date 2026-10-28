@@ -1061,7 +1061,7 @@ The full-surface walk's remaining finding; battery 102 -> 103:
 ### Pass 26.17 - the family-sweep queue (done, same session, post-26.16)
 
 The open queue's real bugs and gate work, worked top-down; battery
-103 -> 108:
+103 -> 109:
 
 - **linkcheck ignored basePath (fixed, #32):** the highest-value family
   bug. `engine/linkcheck.js` resolved root-absolute hrefs against the
@@ -1081,7 +1081,11 @@ The open queue's real bugs and gate work, worked top-down; battery
   with an affected-page count (`WARN config: og:image not configured - N
   page(s) affected`); page-shaped classes (title/description length,
   JSON-LD absence, h1 sanity, partial-set coherence) still repeat. Pinned:
-  one config row, correct count, no per-page rows, digest carries it.
+  one config row, correct count, no per-page rows, digest carries it. Edge
+  (self-review catch): with `og.scoped`/`ogImageGeneration` the config DOES
+  supply an image, just not for every page - the line then reads
+  "og:image absent on N page(s)" instead of the false "not configured"
+  (pinned both states).
 - **release gate composed (fixed, #37):** `"check": "npm test && npm run
   lint:docs && npm run packs:selftest"` + `"prepublishOnly": "npm run
   check"`, mirroring the eyestruct precedent; `publish.yml` runs the

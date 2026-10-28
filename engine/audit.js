@@ -283,12 +283,30 @@ export function auditOutput({ outputDir, config, json = false, capture = false }
 
   // Flush config-gated absences as ONE line each (issue #28), with the
   // affected-page count. Deterministic order (og:image before twitter:image).
+  // The og:image wording stays truthful when the config DOES supply an image
+  // but not for every page (og.scoped, ogImageGeneration): the line then
+  // reads "absent on N page(s)" rather than the false "not configured".
+  const ogScopedCfg = config.og?.scoped;
+  const ogImageConfigured = Boolean(config.og?.image)
+    || Boolean(config.ogImageGeneration)
+    || Boolean(ogScopedCfg && typeof ogScopedCfg === 'object' && !Array.isArray(ogScopedCfg)
+      && Object.keys(ogScopedCfg).length > 0);
   for (const [key, pages] of [...configGated.entries()].sort()) {
     const n = pages.size;
-    const hint = key === 'og:image'
-      ? 'add one for share previews'
-      : 'add a twitter username / og.image as needed';
-    warn('config', key + ' not configured - ' + n + ' page(s) affected (' + hint + ')');
+    let msg;
+    if (key === 'og:image') {
+      msg = ogImageConfigured
+        ? 'og:image absent on ' + n + ' page(s) - no og.image covers them (add one, or extend og.scoped)'
+        : 'og:image not configured - ' + n + ' page(s) affected (add one for share previews)';
+    } else {
+      // twitter:image ships alongside og:image (the injector derives it), so
+      // its absence tracks the same config state: "not configured" only when
+      // NO og image source exists at all, else "absent on N page(s)".
+      msg = ogImageConfigured
+        ? key + ' absent on ' + n + ' page(s) - no og.image covers them (add one, or extend og.scoped)'
+        : key + ' not configured - ' + n + ' page(s) affected (add a twitter username / og.image as needed)';
+    }
+    warn('config', msg);
   }
 
   if (capture) {

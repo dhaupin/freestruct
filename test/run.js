@@ -1547,6 +1547,31 @@ test('audit: config-gated absences collapse to one line each with a page count (
   } finally { rmDir(dir); }
 });
 
+test('audit: og.scoped partial coverage keeps the collapsed line truthful (issue #28 edge)', () => {
+  const dir = scenario('main', {
+    'docs/ssr-config.yml': [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'og:',
+      '  scoped:',
+      '    "/guide/**": /guide.png',
+      '',
+    ].join('\n'),
+  });
+  try {
+    runInject(dir);
+    const out = spawnSync(process.execPath, [INJECT, 'audit'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(out.status, 0, 'scoped-partial absence stays report-grade\n' + out.stdout);
+    // og.image IS configured (via og.scoped) - the line must not claim
+    // otherwise, and must still collapse to one row with a count.
+    assert.includes(out.stdout, 'og:image absent on ', 'partial coverage reads as absent-on-N, not not-configured');
+    assert.ok(!/config: og:image not configured/.test(out.stdout), 'no false not-configured claim when og.scoped is set');
+    assert.includes(out.stdout, 'WARN config: twitter:image absent on ', 'twitter:image tracks the same config state');
+  } finally { rmDir(dir); }
+});
+
 // ---------- indexnow (issue #19) ----------
 // Key-file emission during the run (the keyLocation contract), generate-
 // once-and-persist key handling, and a network-free --dry-run submission
