@@ -4,7 +4,7 @@ All notable changes to freestruct will be documented here.
 
 ## [1.1.0] - 2026-10-25
 
-The first post-stable release: the all-items issue sweep (#17-#24 plus the #25 follow-on only here by owner direction) and the CI tooling that came with it, plus the SEO-gap pass landed inside this same untagged version. Every item below is battery-pinned; the battery grew 49 -> 120.
+The first post-stable release: the all-items issue sweep (#17-#24 plus the #25 follow-on only here by owner direction) and the CI tooling that came with it, plus the SEO-gap pass landed inside this same untagged version. Every item below is battery-pinned; the battery grew 49 -> 121.
 
 The SEO-gap pass (eight additions, all opt-in, missing-only, pinned):
 
@@ -35,6 +35,7 @@ The SEO-gap pass (eight additions, all opt-in, missing-only, pinned):
 - Prose flows: the living surfaces (discussions posts + index, README, AGENTS, CHANGELOG, labs memory) are unwrapped, and `scripts/unwrap-prose.cjs` joins hard-wrapped prose mechanically while leaving frontmatter, fences, tables, headings, and blank-line boundaries alone. The 72-column commit-time habit is retired so future agents do not reinstate it (#39)
 - Phone publish lane: `scripts/ship-from-download.cjs` (the generic, family-reusable lane) stages a GitHub-zip-extracted tree into the Termux home, installs, and publishes with the repo's own `prepublishOnly` gate riding unchanged. The token rides env or `--token-file` into a staged one-line `.npmrc` that is unlinked in a finally - never in argv, on disk, or in the log - and named refusals keep exit 0/1/2 with `--clean` scoped to the staged root only (#38)
 - Playbooks leg: a new `docs/playbooks/` docs layer - the runbook recipes an agent runs (first run, link triage, baked-output audit, config validation, release gate, phone publish, docs preview, pin bump), each a single-file page indexed in the leg's table and the nav, so the commands live next to the gates they prove (#34)
+- Reusable docs lane: the Pages runbook is promoted to `.github/workflows/docs-lane.yml` (`on: workflow_call`, eight inputs with this repo's defaults), and `docs.yml` thins to a caller that dogfoods it - so the rig projects stop hand-porting ~115 drifted lines and call one lane instead; both pagefind cache scopes and every pinned install survive the move (#31)
 - Table guard (`tableWrap`, on by default): every `<table>` wraps in a `.fs-table-wrap` scroll container, so a wide docs table scrolls inside its own box instead of pinning the whole page width - mobile-safe by construction on any layout. Nested tables wrap once, a table already inside a consumer `.table-wrap` is left alone, and a table-less page is untouched (issue #35)
 
 ## [1.0.0] - 2026-10-22

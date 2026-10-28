@@ -213,6 +213,30 @@ test('docs layout: the rouge token block covers the common vocabulary (#30)', ()
   }
 });
 
+test('docs lane is reusable: docs.yml is a thin caller of the workflow_call lane (#31)', () => {
+  const lanePath = path.join(ROOT, '.github', 'workflows', 'docs-lane.yml');
+  const callerPath = path.join(ROOT, '.github', 'workflows', 'docs.yml');
+  assert.ok(fs.existsSync(lanePath), 'the reusable docs lane ships');
+  const lane = yamlLoad(fs.readFileSync(lanePath, 'utf8'));
+  assert.ok(lane.on && 'workflow_call' in lane.on, 'the lane is on: workflow_call');
+  const inputs = lane.on.workflow_call.inputs || {};
+  for (const name of ['docs-path', 'output-dir', 'ruby-version', 'node-version', 'pagefind-version', 'crashtest-ref', 'freestruct-cmd', 'strict']) {
+    assert.ok(name in inputs, `the lane exposes the ${name} input`);
+  }
+  // The receipts the inline lane kept must survive the promotion: both pagefind
+  // scopes are cached, and the crashtest + pagefind installs stay pinned.
+  const laneText = fs.readFileSync(lanePath, 'utf8');
+  assert.match(laneText, /node_modules\/pagefind\n\s+node_modules\/@pagefind/, 'the pagefind cache carries BOTH scopes');
+  assert.match(laneText, /github:dhaupin\/crashtest#\$/, 'crashtest install stays pinned to the input ref');
+  assert.match(laneText, /pagefind@\$/, 'pagefind install stays pinned to the input version');
+
+  const caller = yamlLoad(fs.readFileSync(callerPath, 'utf8'));
+  const job = caller.jobs.docs;
+  assert.ok(job && typeof job.uses === 'string' && job.uses.endsWith('docs-lane.yml'),
+    'docs.yml dogfoods the lane via a uses: caller job (no inlined steps)');
+  assert.ok(!job.steps, 'the caller carries no steps (the runbook lives in the lane)');
+});
+
 // ---------- crashtest pack surface (packs/, the one-surface extension model) ----------
 
 test('packs/ surface: a README ships, every public pack.json is schemaVersion 1, and each entry satisfies the scenario contract (name/description/attacks)', async () => {

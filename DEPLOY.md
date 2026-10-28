@@ -16,7 +16,7 @@ CI recipe lives in the
 
 | Target | What it is | Runs on |
 |--------|-----------|---------|
-| GitHub Pages | This repo's own docs site (`docs/` is the dogfood: Jekyll + Freestruct + Pagefind) | `.github/workflows/docs.yml`, every push to `main` |
+| GitHub Pages | This repo's own docs site (`docs/` is the dogfood: Jekyll + Freestruct + Pagefind) | `.github/workflows/docs.yml` (thin caller) -> `docs-lane.yml` (reusable lane), every push to `main` |
 | Test battery | Fixture battery + version pins + docs audit + tarball e2e + pack selftest | `.github/workflows/test.yml`, every push/PR |
 | npm release | Trusted Publisher (OIDC), dormant until the owner's bootstrap | `.github/workflows/publish.yml`, fires on `v*` tags ONLY |
 
@@ -26,11 +26,18 @@ caches keyed by pinned versions (see [Cache discipline](#cache-discipline)).
 
 ---
 
-## 1. GitHub Pages (`docs.yml`)
+## 1. GitHub Pages (`docs.yml` -> `docs-lane.yml`)
 
 The docs build is the dogfood proof: the Pages site at
 https://freestruct.creadev.org is produced by the same pipeline a consumer
 would run, gated at every step.
+
+The runbook lives in `.github/workflows/docs-lane.yml` as a reusable
+`on: workflow_call` lane (issue #31); `docs.yml` is now a thin caller that
+uses it with no inputs (this repo dogfoods its own lane). That is the point of
+the promotion: the other rig projects (flowforge, gistory, eyestruct,
+crashtest, packstruct, prestruct) call the same lane and thin their drifted
+hand-copies to a caller file, instead of hand-porting ~115 lines each.
 
 ```text
 Checkout -> Ruby setup -> bundle install -> jekyll build (inline cd: docs/)
@@ -40,6 +47,15 @@ Checkout -> Ruby setup -> bundle install -> jekyll build (inline cd: docs/)
          -> pagefind index (pinned, cached)
          -> upload-pages-artifact -> deploy-pages
 ```
+
+The lane is parameterized on the axes the hand-copies drifted on -
+`docs-path`, `output-dir`, `ruby-version`, `node-version`, `pagefind-version`,
+`crashtest-ref`, `freestruct-cmd`, `strict` - with defaults matching this
+repo, so a consumer pins only what it changes (for example
+`freestruct-cmd: npx freestruct` instead of the dogfood `node
+bin/freestruct.mjs`). The two receipts the inline lane kept survive the move:
+pagefind is cached in BOTH scopes (`node_modules/pagefind` and the scoped
+`@pagefind/<platform>` companion), and every install stays pinned.
 
 Hard gates baked in:
 
@@ -61,7 +77,7 @@ configured for the repository; the CNAME is `freestruct.creadev.org`
 
 Every push and pull request runs:
 
-1. `npm test` - the fixture battery (120 pins), including the version-truth
+1. `npm test` - the fixture battery (121 pins), including the version-truth
    pin that enforces the triple agreement (README / package.json /
    CHANGELOG) and the pinned **1.1.0** (owner call, 2026-10-25).
 2. Docs audit (`npm run lint:docs`) - frontmatter, links, nav symmetry,
