@@ -31,7 +31,9 @@
     "test": "node test/run.js",
     "e2e": "node scripts/e2e-install.cjs",
     "lint:docs": "node scripts/run-docs-audit.cjs",
-    "packs:selftest": "node scripts/packs-selftest.cjs"
+    "packs:selftest": "node scripts/packs-selftest.cjs",
+    "check": "npm test && npm run lint:docs && npm run packs:selftest",
+    "prepublishOnly": "npm run check"
   },
   "repository": {
     "type": "git",

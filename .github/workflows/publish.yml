@@ -56,11 +56,13 @@ jobs:
       - name: Install
         run: npm install --no-audit --no-fund
 
-      - name: Test
-        run: npm test
-
-      - name: Docs audit
-        run: node scripts/run-docs-audit.cjs
+      # The composed local gate (battery + docs audit + pack selftest). The
+      # `npm publish` step below ALSO triggers prepublishOnly -> check, so a
+      # tagged tree is gated twice; this explicit step fails fast and prints
+      # clearly. packs:selftest skips without a crashtest checkout (test.yml
+      # runs the real teeth on this same commit).
+      - name: Check (battery + docs audit + pack selftest)
+        run: npm run check
 
       - name: Tarball e2e (fresh-install quick start gates the publish)
         run: node scripts/e2e-install.cjs

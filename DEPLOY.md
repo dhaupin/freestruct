@@ -61,9 +61,9 @@ configured for the repository; the CNAME is `freestruct.creadev.org`
 
 Every push and pull request runs:
 
-1. `npm test` - the fixture battery (89 pins), including the version-truth
+1. `npm test` - the fixture battery (108 pins), including the version-truth
    pin that enforces the triple agreement (README / package.json /
-   CHANGELOG) and the pinned **1.0.0** (owner call, 2026-10-22).
+   CHANGELOG) and the pinned **1.1.0** (owner call, 2026-10-25).
 2. Docs audit (`npm run lint:docs`) - frontmatter, links, nav symmetry,
    style, truthfulness, English-only language gate, and the engine-header
    comment format gate.
@@ -90,8 +90,9 @@ provenance automatically per npm Trusted Publishers.
 The runbook (when it is time - all owner actions):
 
 ```bash
-# 1. everything green: battery, audit, sync, selftest, e2e (CI already runs these)
-npm test && npm run lint:docs && npm run sync:check && npm run e2e
+# 1. everything green: the composed check (battery + docs audit + pack
+#    selftest), plus sync lockstep and the tarball e2e (CI runs all of these)
+npm run check && npm run sync:check && npm run e2e
 
 # 2. inspect the intended tarball (bin/, engine/, init/ per the files whitelist)
 npm pack --dry-run
@@ -108,6 +109,13 @@ npm publish
 # 5. cut the first tag; every later release publishes with provenance:
 #    npm version <bump> && git push --tags
 ```
+
+`npm publish` also fires `prepublishOnly` -> `npm run check` (issue #37), so
+even a manual bootstrap publish is gated on the battery, docs audit and pack
+selftest. `packs:selftest` needs a crashtest checkout: with one present it
+runs the real teeth, and with none present it prints a named skip and exits
+0 (a local publish should not need a github-tarball install); `test.yml`
+always installs crashtest, so the teeth run on every push/PR regardless.
 
 The version truth is enforced in CI: the battery pin refuses any README /
 package.json / CHANGELOG triplet that disagrees. Everything currently ships

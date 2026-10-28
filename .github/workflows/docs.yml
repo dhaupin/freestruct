@@ -71,7 +71,7 @@ jobs:
       # with 'Failed to install either of [pagefind_extended, pagefind]').
       - name: Restore pagefind (indexer cache)
         id: pf
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             node_modules/pagefind

@@ -1058,3 +1058,45 @@ The full-surface walk's remaining finding; battery 102 -> 103:
 - Gates: battery 103/103, docs audit, sync lockstep, packs selftest,
   tarball e2e.
 
+### Pass 26.17 - the family-sweep queue (done, same session, post-26.16)
+
+The open queue's real bugs and gate work, worked top-down; battery
+103 -> 108:
+
+- **linkcheck ignored basePath (fixed, #32):** the highest-value family
+  bug. `engine/linkcheck.js` resolved root-absolute hrefs against the
+  output ROOT with no `basePath` awareness, so a Jekyll `baseurl`'d site
+  (gistory/eyestruct shape) failed `--strict` with a BROKEN row for every
+  nav link - the same bug class urls.js solved for canonical/sitemap, on
+  the link-check surface. `checkLinks` now takes `basePath`, strips the
+  EXACT configured prefix from a root-absolute target before resolving
+  (`inject.js` threads `config.basePath` through), and leaves an href
+  carrying a DIFFERENT prefix resolving (correctly) as broken. Reproduced
+  offline first (2 broken links on a `/myrepo` site), then pinned both
+  ways: a prefixed nav resolves and `--strict` passes; a foreign prefix
+  stays broken.
+- **config-gated audit noise (fixed, #28):** `og:image`/`twitter:image`
+  absences are config-shaped, not page-shaped - they printed once per page
+  (80 lines at 40 pages). They now collect into one line each at run end
+  with an affected-page count (`WARN config: og:image not configured - N
+  page(s) affected`); page-shaped classes (title/description length,
+  JSON-LD absence, h1 sanity, partial-set coherence) still repeat. Pinned:
+  one config row, correct count, no per-page rows, digest carries it.
+- **release gate composed (fixed, #37):** `"check": "npm test && npm run
+  lint:docs && npm run packs:selftest"` + `"prepublishOnly": "npm run
+  check"`, mirroring the eyestruct precedent; `publish.yml` runs the
+  composed gate explicitly (the publish step re-triggers it), keeping the
+  heavyweight `e2e` leg as the CI-side gate. To keep a local publish from
+  needing a github-tarball install, `packs:selftest` now degrades to a
+  NAMED skip (exit 0) when no crashtest checkout is present and looks for
+  a repo-relative `node_modules/crashtest` too - while `CRASHTEST_BIN`
+  set-but-missing stays loud (exit 2). CI always installs crashtest, so
+  the teeth still run there; pinned both shapes.
+- **straggler pin (fixed, #29):** `docs.yml` pagefind cache moved
+  `actions/cache@v4` -> `@v6`, matching every other cache step.
+- Trail aligned at 108: README trail, AGENTS house table, CHANGELOG 1.1.0
+  line, the announcement's quality layer, DEPLOY's battery line +
+  prepublish note, and the CLI guide's audit section (the collapse rule).
+- Gates: battery 108/108, docs audit, sync lockstep, packs selftest
+  (skip locally, teeth in CI), tarball e2e.
+

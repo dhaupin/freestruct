@@ -15,8 +15,20 @@ import path from 'path';
  * then the .html/.htm sibling file. Assets stay out of the checker's
  * purview (see the shape test above the flags).
  */
-export function checkLinks(files, outputDir) {
+export function checkLinks(files, outputDir, basePath = '') {
   const broken = [];
+
+  // basePath is the URL path prefix the output tree is SERVED under (same
+  // semantics urls.js owns for canonical/sitemap). A root-absolute href on a
+  // baseurl'd site carries that prefix ("/myrepo/guides/cli"), but inside the
+  // output tree the prefix is not a directory - resolving it literally turned
+  // every nav link into a miss and failed --strict for every baseurl'd site
+  // (issue #32). Strip the EXACT prefix before resolving; an href carrying a
+  // DIFFERENT prefix stays broken (the strip must match the configured
+  // basePath, not "any leading segment").
+  const prefix = basePath
+    ? ('/' + String(basePath).replace(/^\/+/, '')).replace(/\/+$/, '')
+    : '';
 
   for (const file of files) {
     // Payload stripping (Pass 26.14): inline JS template strings
@@ -44,9 +56,16 @@ export function checkLinks(files, outputDir) {
       // against the OUTPUT ROOT - path.join(baseDir, '/x') APPENDS, it never
       // resets, which turned every menu link on a nested page into a miss
       // (the CI --strict run caught it). Relative hrefs stay page-relative.
-      const absPath = link.startsWith('/')
-        ? path.join(outputDir, link)
-        : path.join(baseDir, link);
+      // A root-absolute href that carries the configured basePath has that
+      // prefix stripped first (issue #32); one with a different prefix keeps
+      // it and resolves (correctly) as broken.
+      let target = link;
+      if (link.startsWith('/') && prefix && (link === prefix || link.startsWith(prefix + '/'))) {
+        target = link.slice(prefix.length) || '/';
+      }
+      const absPath = target.startsWith('/')
+        ? path.join(outputDir, target)
+        : path.join(baseDir, target);
       const normalized = path.normalize(absPath);
 
       // Targeted file link: extension decides the check shape (case-

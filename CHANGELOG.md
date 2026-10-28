@@ -7,7 +7,7 @@ All notable changes to freestruct will be documented here.
 The first post-stable release: the all-items issue sweep (#17-#24 plus the
 #25 follow-on only here by owner direction) and the CI tooling that came
 with it, plus the SEO-gap pass landed inside this same untagged version.
-Every item below is battery-pinned; the battery grew 49 -> 103.
+Every item below is battery-pinned; the battery grew 49 -> 108.
 
 The SEO-gap pass (eight additions, all opt-in, missing-only, pinned):
 
@@ -69,6 +69,12 @@ The SEO-gap pass (eight additions, all opt-in, missing-only, pinned):
   into committed template copies now aborts loudly with exit 3 and the
   fix spelled out; staged-dirs-only sentinels (a built _site legitimately
   carries the config file, so that marker never gates) (#18 + Pass 26.15)
+- Family sweep: the link checker resolves root-absolute hrefs against the
+  configured `basePath` (a baseurl'd site's nav no longer fails `--strict`),
+  config-gated audit absences collapse to one line each with a page count,
+  and the release gate is composed - `npm run check` plus a `prepublishOnly`
+  hook, with `packs:selftest` degrading to a named skip when no crashtest
+  checkout is present (#32, #28, #37, #29)
 
 ## [1.0.0] - 2026-10-22
 

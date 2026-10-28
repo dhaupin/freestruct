@@ -106,6 +106,37 @@ test('package.json is ESM, node >= 20, and ships the house structure (bin + engi
   assert.strictEqual(pkg.main, 'engine/inject.js', 'main points at the engine');
 });
 
+test('publish gate: check composes the battery + audit + pack selftest, and prepublishOnly runs it (issue #37)', () => {
+  const pkg = JSON.parse(read('.', 'package.json'));
+  assert.strictEqual(pkg.scripts.check, 'npm test && npm run lint:docs && npm run packs:selftest',
+    'check composes the three fast gates');
+  assert.strictEqual(pkg.scripts.prepublishOnly, 'npm run check',
+    'prepublishOnly gates the publish on check');
+  // The heavyweight e2e leg stays a CI-side gate (publish.yml), not in check.
+  assert.ok(!/e2e/.test(pkg.scripts.check), 'the heavyweight e2e leg stays out of the local gate');
+  const publish = read('.', '.github/workflows/publish.yml');
+  assert.includes(publish, 'npm run check', 'publish.yml runs the composed gate');
+  assert.includes(publish, 'e2e-install.cjs', 'the tarball e2e stays a CI-side publish gate');
+});
+
+test('packs:selftest degrades gracefully without a crashtest checkout (named skip, exit 0 - issue #37)', () => {
+  // A local `npm run check` / `npm publish` has no crashtest install; the
+  // gate must skip with a named line, never hard-fail (CI always installs
+  // crashtest, so the teeth still run where it matters). CRASHTEST_BIN set
+  // but missing stays loud (exit 2) - a misconfig, not an absent checkout.
+  const res = spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'packs-selftest.cjs')], {
+    cwd: ROOT, encoding: 'utf8', env: { ...process.env, CRASHTEST_BIN: '' },
+  });
+  assert.strictEqual(res.status, 0, 'an absent checkout is exit 0 either way (skip or teeth proven)\n' + res.stderr);
+  // Fresh clone / CI battery: no crashtest -> named skip. A dev who happens
+  // to have one installed runs the real teeth (also exit 0) - both are fine.
+  assert.match(res.stderr, /skipped|teeth proven/, 'the gate names what it did');
+  const bad = spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'packs-selftest.cjs')], {
+    cwd: ROOT, encoding: 'utf8', env: { ...process.env, CRASHTEST_BIN: '/no/such/crashtest.js' },
+  });
+  assert.strictEqual(bad.status, 2, 'an explicitly-requested-but-missing checkout is still loud');
+});
+
 // ---------- version truth (issue #7) ----------
 
 test('README, package.json and CHANGELOG agree on one version (1.1.0 owner pin)', () => {
@@ -1478,6 +1509,44 @@ test('audit: svg og:image FAILs it, missing output dir is exit 3, --json parses 
   } finally { rmDir(dir2); }
 });
 
+test('audit: config-gated absences collapse to one line each with a page count (issue #28)', () => {
+  const dir = scenario('main');
+  try {
+    // No og.image configured -> the engine ships no og:image / twitter:image
+    // anywhere; the audit must say so ONCE, not once per page.
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      '',
+    ].join('\n'));
+    runInject(dir);
+    const out = spawnSync(process.execPath, [INJECT, 'audit'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(out.status, 0, 'config-gated absence is report-grade\n' + out.stdout);
+    // ONE config line each, with a count - and no per-page og:image rows.
+    assert.includes(out.stdout, 'WARN config: og:image not configured - ', 'og:image collapses to one config line');
+    assert.includes(out.stdout, 'page(s) affected', 'the config line carries an affected-page count');
+    assert.includes(out.stdout, 'WARN config: twitter:image not configured - ', 'twitter:image collapses too');
+    assert.ok(!/WARN [^:]*\.html: og:image absent/.test(out.stdout), 'no per-page og:image noise');
+    assert.ok(!/WARN [^:]*\.html: twitter:image absent/.test(out.stdout), 'no per-page twitter:image noise');
+
+    // The count matches the non-404 page total (7 baked pages - 1 404).
+    const countMatch = out.stdout.match(/og:image not configured - (\d+) page\(s\)/);
+    assert.ok(countMatch, 'count present');
+    assert.strictEqual(countMatch[1], '6', 'the count is the real affected-page total');
+
+    // Page-shaped classes still repeat (the distinguishing test from the ask):
+    // a page shipping its own partial og set still warns per page.
+    assert.includes(out.stdout, 'og:url absent', 'SSG-partial-set coherence stays per-page');
+
+    // The JSON digest carries the collapsed rows on the config page key.
+    const jsonOut = spawnSync(process.execPath, [INJECT, 'audit', '--json'], { cwd: dir, encoding: 'utf8' });
+    const digest = JSON.parse(jsonOut.stdout);
+    assert.ok(digest.warns.some(w => w.page === 'config' && /og:image not configured/.test(w.msg)), 'digest carries the config row');
+  } finally { rmDir(dir); }
+});
+
 // ---------- indexnow (issue #19) ----------
 // Key-file emission during the run (the keyLocation contract), generate-
 // once-and-persist key handling, and a network-free --dry-run submission
@@ -2135,6 +2204,65 @@ test('linkcheck route shapes: dir index + .htm sibling resolve, real misses repo
     assert.includes(out, '/nowhere');
     assert.includes(out, 'ghost.html', "the fixture's own ghost link still reports");
     assert.ok(!out.includes('site.css'), 'the stylesheet href stays out of the checker');
+  } finally { rmDir(dir); }
+});
+
+test('linkcheck: root-absolute hrefs carry the basePath prefix and still resolve (issue #32)', () => {
+  const dir = scenario('main', {
+    'docs/ssr-config.yml': [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'basePath: /myrepo',
+      ''
+    ].join('\n'),
+    // nav + crosslinks are root-absolute WITH the deploy prefix (the
+    // Jekyll/baseurl shape that failed every --strict run)
+    'docs/_site/index.html':
+      '<html><head><title>Home</title></head><body><h1>Home</h1>'
+      + '<a href="/myrepo/guides/cli">CLI</a>'
+      + '<a href="/myrepo/">Home</a>'
+      + '</body></html>',
+    'docs/_site/guides/cli.html':
+      '<html><head><title>CLI</title></head><body><h1>CLI</h1>'
+      + '<a href="/myrepo/guides/cli">self</a>'
+      + '</body></html>',
+    // the main fixture's own page carries a deliberate ghost link; replace
+    // it so this pin isolates the basePath resolution question
+    'docs/_site/check-me.html':
+      '<html><head><title>Check me</title></head><body><h1>Check me</h1>'
+      + '<a href="/myrepo/">Home</a>'
+      + '</body></html>',
+  });
+  try {
+    const out = runInject(dir);
+    assert.includes(out, 'Link check: All links OK', 'prefixed root-absolute hrefs resolve against the tree');
+    // The same tree under --strict must pass: the whole point of the fix.
+    const res = spawnSync(process.execPath, [INJECT, '--strict'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(res.status, 0, `--strict must pass for a baseurl'd site\n${res.stdout}\n${res.stderr}`);
+  } finally { rmDir(dir); }
+});
+
+test('linkcheck: a root-absolute href with a DIFFERENT prefix stays broken (issue #32 strip is exact)', () => {
+  const dir = scenario('main', {
+    'docs/ssr-config.yml': [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'basePath: /myrepo',
+      ''
+    ].join('\n'),
+    'docs/_site/index.html':
+      '<html><head><title>Home</title></head><body><h1>Home</h1>'
+      + '<a href="/otherrepo/guides/cli">foreign prefix</a>'
+      + '</body></html>',
+  });
+  try {
+    const out = runInject(dir);
+    assert.ok(!out.includes('All links OK'), 'a foreign prefix is not silently stripped');
+    assert.includes(out, '/otherrepo/guides/cli', 'the offending href is named');
   } finally { rmDir(dir); }
 });
 

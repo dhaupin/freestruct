@@ -317,8 +317,13 @@ export function runInject(options = {}) {
     if (config.generateRobots !== false) generateRobots(config, outputDir);
     if (config.generateFeed !== false) generateFeed(indexablePages, config, outputDir);
 
-    // link check over regular pages (404 targets excluded by design)
-    const brokenLinks = config.linkCheck !== false ? checkLinks(sitePages.map(p => p.file), outputDir) : [];
+    // link check over regular pages (404 targets excluded by design).
+    // basePath threads through so root-absolute hrefs on a baseurl'd site
+    // (which carry the deploy prefix) resolve against the tree, not the
+    // prefix as a directory (issue #32).
+    const brokenLinks = config.linkCheck !== false
+      ? checkLinks(sitePages.map(p => p.file), outputDir, config.basePath)
+      : [];
 
     // opt-in search index (owner decision: search.json is opt-in as of Phase 2)
     if (config.searchIndex === true) generateSearchIndex(indexablePages, config, outputDir);
