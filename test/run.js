@@ -667,6 +667,135 @@ test('default run: idempotent - a second pass does not duplicate anything', () =
   } finally { rmDir(dir); }
 });
 
+test('rerun hygiene: body-start/footer snippets never duplicate and the build hash stays put (bug fix)', () => {
+  const dir = scenario('main');
+  try {
+    // The main fixture ships a header snippet; add the body-start + footer
+    // pair the bug reproduced with (they live in the BODY, so the old
+    // marker-only strip in computeBuildHash could not neutralize them).
+    fs.writeFileSync(path.join(dir, 'docs/_freestruct/inject-body-start.html'), '<div id="bs">BODYSTART</div>\n');
+    fs.writeFileSync(path.join(dir, 'docs/_freestruct/inject-footer.html'), '<div id="ft">FOOTER</div>\n');
+    const hashOf = () => read(dir, 'docs/_site/index.html').match(/<meta name="freestruct-build" content="([0-9a-f]{8})"/)[1];
+    const first = runInject(dir);
+    const hashA = hashOf();
+    runInject(dir);
+    runInject(dir);
+    const html = read(dir, 'docs/_site/index.html');
+    assert.strictEqual((html.match(/id="bs"/g) || []).length, 1, 'body-start snippet injected exactly once after a rerun');
+    assert.strictEqual((html.match(/id="ft"/g) || []).length, 1, 'footer snippet injected exactly once after a rerun');
+    assert.strictEqual((html.match(/<!-- freestruct -->/g) || []).length, 1, 'the generated head marker stays single');
+    assert.strictEqual((html.match(/<meta name="freestruct-build"/g) || []).length, 1, 'the build meta stays single');
+    assert.strictEqual(hashOf(), hashA, 'the content-derived hash does not churn across reruns');
+    void first;
+  } finally { rmDir(dir); }
+});
+
+test('minify: verbatim blocks survive byte-for-byte and attribute-form tags are protected (bug fix)', () => {
+  const dir = scenario('main', {
+    'docs/ssr-config.yml': [
+      'site:', '  name: Foo Docs', '  url: https://docs.example.com',
+      'minify: true',
+    ].join('\n') + '\n',
+    'docs/_site/code.html': [
+      '<html><head><title>Code</title></head><body>',
+      '<p>a</p>',
+      '<p>b</p>',
+      '<pre class="highlight"><code>def foo():',
+      '    return 1',
+      '</code></pre>',
+      '<script>',
+      '// keep this comment line',
+      'var x = 1;',
+      '</script>',
+      '</body></html>',
+    ].join('\n') + '\n',
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/code.html');
+    // <pre class="..."> (attribute form) must be detected: its inner newlines
+    // and indentation are significant and survive untouched.
+    assert.includes(html, 'def foo():\n    return 1', 'pre class="..." content preserved byte-for-byte');
+    // Inline JS with a // comment must not be collapsed onto one line (that
+    // would comment out the rest of the script).
+    assert.includes(html, '// keep this comment line\nvar x = 1;', 'inline script newlines preserved');
+    // Outside blocks, redundant whitespace is still removed (body region:
+    // late-pass head metas are appended after minify by design).
+    assert.includes(html, '<body><p>a</p>', 'inter-tag whitespace outside blocks is minified');
+  } finally { rmDir(dir); }
+});
+
+test('cache-busting: only real asset extensions are busted, case-insensitively (bug fix)', () => {
+  const dir = scenario('main', {
+    'docs/_site/exts.html': [
+      '<html><head><title>Exts</title></head><body>',
+      '<a href="/x.cs">cs</a>',
+      '<a href="/x.tt">tt</a>',
+      '<a href="/x.j">j</a>',
+      '<a href="/real.css">css</a>',
+      '<a href="/img.PNG">upper png</a>',
+      '</body></html>',
+    ].join('\n') + '\n',
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/exts.html');
+    // '.cs' / '.tt' / '.j' are NOT assets (old substring test busted them).
+    assert.ok(/href="\/x\.cs"/.test(html), 'a .cs href is not cache-busted');
+    assert.ok(/href="\/x\.tt"/.test(html), 'a .tt href is not cache-busted');
+    assert.ok(/href="\/x\.j"/.test(html), 'a .j href is not cache-busted');
+    assert.match(html, /href="\/real\.css\?v=[0-9a-f]{8}"/, 'a real .css href is busted');
+    assert.match(html, /href="\/img\.PNG\?v=[0-9a-f]{8}"/, 'an uppercase .PNG is busted (case-insensitive)');
+  } finally { rmDir(dir); }
+});
+
+test('linkcheck: single-quoted hrefs are checked too, so --strict catches them (bug fix)', () => {
+  const dir = scenario('main', {
+    'docs/_site/quotes.html': "<html><head><title>Q</title></head><body><a href='/gone-sq/'>sq</a><a href=\"/gone-dq/\">dq</a><a href='/ok/'>ok</a></body></html>\n",
+    'docs/_site/ok/index.html': '<html><head><title>Ok</title></head><body>ok</body></html>\n',
+  });
+  try {
+    const out = runInject(dir);
+    assert.includes(out, '/gone-sq/', 'a single-quoted broken link is reported');
+    assert.includes(out, '/gone-dq/', 'a double-quoted broken link is reported');
+    assert.ok(!/-> \/ok\//.test(out), 'a resolvable single-quoted link is not flagged');
+    const strict = runInjectFailing(dir, ['--strict']);
+    assert.strictEqual(strict.status, 1, '--strict fails on the single-quoted break');
+  } finally { rmDir(dir); }
+});
+
+test('cli: -h is a help alias like --help (bug fix - it used to ride as an output dir)', () => {
+  const dir = scenario('main');
+  try {
+    const res = spawnSync(process.execPath, [INJECT, '-h'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(res.status, 0, '-h exits 0');
+    assert.includes(res.stdout, 'freestruct -- post-build SEO layer', '-h prints the help text');
+    assert.ok(!/Output directory not found/.test(res.stdout + res.stderr), '-h never rides as a positional output dir');
+    // Control: a real typo'd flag still fails loudly (not silently as a dir).
+    const bad = runInjectFailing(dir, ['--definitely-not-a-flag']);
+    assert.strictEqual(bad.status, 1);
+  } finally { rmDir(dir); }
+});
+
+test('audit: a basePath without its leading slash still strips from the og:image on-disk check (bug fix)', () => {
+  const dir = scenario('main', {
+    'docs/ssr-config.yml': [
+      'site:', '  name: Foo Docs', '  url: https://docs.example.com',
+      'basePath: myproject',
+      'og:', '  image: /og.png',
+    ].join('\n') + '\n',
+  });
+  try {
+    // The real image sits at the tree root (served under /myproject/og.png);
+    // the audit must resolve the stripped path and NOT warn it is missing.
+    fs.writeFileSync(path.join(dir, 'docs/_site/og.png'), 'PNG');
+    const res = spawnSync(process.execPath, [INJECT, 'audit'], { cwd: dir, encoding: 'utf8' });
+    const out = res.stdout + res.stderr;
+    assert.ok(!/og:image points at .* which does not exist on disk/.test(out),
+      'basePath (no leading slash) is normalized before the on-disk resolve');
+  } finally { rmDir(dir); }
+});
+
 test('default run: custom snippets get comments stripped + placeholders substituted (FIXED issue #10)', () => {
   const dir = scenario('main');
   try {
@@ -691,6 +820,27 @@ test('default run: reading-time, last-modified and lazy-loading metas land on pa
     // asset busting runs before lazy-load, so the img picks up its ?v= first
     assert.match(html, /<img src="\/img\/hero.png\?v=[0-9a-f]{8}" alt="hero" loading="lazy">/);
     assert.match(html, /<img src="\/img\/banner.png\?v=[0-9a-f]{8}" alt="banner" loading="eager">/);
+  } finally { rmDir(dir); }
+});
+
+test('lazy-loading: a self-closing <img/> stays well-formed (bug fix)', () => {
+  const dir = scenario('main', {
+    'docs/_site/selfclose.html': [
+      '<html><head><title>SelfClose</title></head><body>',
+      '<img src="/img/a.png"/>',
+      '<img src="/img/b.png" />',
+      '<img src="/img/c.png" alt="c">',
+      '</body></html>',
+    ].join('\n') + '\n',
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/selfclose.html');
+    // No dangling '/ loading=' artifact: the attribute lands before the close.
+    assert.ok(!/\/\s+loading="lazy"/.test(html), 'no malformed "/ loading=" artifact');
+    assert.match(html, /<img src="\/img\/a\.png\?v=[0-9a-f]{8}" loading="lazy">/, 'self-closing img repaired and lazied');
+    assert.match(html, /<img src="\/img\/b\.png\?v=[0-9a-f]{8}" loading="lazy">/, 'spaced self-closing img repaired and lazied');
+    assert.match(html, /<img src="\/img\/c\.png\?v=[0-9a-f]{8}" alt="c" loading="lazy">/, 'plain img still lazied');
   } finally { rmDir(dir); }
 });
 
@@ -1285,6 +1435,30 @@ test('purge hooks: runHooks: true executes the canary with truthful substitution
   } finally { rmDir(dir); }
 });
 
+test('purge hooks: the FREESTRUCT_* env vars reach the child (bug fix - README claimed them)', () => {
+  const dir = scenario('main');
+  try {
+    const marker = path.join(dir, 'purge-env.txt');
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      'runHooks: true',
+      'cacheBusting:',
+      '  purge:',
+      '    - name: envcanary',
+      `      command: node -e "require('fs').writeFileSync(process.argv[1], [process.env.FREESTRUCT_SITE_URL, process.env.FREESTRUCT_BUILD_HASH, process.env.FREESTRUCT_OUTPUT_DIR].join('|'))" ${marker}`,
+    ].join('\n') + '\n');
+    const out = runInject(dir);
+    const hash = (out.match(/freestruct: Done \(([0-9a-f]{0,8})\)/) || [])[1];
+    assert.ok(fs.existsSync(marker), 'the purge hook ran');
+    const parts = fs.readFileSync(marker, 'utf8').split('|');
+    assert.strictEqual(parts[0], 'https://docs.example.com', 'FREESTRUCT_SITE_URL reaches the child');
+    assert.strictEqual(parts[1], hash, 'FREESTRUCT_BUILD_HASH reaches the child');
+    assert.ok(parts[2].endsWith(path.join('docs', '_site')), 'FREESTRUCT_OUTPUT_DIR reaches the child');
+  } finally { rmDir(dir); }
+});
+
 // ---------- $-expansion trap (issue #24, latent hardening) ----------
 // Any config- or content-carried value that rides a STRING-form
 // String.replace() replacer is treated as replacement syntax: a $& / $' /
@@ -1562,6 +1736,24 @@ test('audit: a real engine run audits CLEAN, doctored output FAILS with exit 1 (
     assert.strictEqual(out2.status, 1, 'head regression exits 1');
     assert.includes(out2.stdout, 'FAIL index.html: missing meta description');
     assert.includes(out2.stdout, 'exiting 1');
+  } finally { rmDir(dir); }
+});
+
+test('audit: a valid description meta with a leading attribute is not a false FAIL (bug fix)', () => {
+  const dir = scenario('main');
+  try {
+    runInject(dir);
+    const idx = path.join(dir, 'docs/_site/index.html');
+    // Rewrite the description meta with another attribute FIRST (valid HTML);
+    // the audit's grabMeta must still find it (old single-char class did not).
+    const before = fs.readFileSync(idx, 'utf8');
+    assert.match(before, /<meta name="description"/, 'fixture page carries an injected description meta');
+    fs.writeFileSync(idx, before
+      .replace(/<meta name="description" content="([^"]*)"\s*\/?>/i,
+        '<meta charset="utf-8" name="description" content="$1">'));
+    const out = spawnSync(process.execPath, [INJECT, 'audit'], { cwd: dir, encoding: 'utf8' });
+    assert.ok(!/FAIL .*missing meta description/.test(out.stdout),
+      'a description meta carrying a leading attribute is still found\n' + out.stdout);
   } finally { rmDir(dir); }
 });
 

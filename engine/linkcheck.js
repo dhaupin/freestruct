@@ -43,10 +43,14 @@ export function checkLinks(files, outputDir, basePath = '') {
       .replace(/<code[\s\S]*?<\/code>/gi, '');
     const baseDir = path.dirname(file);
 
-    const linkRegex = /href="([^"#]+)(?:#[^"]*)?"/g;
+    // Both quote styles (bug fix): the old /href="..."/ only saw
+    // double-quoted hrefs, so a single-quoted broken link (`href='/gone/'`,
+    // valid HTML) sailed through --strict. The backreference keeps the pair
+    // consistent; the fragment is stripped from the checked target either way.
+    const linkRegex = /href=(["'])([^"'#]+)(?:#[^"']*)?\1/g;
     let match;
     while ((match = linkRegex.exec(html)) !== null) {
-      const link = match[1];
+      const link = match[2];
 
       // Skip external, absolute-protocol, and ANY scheme-shaped target
       // (data:, javascript:, tel:, mailto:, ...): schemes are not routes.

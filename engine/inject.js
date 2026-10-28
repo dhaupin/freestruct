@@ -386,8 +386,12 @@ export function runInject(options = {}) {
 // (the pre-change --version module-level check had the same shape). Library
 // importers pass no such argv and simply skip all of these.
 if (_flags.includes('--version')) { printVersion(); process.exit(0); }
-// `help` is the subcommand; --help is the flag alias (both print the same text)
-if (_firstArg === 'help' || _argv.includes('--help')) { printHelp(); process.exit(EXIT_OK); }
+// `help` is the subcommand; --help and -h are the flag aliases (all print the
+// same text). -h must be handled HERE: it is listed in KNOWN_DEFAULT_DASHES,
+// so without this branch it passes the unknown-flag guard and then rides as
+// the positional output dir (the run then dies with "Output directory not
+// found: .../-h").
+if (_firstArg === 'help' || _argv.includes('--help') || _argv.includes('-h')) { printHelp(); process.exit(EXIT_OK); }
 // ---------- audit subcommand (issue #18) ----------
 
 // `freestruct audit [outputDir] [--json]`: verify the BAKED output (heads +

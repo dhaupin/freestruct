@@ -40,7 +40,11 @@ const LB_RECOMMENDED = ['name', 'url', 'image', 'logo', 'telephone', 'priceRange
 
 /** Attribute-order tolerant meta extraction: hits aligned multi-space output. */
 function grabMeta(head, attrHasKey, name) {
-  const keyRe = new RegExp(`<meta[^>]${attrHasKey}=["']${name}["'][^>]*>`, 'i');
+  // `<meta\b[^>]*` (not `<meta[^>]`) so a leading attribute - `<meta charset=...
+  // name="description">` - is found too. The single-char class made the audit
+  // false-FAIL "missing meta description" on any page whose description meta
+  // carried another attribute first.
+  const keyRe = new RegExp(`<meta\\b[^>]*\\b${attrHasKey}=["']${name}["'][^>]*>`, 'i');
   const tag = head.match(keyRe);
   if (!tag) return null;
   const content = tag[0].match(/content=["']([^"']*)["']/i);
@@ -90,8 +94,14 @@ function urlToDisk(urlValue, { outputDir, config }) {
     return null;
   }
   if (pathName.startsWith('/')) {
-    if (config?.basePath && pathName.startsWith(config.basePath)) {
-      pathName = pathName.slice(config.basePath.length);
+    // basePath normalization mirrors urls.js (issue #32 contract): the
+    // configured prefix may lack its leading slash, and a prefix must match a
+    // whole path segment ('/myproject' never strips '/myprojectx/...').
+    const bp = config?.basePath
+      ? ('/' + String(config.basePath).replace(/^\/+/, '')).replace(/\/+$/, '')
+      : '';
+    if (bp && (pathName === bp || pathName.startsWith(bp + '/'))) {
+      pathName = pathName.slice(bp.length);
     }
     return path.join(outputDir, pathName.replace(/^\//, ''));
   }

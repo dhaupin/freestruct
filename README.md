@@ -229,11 +229,12 @@ The first post-stable release, carried by the all-items issue sweep (#17-#25 plu
 - Structured `og.image` - `{ src, width, height, alt, allowSvg }` with the companion tags and the SVG warn/strict ladder
 - Per-page OG-image generation - `ogImageGeneration` through the optional `@resvg/resvg-js` rasterizer
 - Latent hardening - every config/page-carried substitute now rides function replacers ($-expansion cannot corrupt output), plus the docs-layout dead-CSS removal
-- CI - packstruct manifest lint joined the push/PR battery alongside the crashtest pack selftest; the battery grew 49 -> 75 -> 121 pins
+- CI - packstruct manifest lint joined the push/PR battery alongside the crashtest pack selftest; the battery grew 49 -> 75 -> 121 -> 130 pins
 - Release gate - `npm run check` composes the battery + docs audit + pack selftest, and `prepublishOnly` runs it, so a dirty tree cannot publish
 - Audit signal - config-gated absences (`og:image` / `twitter:image` not configured) print once with an affected-page count instead of once per page
 - basePath links - root-absolute hrefs carrying the configured `basePath` resolve against the tree, so a baseurl'd site passes `--strict`
 - Table guard - a default-on `tableWrap` pass wraps wide tables in a scroll container so every downstream site is mobile-safe by construction
+- Engine sweep - a post-release pass over the untouched engine corners fixed rerun snippet stacking + build-hash churn, verbatim-block-aware `minifyHtml`, substring cache-bust matching, single-quoted `href` link checking, purge-hook `FREESTRUCT_*` env, self-closing `<img/>` lazy-load, the audit's leading-attribute `grabMeta` false FAIL, and the `-h` help alias
 
 ## v1.0.0
 

@@ -37,6 +37,16 @@ The SEO-gap pass (eight additions, all opt-in, missing-only, pinned):
 - Playbooks leg: a new `docs/playbooks/` docs layer - the runbook recipes an agent runs (first run, link triage, baked-output audit, config validation, release gate, phone publish, docs preview, pin bump), each a single-file page indexed in the leg's table and the nav, so the commands live next to the gates they prove (#34)
 - Reusable docs lane: the Pages runbook is promoted to `.github/workflows/docs-lane.yml` (`on: workflow_call`, eight inputs with this repo's defaults), and `docs.yml` thins to a caller that dogfoods it - so the rig projects stop hand-porting ~115 drifted lines and call one lane instead; both pagefind cache scopes and every pinned install survive the move (#31)
 - Table guard (`tableWrap`, on by default): every `<table>` wraps in a `.fs-table-wrap` scroll container, so a wide docs table scrolls inside its own box instead of pinning the whole page width - mobile-safe by construction on any layout. Nested tables wrap once, a table already inside a consumer `.table-wrap` is left alone, and a table-less page is untouched (issue #35)
+- Post-release engine sweep (battery 121 -> 130, nine pins): a pass over the untouched engine corners landed real fixes, each pinned.
+  - Rerun hygiene: body-start/footer snippets are marker-wrapped and a rerun strips the previous copy before re-adding it, so a second pass no longer stacks snippets or churns the content-derived build hash (the body text used to differ every run)
+  - `minifyHtml` was rewritten to be verbatim-block aware: `<pre>`/`<script>`/`<style>`/`<textarea>` content (including attribute forms like `<pre class="highlight">`) survives byte-for-byte, so inline JS with `//` comments and code fences are never collapsed
+  - Cache busting matched asset extensions by SUBSTRING (`.cs` hit `.css`, `.tt` hit `.ttf`, `.j` hit `.js`) and missed uppercase extensions; it is now a case-insensitive extension SET
+  - The link checker only saw double-quoted `href="..."`, so a single-quoted broken link (`href='/gone/'`, valid HTML) sailed through `--strict`; both quote styles are checked now
+  - Purge hooks ran without the documented `FREESTRUCT_SITE_URL` / `FREESTRUCT_BUILD_HASH` / `FREESTRUCT_OUTPUT_DIR` env on the child (README and the hooks guide both claimed it); `runPurgeHooks` now passes the same env as `hooks.postBuild`
+  - `addLazyLoading` mangled self-closing images (`<img ... />` became `<img ... / loading="lazy">`); the attribute now lands before the close
+  - The audit's `grabMeta` used a single-character class before the keyed attribute, so a valid `<meta charset="utf-8" name="description" ...>` was a false `FAIL missing meta description`; it now tolerates a leading attribute
+  - The audit's `urlToDisk` normalized a `basePath` without its leading slash the same way `urls.js` does, so the og:image on-disk check no longer false-warns on sub-path installs
+  - `-h` was listed as a known flag but not handled, so it rode as the positional output dir and the run died with "Output directory not found: .../-h"; `-h` now aliases `--help`
 
 ## [1.0.0] - 2026-10-22
 
