@@ -19,7 +19,10 @@ import os from 'os';
 import path from 'path';
 import { spawnSync } from 'child_process';
 import { pathToFileURL } from 'url';
+import { createRequire } from 'module';
 import { load as yamlLoad } from 'js-yaml';
+
+const require = createRequire(import.meta.url);
 
 const ROOT = path.resolve(new URL('.', import.meta.url).pathname, '..');
 const INJECT = path.join(ROOT, 'engine', 'inject.js');
@@ -2595,6 +2598,135 @@ test('prose: unwrap-prose joins hard-wrapped paragraphs but never touches struct
     assert.includes(out, 'the old seventy-two', 'the later rule did not swallow the body');
     assert.ok(out.split('\n')[0] === '---' && out.split('\n')[1] === 'title: t', 'frontmatter block intact');
   } finally { try { fs.rmSync(f, { force: true }); } catch (e) { /* best-effort */ } }
+});
+
+// ---------- ship-from-download lane (#38) ----------
+// The generic phone publish lane is family-reusable (zero repo imports), so
+// these pins drive it through the runner seam: no npm, no network. The gate
+// itself (whatever prepublishOnly the staged tree carries) is proven
+// elsewhere; what is pinned here is that the lane assembles and refuses
+// correctly and that the token never lands on disk, in argv, or in the log.
+
+const { ship, tokenProblems, expandHome, TOKEN_ENV, TOKEN_ENV_ALIAS } = require(path.join(ROOT, 'scripts', 'ship-from-download.cjs'));
+
+function shipTmp() {
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'ship-lane-'));
+}
+function mkPkgTree(root, name = 'lib-x', version = '1.0.0', withLock = true) {
+  fs.mkdirSync(root, { recursive: true });
+  fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ name, version }));
+  if (withLock) fs.writeFileSync(path.join(root, 'package-lock.json'), '{}');
+}
+function fakeRunner(status = 0, statuses = null) {
+  const calls = [];
+  const run = (cmd, args, o) => {
+    calls.push({ cmd, args: [...args], o });
+    const key = args[0] === 'publish' ? 'publish' : 'install';
+    return { status: statuses && key in statuses ? statuses[key] : status };
+  };
+  run.calls = calls;
+  return run;
+}
+const GOOD_SHIP_TOKEN = 'npm_LIVE-AMPLE-HELLO-WORLD-0123456789abcdef';
+
+test('ship lane (#38): the token never lands in a file, in argv, or in the log', () => {
+  const base = shipTmp();
+  try {
+    mkPkgTree(path.join(base, 'src-tree'));
+    const run = fakeRunner(0, { install: 0, publish: 1 }); // publish fails, unlink still runs
+    const npmrc = path.join(base, 'dest', '.npmrc');
+    const r = ship({ target: path.join(base, 'src-tree'), root: path.join(base, 'dest'), token: GOOD_SHIP_TOKEN, run });
+    assert.strictEqual(r.code, 1, 'publish failure surfaces npm\'s code');
+    assert.strictEqual(fs.existsSync(npmrc), false, 'the staged .npmrc is unlinked in finally even on failure');
+    assert.strictEqual(run.calls.length, 2, 'install then publish');
+    assert.strictEqual(run.calls[1].o.env[TOKEN_ENV], GOOD_SHIP_TOKEN, 'the token rides the child ENV under the standard name');
+    assert.ok(!JSON.stringify(run.calls[1].args).includes(GOOD_SHIP_TOKEN), 'never in argv (ps-safe)');
+    assert.ok(!r.out.join('\n').includes(GOOD_SHIP_TOKEN), 'never in the log');
+  } finally { fs.rmSync(base, { recursive: true, force: true }); }
+});
+
+test('ship lane (#38): the staged .npmrc holds the ${NPM_TOKEN} expansion, never the raw token', () => {
+  const base = shipTmp();
+  try {
+    mkPkgTree(path.join(base, 'src-tree'));
+    let captured = null;
+    const origWrite = fs.writeFileSync;
+    fs.writeFileSync = (p, c, ...rest) => { if (String(p).endsWith('.npmrc')) captured = c; return origWrite(p, c, ...rest); };
+    try {
+      const r = ship({ target: path.join(base, 'src-tree'), root: path.join(base, 'dest'), token: GOOD_SHIP_TOKEN, run: fakeRunner(0) });
+      assert.strictEqual(r.code, 0);
+    } finally { fs.writeFileSync = origWrite; }
+    assert.ok(captured && captured.includes(`\${${TOKEN_ENV}}`), 'the .npmrc carries the env placeholder');
+    assert.ok(captured && !captured.includes(GOOD_SHIP_TOKEN), 'the raw token never hits the staged file');
+  } finally { fs.rmSync(base, { recursive: true, force: true }); }
+});
+
+test('ship lane (#38): named refusals, exit 2, nothing staged before the refusal', () => {
+  const base = shipTmp();
+  try {
+    mkPkgTree(path.join(base, 'src-tree'), 'crashtest', '1.2.0');
+    const noRoot = ship({ target: path.join(base, 'src-tree'), run: fakeRunner() });
+    assert.strictEqual(noRoot.code, 2, 'a missing --root is a precondition refusal');
+    // no name in package.json refuses before any copy
+    fs.mkdirSync(path.join(base, 'nameless'));
+    fs.writeFileSync(path.join(base, 'nameless', 'package.json'), JSON.stringify({ version: '1.0.0' }));
+    const bad = ship({ target: path.join(base, 'nameless'), root: path.join(base, 'dest-a'), token: GOOD_SHIP_TOKEN, run: fakeRunner() });
+    assert.strictEqual(bad.code, 2);
+    assert.includes(bad.out.join('\n'), 'BAD_PACKAGE_NAME');
+    assert.strictEqual(fs.existsSync(path.join(base, 'dest-a')), false, 'nothing copied on refusal');
+    // a non-empty root refuses and NEVER deletes
+    const root = path.join(base, 'dest-b');
+    fs.mkdirSync(root);
+    fs.writeFileSync(path.join(root, 'sentinel.txt'), 'do not touch');
+    const occupied = ship({ target: path.join(base, 'src-tree'), root, token: GOOD_SHIP_TOKEN, run: fakeRunner() });
+    assert.strictEqual(occupied.code, 2);
+    assert.includes(occupied.out.join('\n'), 'ROOT_OCCUPIED');
+    assert.includes(occupied.out.join('\n'), 'rm -rf', 'the refusal carries the exact command as advice');
+    assert.strictEqual(fs.existsSync(path.join(root, 'sentinel.txt')), true, 'the lane never deletes on its own');
+    // shared-storage roots (the EACCES-symlink class) refuse
+    for (const shared of ['/storage/emulated/0/Download/dest', '/sdcard/dest']) {
+      const r = ship({ target: path.join(base, 'src-tree'), root: shared, token: GOOD_SHIP_TOKEN, run: fakeRunner() });
+      assert.strictEqual(r.code, 2, shared);
+      assert.includes(r.out.join('\n'), 'SHARED_STORAGE_ROOT');
+    }
+  } finally { fs.rmSync(base, { recursive: true, force: true }); }
+});
+
+test('ship lane (#38): --clean removes ONLY the staged root, on every exit, and the retry closes', () => {
+  const base = shipTmp();
+  try {
+    const target = path.join(base, 'src-tree');
+    mkPkgTree(target);
+    const root = path.join(base, 'dest');
+    // publish fails -> --clean still removes the stage so the retry is not blocked
+    const r = ship({ target, root, token: GOOD_SHIP_TOKEN, run: fakeRunner(0, { install: 0, publish: 1 }), clean: true });
+    assert.strictEqual(r.code, 1);
+    assert.strictEqual(fs.existsSync(root), false, 'a failed run with --clean leaves nothing behind');
+    assert.includes(r.out.join('\n'), '--clean removed');
+    assert.strictEqual(fs.existsSync(target), true, '--clean never touches the --target');
+    // the retry loop closes: the SAME root stages fresh
+    const r2 = ship({ target, root, token: GOOD_SHIP_TOKEN, run: fakeRunner(0) });
+    assert.strictEqual(r2.code, 0, 'the same root stages fresh after a cleaned failure');
+    // default (no --clean) never deletes
+    const root2 = path.join(base, 'dest-keep');
+    const r3 = ship({ target, root: root2, token: GOOD_SHIP_TOKEN, run: fakeRunner(0) });
+    assert.strictEqual(r3.code, 0);
+    assert.strictEqual(fs.existsSync(root2), true, 'default keeps the staged root');
+  } finally { fs.rmSync(base, { recursive: true, force: true }); }
+});
+
+test('ship lane (#38): tokenProblems describes shape, never the value; exports are the standard names', () => {
+  assert.strictEqual(tokenProblems('npm_live-ok-hello-0123456789abcdef'), null, 'a well-formed npm_ token passes');
+  const gib = 'Zq7kxWmPv9hRt2LqBnJ4f';
+  for (const bad of [null, '', gib, gib.slice(0, 12)]) {
+    const msg = tokenProblems(bad) || '';
+    assert.ok(msg.length > 0, 'a malformed token gets a named diagnosis');
+    if (bad && bad.length > 4) assert.ok(!msg.includes(bad), 'the diagnosis never repeats the input verbatim');
+  }
+  assert.strictEqual(expandHome('~/web/x'), path.join(os.homedir(), 'web/x'), 'expandHome resolves ~');
+  assert.strictEqual(expandHome('/abs/x'), '/abs/x', 'absolute paths pass through');
+  assert.strictEqual(TOKEN_ENV, 'NPM_TOKEN', 'the standard npm env name is primary');
+  assert.strictEqual(TOKEN_ENV_ALIAS, 'NPM_SHIP_TOKEN', 'the generic fallback rides along');
 });
 
 // done

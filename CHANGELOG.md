@@ -4,7 +4,7 @@ All notable changes to freestruct will be documented here.
 
 ## [1.1.0] - 2026-10-25
 
-The first post-stable release: the all-items issue sweep (#17-#24 plus the #25 follow-on only here by owner direction) and the CI tooling that came with it, plus the SEO-gap pass landed inside this same untagged version. Every item below is battery-pinned; the battery grew 49 -> 112.
+The first post-stable release: the all-items issue sweep (#17-#24 plus the #25 follow-on only here by owner direction) and the CI tooling that came with it, plus the SEO-gap pass landed inside this same untagged version. Every item below is battery-pinned; the battery grew 49 -> 117.
 
 The SEO-gap pass (eight additions, all opt-in, missing-only, pinned):
 
@@ -32,6 +32,7 @@ The SEO-gap pass (eight additions, all opt-in, missing-only, pinned):
 - Local docs preview: the DEPLOY guide records the rootless Jekyll recipe (prebuilt ruby-builder toolchain under `$HOME`, shimmed binstubs, scratch-copy build, strict run, local server), with `.gitignore` belt-and-suspenders (`docs/.bundle/`, `docs/vendor/`, `docs/.jekyll-cache/`) and dark+light receipt frames in `labs/receipts/` (#36)
 - Docs code fences: the rouge token block on `docs/_layouts/default.html` grew to the full common vocabulary (nb/nf/nv/sb/se/si/cs/ch/kv/nc/nd/fm/gi/gd and friends), so bash/js fences paint every token instead of only the six classes the old block covered; all 121 fences already carry a language tag, so rouge runs everywhere (#30)
 - Prose flows: the living surfaces (discussions posts + index, README, AGENTS, CHANGELOG, labs memory) are unwrapped, and `scripts/unwrap-prose.cjs` joins hard-wrapped prose mechanically while leaving frontmatter, fences, tables, headings, and blank-line boundaries alone. The 72-column commit-time habit is retired so future agents do not reinstate it (#39)
+- Phone publish lane: `scripts/ship-from-download.cjs` (the generic, family-reusable lane) stages a GitHub-zip-extracted tree into the Termux home, installs, and publishes with the repo's own `prepublishOnly` gate riding unchanged. The token rides env or `--token-file` into a staged one-line `.npmrc` that is unlinked in a finally - never in argv, on disk, or in the log - and named refusals keep exit 0/1/2 with `--clean` scoped to the staged root only (#38)
 - Table guard (`tableWrap`, on by default): every `<table>` wraps in a `.fs-table-wrap` scroll container, so a wide docs table scrolls inside its own box instead of pinning the whole page width - mobile-safe by construction on any layout. Nested tables wrap once, a table already inside a consumer `.table-wrap` is left alone, and a table-less page is untouched (issue #35)
 
 ## [1.0.0] - 2026-10-22

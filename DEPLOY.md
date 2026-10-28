@@ -61,7 +61,7 @@ configured for the repository; the CNAME is `freestruct.creadev.org`
 
 Every push and pull request runs:
 
-1. `npm test` - the fixture battery (112 pins), including the version-truth
+1. `npm test` - the fixture battery (117 pins), including the version-truth
    pin that enforces the triple agreement (README / package.json /
    CHANGELOG) and the pinned **1.1.0** (owner call, 2026-10-25).
 2. Docs audit (`npm run lint:docs`) - frontmatter, links, nav symmetry,
@@ -116,6 +116,26 @@ selftest. `packs:selftest` needs a crashtest checkout: with one present it
 runs the real teeth, and with none present it prints a named skip and exits
 0 (a local publish should not need a github-tarball install); `test.yml`
 always installs crashtest, so the teeth run on every push/PR regardless.
+
+**Phone publish lane (`scripts/ship-from-download.cjs`, issue #38).** A
+GitHub zip carries no `.git` and no `node_modules`, and `/storage/emulated`
+is a symlinkless FUSE mount where `npm install` dies EACCES creating
+`node_modules/.bin` symlinks. The lane stages the zip-extracted tree into the
+Termux home, installs, then publishes with this repo's `prepublishOnly` gate
+riding unchanged - the script only reaches the launchpad, the gate still
+rules:
+
+```bash
+NPM_TOKEN=npm_xxx node scripts/ship-from-download.cjs \
+  --target /storage/emulated/0/Download/freestruct-main/freestruct-main \
+  --root ~/web/freestruct-main          # [--dry-run] [--clean]
+```
+
+The token rides `NPM_TOKEN` (or `NPM_SHIP_TOKEN`, or `--token-file`), expands
+from env into a staged one-line `.npmrc` that is unlinked in a finally - it
+never lands in argv (ps-safe), on disk, or in the log. Refusals are named with
+exit 0/1/2; `--clean` removes only the staged root, on every exit, so a failed
+run cannot block the retry.
 
 The version truth is enforced in CI: the battery pin refuses any README /
 package.json / CHANGELOG triplet that disagrees. Everything currently ships
