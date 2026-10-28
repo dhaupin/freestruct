@@ -215,8 +215,21 @@ Two shipped surfaces beyond the engine:
 
 - Versions live in one place: `package.json`, pinned in CI against the README/CHANGELOG truth. Single source, no drift.
 - `CHANGELOG.md` is the changelog; releases are tagged (`v*`) and CHANGELOG-truthful or they don't ship.
-- Current release: **1.1.0** (the version sweep + first post-1.0.0 surface: this release carries the issue sweep landed after the 2026-10-22 tag; see `labs/TASKS.md` for the version policy).
+- Current release: **1.2.0** (the post-queue engine sweep: nine fixes across the untouched engine corners, all battery-pinned; see `labs/TASKS.md` for the version policy).
 - Deployment truth lives in [DEPLOY.md](DEPLOY.md): the GitHub Pages pipeline (this repo's own docs site deploys through it) and the npm release runbook.
+
+## v1.2.0
+
+The post-queue engine sweep. The GitHub issue queue is fully closed (#1-#40), so this release hunts the engine corners the queue-era waves never probed - nine real fixes, each with a battery pin (121 -> 130):
+
+- Rerun hygiene - body-start/footer snippets are marker-wrapped and a rerun drops the previous copy before re-adding it, so a second pass no longer stacks snippets or churns the content-derived build hash
+- Verbatim-block-aware `minifyHtml` - `<pre class="...">`/`<script>`/`<style>`/`<textarea>` content (attribute forms included) survives byte-for-byte, so code fences and inline JS with `//` comments are never collapsed
+- Cache-bust fix - asset extensions match as a case-insensitive SET, so `.cs`/`.tt`/`.j` are no longer busted and uppercase `.PNG` now is
+- Link checking - single-quoted `href` links are checked too, so `--strict` catches a single-quoted broken link
+- Purge hooks - `FREESTRUCT_SITE_URL` / `FREESTRUCT_BUILD_HASH` / `FREESTRUCT_OUTPUT_DIR` now reach the child, matching `hooks.postBuild` and the docs
+- Lazy-load fix - self-closing `<img ... />` stays well-formed instead of getting a dangling `/ loading="lazy"`
+- Audit fixes - `grabMeta` tolerates a leading attribute (no more false `missing meta description`), and `urlToDisk` normalizes a slash-less `basePath`
+- CLI - `-h` now aliases `--help` instead of riding as the positional output dir
 
 ## v1.1.0
 
@@ -229,12 +242,11 @@ The first post-stable release, carried by the all-items issue sweep (#17-#25 plu
 - Structured `og.image` - `{ src, width, height, alt, allowSvg }` with the companion tags and the SVG warn/strict ladder
 - Per-page OG-image generation - `ogImageGeneration` through the optional `@resvg/resvg-js` rasterizer
 - Latent hardening - every config/page-carried substitute now rides function replacers ($-expansion cannot corrupt output), plus the docs-layout dead-CSS removal
-- CI - packstruct manifest lint joined the push/PR battery alongside the crashtest pack selftest; the battery grew 49 -> 75 -> 121 -> 130 pins
+- CI - packstruct manifest lint joined the push/PR battery alongside the crashtest pack selftest; the battery grew 49 -> 75 -> 121 pins
 - Release gate - `npm run check` composes the battery + docs audit + pack selftest, and `prepublishOnly` runs it, so a dirty tree cannot publish
 - Audit signal - config-gated absences (`og:image` / `twitter:image` not configured) print once with an affected-page count instead of once per page
 - basePath links - root-absolute hrefs carrying the configured `basePath` resolve against the tree, so a baseurl'd site passes `--strict`
 - Table guard - a default-on `tableWrap` pass wraps wide tables in a scroll container so every downstream site is mobile-safe by construction
-- Engine sweep - a post-release pass over the untouched engine corners fixed rerun snippet stacking + build-hash churn, verbatim-block-aware `minifyHtml`, substring cache-bust matching, single-quoted `href` link checking, purge-hook `FREESTRUCT_*` env, self-closing `<img/>` lazy-load, the audit's leading-attribute `grabMeta` false FAIL, and the `-h` help alias
 
 ## v1.0.0
 

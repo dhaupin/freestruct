@@ -7,14 +7,9 @@ permalink: /playbooks/
 
 # Playbooks
 
-Each playbook is the short series of commands an agent (or a human) runs, in
-order, with the receipt at every step. They stay inside this repo's contract:
-config-first (no magic), missing-only injection, escaped-or-fail XML, and the
-strictness ladder where `--strict` graduates report-only classes to failures.
+Each playbook is the short series of commands an agent (or a human) runs, in order, with the receipt at every step. They stay inside this repo's contract: config-first (no magic), missing-only injection, escaped-or-fail XML, and the strictness ladder where `--strict` graduates report-only classes to failures.
 
-Every command below is a real command this repo ships. Nothing here promises
-surface the engine does not do - the [truthfulness gate](/contributing/style)
-fails on the reverse.
+Every command below is a real command this repo ships. Nothing here promises surface the engine does not do - the [truthfulness gate](/contributing/style) fails on the reverse.
 
 | # | Playbook | The job |
 |---|----------|---------|
@@ -27,6 +22,4 @@ fails on the reverse.
 | 7 | [Docs preview](/playbooks/docs-preview/) | the rootless Jekyll recipe, served locally |
 | 8 | [Pin bump](/playbooks/pin-bump/) | a new prestruct pin: one dependency edit, one verify |
 
-The lanes themselves (what CI runs) live in the [CI/CD guide](/guides/cicd)
-and [DEPLOY.md](https://github.com/dhaupin/freestruct/blob/main/DEPLOY.md);
-playbooks are what an agent runs through those lanes.
+The lanes themselves (what CI runs) live in the [CI/CD guide](/guides/cicd) and [DEPLOY.md](https://github.com/dhaupin/freestruct/blob/main/DEPLOY.md); playbooks are what an agent runs through those lanes.

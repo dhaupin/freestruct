@@ -108,13 +108,9 @@ buildHash.update(JSON.stringify(config || {}));
 const buildHashHex = buildHash.digest('hex').slice(0, 8);
 ```
 
-(Shape matches `engine/scan.js` `computeBuildHash`; the real helper strips
-freestruct's regenerated artifacts and previous `?v=` params first, and
-404 pages sit outside the hash entirely.)
+(Shape matches `engine/scan.js` `computeBuildHash`; the real helper strips freestruct's regenerated artifacts and previous `?v=` params first, and 404 pages sit outside the hash entirely.)
 
-Content-derived, not timestamped: identical content rebuilds to an
-identical hash, which is what makes CDNs cache correctly, and a content
-or config change always flips it.
+Content-derived, not timestamped: identical content rebuilds to an identical hash, which is what makes CDNs cache correctly, and a content or config change always flips it.
 
 ### CDN Purge Hooks
 

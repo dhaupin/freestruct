@@ -80,6 +80,8 @@
   items:
     - title: Release Posts
       url: /discussions
+    - title: Announcing freestruct v1.2.0
+      url: /discussions/announcing-freestruct-v1.2.0/
     - title: Announcing freestruct v1.1.0
       url: /discussions/announcing-freestruct-v1.1.0/
     - title: Announcing freestruct v1.0.0

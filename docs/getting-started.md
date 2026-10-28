@@ -36,10 +36,7 @@ Don't have Node? Install it from [nodejs.org](https://nodejs.org) or via homebre
 npm install --save-dev freestruct
 ```
 
-That's it. The npm package ships everything it needs at runtime,
-including its one dependency (`js-yaml`) - npm installs it automatically
-with the package. You only install dependencies by hand when running the
-engine from a repo checkout.
+That's it. The npm package ships everything it needs at runtime, including its one dependency (`js-yaml`) - npm installs it automatically with the package. You only install dependencies by hand when running the engine from a repo checkout.
 
 ## Step 2: Create Your Config
 

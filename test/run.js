@@ -142,7 +142,7 @@ test('packs:selftest degrades gracefully without a crashtest checkout (named ski
 
 // ---------- version truth (issue #7) ----------
 
-test('README, package.json and CHANGELOG agree on one version (1.1.0 owner pin)', () => {
+test('README, package.json and CHANGELOG agree on one version (1.2.0 owner pin)', () => {
   const pkg = JSON.parse(read('.', 'package.json'));
   const readme = read('.', 'README.md');
   const changelog = read('.', 'CHANGELOG.md');
@@ -152,11 +152,11 @@ test('README, package.json and CHANGELOG agree on one version (1.1.0 owner pin)'
   assert.ok(changeVer, 'CHANGELOG must open with a "## [X.Y.Z]" version entry');
   assert.strictEqual(readmeVer, pkg.version, 'README version heading must equal package.json version');
   assert.strictEqual(changeVer, pkg.version, 'CHANGELOG top entry must equal package.json version');
-  // Owner call: the pin moved to 1.0.0 - the first stable release, and to
-  // 1.1.0 on 2026-10-25 with the first post-stable surface. The manual npm
-  // bootstrap is done; only the tag remains
-  // owner-gated (see labs/TASKS.md VERSION POLICY).
-  assert.strictEqual(pkg.version, '1.1.0', 'version pinned at 1.1.0 by owner call - see the VERSION POLICY in labs/TASKS.md first');
+  // Owner call: the pin moved to 1.0.0 - the first stable release, then to
+  // 1.1.0 on 2026-10-25 with the first post-stable surface, and to 1.2.0 on
+  // 2026-10-28 with the post-queue engine sweep. The manual npm bootstrap is
+  // done; only the tag remains owner-gated (see labs/TASKS.md VERSION POLICY).
+  assert.strictEqual(pkg.version, '1.2.0', 'version pinned at 1.2.0 by owner call - see the VERSION POLICY in labs/TASKS.md first');
 });
 
 test('README quickstart YAML example actually parses (issue #8)', () => {
@@ -2824,6 +2824,14 @@ test('prose: unwrap-prose joins hard-wrapped paragraphs but never touches struct
     'exactly as written"',
     '```',
     '',
+    '    indented code stays',
+    '    on its own two lines',
+    '',
+    '<div class="note">',
+    '<p>A multi-line HTML block',
+    'stays verbatim too.</p>',
+    '</div>',
+    '',
   ].join('\n');
   const f = path.join(os.tmpdir(), `freestruct-unwrap-${process.pid}-${++tmpSeq}.md`);
   fs.writeFileSync(f, src);
@@ -2836,6 +2844,10 @@ test('prose: unwrap-prose joins hard-wrapped paragraphs but never touches struct
     assert.includes(out, '  - a nested bullet stays nested and its wrap joins too', 'a nested bullet stays nested and joins');
     assert.includes(out, 'echo "this line stays\nexactly as written"', 'fenced code is never touched');
     assert.includes(out, 'title: t', 'frontmatter is preserved');
+    // Indented code (4+ spaces) is structural: the two lines stay two lines.
+    assert.includes(out, '    indented code stays\n    on its own two lines', 'indented code survives unjoined');
+    // An HTML block runs verbatim to the blank line; its lines are not joined.
+    assert.includes(out, '<div class="note">\n<p>A multi-line HTML block\nstays verbatim too.</p>\n</div>', 'HTML block survives unjoined');
     // A bare `---` rule later in the file must NOT open frontmatter (the
     // labs/TASKS.md regression): prose after it still unwraps.
     assert.includes(out, 'the old seventy-two', 'the later rule did not swallow the body');

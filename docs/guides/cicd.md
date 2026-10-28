@@ -176,9 +176,7 @@ npx freestruct audit --json
 npx freestruct audit --external
 ```
 
-A stronger default for the PR build: `npx freestruct --strict` at build
-time (broken links and SVG og:image fail with exit 1 - the same ladder the
-docs CI on this repo dogfoods), then `npx freestruct audit` on the result.
+A stronger default for the PR build: `npx freestruct --strict` at build time (broken links and SVG og:image fail with exit 1 - the same ladder the docs CI on this repo dogfoods), then `npx freestruct audit` on the result.
 
 After the deploy lands, the search-engine notify step is one command:
 
@@ -188,8 +186,7 @@ npx freestruct indexnow            # 200/202 = accepted
 npx freestruct indexnow --dry-run  # build-time shape check, no network
 ```
 
-The key file ships into the output during the run, so only the submission
-is a post-deploy concern (keyLocation must resolve live).
+The key file ships into the output during the run, so only the submission is a post-deploy concern (keyLocation must resolve live).
 
 ---
 
@@ -197,8 +194,7 @@ is a post-deploy concern (keyLocation must resolve live).
 
 ### Missing js-yaml
 
-The Freestruct npm package ships `js-yaml` as its own dependency, so a
-package install never needs a manual entry. Only a repo checkout does:
+The Freestruct npm package ships `js-yaml` as its own dependency, so a package install never needs a manual entry. Only a repo checkout does:
 
 ```bash
 # repo checkout only:
@@ -206,9 +202,7 @@ package install never needs a manual entry. Only a repo checkout does:
 "js-yaml": "^4.1.0"
 ```
 
-Using `npx freestruct` without a local install? npx fetches the package
-with its dependency the first time (`npx --yes freestruct` skips the
-prompt).
+Using `npx freestruct` without a local install? npx fetches the package with its dependency the first time (`npx --yes freestruct` skips the prompt).
 
 ### Wrong output path
 

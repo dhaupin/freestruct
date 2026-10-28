@@ -177,19 +177,13 @@ hooks:
     - npm run seo:audit
 ```
 
-PostBuild commands run after the whole pass (purges included) with a 30s
-timeout, the `$SITE_URL` / `$BUILD_HASH` / `$OUTPUT_DIR` placeholders and the
-matching `FREESTRUCT_*` env vars, and a nonzero exit fails the build with
-exit code 4. Unknown hook seams and non-string entries are loud config
-warnings, never silently ignored.
+PostBuild commands run after the whole pass (purges included) with a 30s timeout, the `$SITE_URL` / `$BUILD_HASH` / `$OUTPUT_DIR` placeholders and the matching `FREESTRUCT_*` env vars, and a nonzero exit fails the build with exit code 4. Unknown hook seams and non-string entries are loud config warnings, never silently ignored.
 
 ## Notify Options
 
 ### indexNow
 
-IndexNow is a one-POST notify protocol shared by Bing, Seznam and Yandex; a
-docs site that re-crawls one hour after shipping beats one that waits
-next-crawl-day. Two config shapes:
+IndexNow is a one-POST notify protocol shared by Bing, Seznam and Yandex; a docs site that re-crawls one hour after shipping beats one that waits next-crawl-day. Two config shapes:
 
 ```yaml
 # generate a 32-hex key once and persist it next to the config
@@ -200,11 +194,7 @@ indexNow:
   key: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaab1
 ```
 
-The run emits `<key>.txt` into the output dir (the keyLocation ownership
-proof search engines probe) and, on the generate-once path, persists the key
-to `indexnow-key.txt` next to the config - commit that file so the
-keyLocation stays stable across runs. A wrong-shaped key is a loud config
-warning and the key file never ships.
+The run emits `<key>.txt` into the output dir (the keyLocation ownership proof search engines probe) and, on the generate-once path, persists the key to `indexnow-key.txt` next to the config - commit that file so the keyLocation stays stable across runs. A wrong-shaped key is a loud config warning and the key file never ships.
 
 Submission is a SEPARATE, post-deploy step:
 
@@ -213,21 +203,13 @@ npx freestruct indexnow --dry-run   # print the request body, no network
 npx freestruct indexnow             # POST the baked sitemap URL list
 ```
 
-Deploy first: keyLocation must resolve live before a submission, otherwise
-the engines reject the ownership signal. The command reads only the baked
-`sitemap.xml`, surfaces the HTTP status in its output (200/202 accepted),
-and exits `0` accepted / `1` failure / `3` missing output dir or sitemap.
-Note that the run itself never submits - it only ships the key file.
+Deploy first: keyLocation must resolve live before a submission, otherwise the engines reject the ownership signal. The command reads only the baked `sitemap.xml`, surfaces the HTTP status in its output (200/202 accepted), and exits `0` accepted / `1` failure / `3` missing output dir or sitemap. Note that the run itself never submits - it only ships the key file.
 
 ## Image Generation Options
 
 ### ogImageGeneration
 
-Per-page OG image generation (issue #22): instead of one shared banner,
-freestruct renders a branded 1200x630 image per page from a template using
-the title/description it already extracts, and wires `og:image`,
-`twitter:image` and the issue #20 companions to the fresh PNG (missing-only:
-pages with their own og set keep it wholesale).
+Per-page OG image generation (issue #22): instead of one shared banner, freestruct renders a branded 1200x630 image per page from a template using the title/description it already extracts, and wires `og:image`, `twitter:image` and the issue #20 companions to the fresh PNG (missing-only: pages with their own og set keep it wholesale).
 
 ```yaml
 ogImageGeneration:
@@ -237,18 +219,9 @@ ogImageGeneration:
   height: 630                  # optional (default 630)
 ```
 
-The template carries three placeholders, XML-escaped before substitution:
-`{{ogTitle}}`, `{{ogDescription}}`, `{{ogUrl}}` - layout, colors and text
-wrapping are yours to design (text elements rely on the configured font;
-system fonts are unreliable in build sandboxes).
+The template carries three placeholders, XML-escaped before substitution: `{{ogTitle}}`, `{{ogDescription}}`, `{{ogUrl}}` - layout, colors and text wrapping are yours to design (text elements rely on the configured font; system fonts are unreliable in build sandboxes).
 
-Rasterization is honest: PNG cannot be made in pure Node, so the engine
-loads the OPTIONAL `@resvg/resvg-js` package (`npm install --save-dev
-@resvg/resvg-js`) and, when it is absent, generation loud-skips per run -
-never silently, never half-shipping. Deterministic: identical page meta
-renders identical bytes, so the content-derived build hash stays honest.
-Noindex pages receive no share preview; output lands in `og/<flattened-slug>.png`
-with `og:image:width`/`height`/`alt` companions riding along.
+Rasterization is honest: PNG cannot be made in pure Node, so the engine loads the OPTIONAL `@resvg/resvg-js` package (`npm install --save-dev @resvg/resvg-js`) and, when it is absent, generation loud-skips per run - never silently, never half-shipping. Deterministic: identical page meta renders identical bytes, so the content-derived build hash stays honest. Noindex pages receive no share preview; output lands in `og/<flattened-slug>.png` with `og:image:width`/`height`/`alt` companions riding along.
 
 ## Path Options
 
@@ -278,8 +251,7 @@ Site-level information.
 
 ### author
 
-Optional author identity, shipped as a schema.org `Person` under
-`"founder"` on the injected Organization JSON-LD block.
+Optional author identity, shipped as a schema.org `Person` under `"founder"` on the injected Organization JSON-LD block.
 
 ```yaml
 author:
@@ -296,9 +268,7 @@ No author configured: the Organization JSON-LD carries no `founder` key.
 
 ### jsonLd
 
-Custom structured data, appended after the built-in Organization and WebSite
-JSON-LD blocks. Takes a single object, an array of objects, or (issue #25) a
-slug-glob MAP that scopes blocks per page:
+Custom structured data, appended after the built-in Organization and WebSite JSON-LD blocks. Takes a single object, an array of objects, or (issue #25) a slug-glob MAP that scopes blocks per page:
 
 ```yaml
 # global - every page gets these (legacy form, unchanged)
@@ -322,15 +292,7 @@ jsonLd:
       name: My Docs
 ```
 
-Scoped semantics: matching blocks land after any global list, most specific
-first (exact keys outrank globs; between globs the one carrying more literal
-path characters wins the order); every matching key ships, not just the
-first. Pages with their own `application/ld+json` receive no blocks at all
-(missing-only, scoped included). One malformed entry warns loudly and skips
-only itself. Serialization neutralizes `<` (as `\u003c`) so a value cannot
-close the script tag early; a non-object entry is skipped with a loud
-`[freestruct] config warning`
-  line; nothing dies silently.
+Scoped semantics: matching blocks land after any global list, most specific first (exact keys outrank globs; between globs the one carrying more literal path characters wins the order); every matching key ships, not just the first. Pages with their own `application/ld+json` receive no blocks at all (missing-only, scoped included). One malformed entry warns loudly and skips only itself. Serialization neutralizes `<` (as `\u003c`) so a value cannot close the script tag early; a non-object entry is skipped with a loud `[freestruct] config warning` line; nothing dies silently.
 
 ## Meta Options
 
@@ -343,9 +305,7 @@ Twitter Card meta tags.
 | `username` | No | Twitter handle (include @). Omit the whole twitter block without one: `twitter:site` and `twitter:creator` then stay out of the injected head (card type and `twitter:title` still inject) |
 | `card` | No | Card type: `summary`, `summary_large_image`, `app`, `player` |
 
-`twitter:description` ships alongside `twitter:title` on every page (same
-value as `og:description`), and `twitter:image` ships whenever an
-`og.image` (or per-page `ogImage`) is configured.
+`twitter:description` ships alongside `twitter:title` on every page (same value as `og:description`), and `twitter:image` ships whenever an `og.image` (or per-page `ogImage`) is configured.
 
 ### og
 
@@ -357,11 +317,7 @@ Open Graph meta tags.
 | `locale` | No | Locale (default: `en_US`) |
 | `type` | No | Content type: `website`, `article`, `book`, `profile` |
 
-`og.image` is optional: with no image configured (and no per-page override),
-no `og:image` or `twitter:image` tag ships at all - a bare image tag pointing
-at the site root is a broken social card, not a fallback. Relative image
-paths are joined onto `site.url`; absolute HTTP(S) values pass through
-unchanged. Values that reach the head are HTML-attribute-escaped first.
+`og.image` is optional: with no image configured (and no per-page override), no `og:image` or `twitter:image` tag ships at all - a bare image tag pointing at the site root is a broken social card, not a fallback. Relative image paths are joined onto `site.url`; absolute HTTP(S) values pass through unchanged. Values that reach the head are HTML-attribute-escaped first.
 
 `og.image` takes two shapes:
 
@@ -378,21 +334,11 @@ og.image:
   alt: Docs banner
 ```
 
-The object form ships `og:image:width`, `og:image:height` and
-`og:image:alt` next to `og:image` (the string form stays companion-free).
-Wrong shapes warn loudly and stay honest (no image ships from a missing
-`src`); unknown companion keys name themselves as config warnings.
+The object form ships `og:image:width`, `og:image:height` and `og:image:alt` next to `og:image` (the string form stays companion-free). Wrong shapes warn loudly and stay honest (no image ships from a missing `src`); unknown companion keys name themselves as config warnings.
 
-SVG sources are a trap: most social scrapers cannot render them and the
-share preview blanks. An `.svg` src (string or object form) refuses silently
-no more - it warns on every run, `og.image.allowSvg: true` accepts it
-explicitly, and `--strict` fails the build until the trap is answered.
+SVG sources are a trap: most social scrapers cannot render them and the share preview blanks. An `.svg` src (string or object form) refuses silently no more - it warns on every run, `og.image.allowSvg: true` accepts it explicitly, and `--strict` fails the build until the trap is answered.
 
-`og.scoped` (issue #25 follow-on) scopes image variants by page-slug glob,
-using the same key language as the scoped `jsonLd` map (exact keys, `*` one
-segment, `**` a sub-tree). Each value takes the plain `og.image` shapes;
-the MOST SPECIFIC matching key wins for the page (an image is singular),
-and the global `og.image` is the fallback:
+`og.scoped` (issue #25 follow-on) scopes image variants by page-slug glob, using the same key language as the scoped `jsonLd` map (exact keys, `*` one segment, `**` a sub-tree). Each value takes the plain `og.image` shapes; the MOST SPECIFIC matching key wins for the page (an image is singular), and the global `og.image` is the fallback:
 
 ```yaml
 og:
@@ -406,9 +352,7 @@ og:
       alt: Article preview
 ```
 
-Per-page `ogImage` overrides (and per-page generated images from
-`ogImageGeneration`) still replace the whole image set ahead of any scoped
-match - the resolution order is override, generated, scoped, global.
+Per-page `ogImage` overrides (and per-page generated images from `ogImageGeneration`) still replace the whole image set ahead of any scoped match - the resolution order is override, generated, scoped, global.
 
 ## Template Placeholders
 
@@ -451,15 +395,9 @@ For page-specific SEO, add a data comment to the built page:
 
 Ground rules:
 
-- Missing-only wins: a page that already ships its own description, Open
-  Graph or Twitter tags keeps them, and overrides aimed at those groups are
-  skipped with a loud `[freestruct] page warning` line (they never die
-  silently).
-- `article:published_time`, `article:author` and `article:section` ride the
-  Open Graph injection: they ship only when freestruct actually injects og
-  tags on that page.
-- Unknown keys in the comment warn; malformed JSON in the comment warns and
-  the whole comment is ignored.
+- Missing-only wins: a page that already ships its own description, Open Graph or Twitter tags keeps them, and overrides aimed at those groups are skipped with a loud `[freestruct] page warning` line (they never die silently).
+- `article:published_time`, `article:author` and `article:section` ride the Open Graph injection: they ship only when freestruct actually injects og tags on that page.
+- Unknown keys in the comment warn; malformed JSON in the comment warns and the whole comment is ignored.
 - Attribute values are HTML-escaped before they land in the head.
 
 ## Source Attribution
@@ -482,11 +420,7 @@ FREESTRUCT_URL=https://staging.example.com npx freestruct
 
 ### search
 
-The SearchAction target for the built-in WebSite JSON-LD. The schema.org
-contract needs the `{search_term_string}` placeholder in the URL - anything
-else warns loudly and ships no potentialAction block at all (the old
-hardcoded `?s=` default is retired: without a `search` config the WebSite
-block stays bare).
+The SearchAction target for the built-in WebSite JSON-LD. The schema.org contract needs the `{search_term_string}` placeholder in the URL - anything else warns loudly and ships no potentialAction block at all (the old hardcoded `?s=` default is retired: without a `search` config the WebSite block stays bare).
 
 ```yaml
 search:
@@ -495,13 +429,7 @@ search:
 
 ### breadcrumb
 
-Opt-in auto BreadcrumbList JSON-LD built from each page's own position in
-the URL tree: the site root first, then one `ListItem` per URL segment, with
-the page's own title on the tail item. The root page (no segments) ships
-none, and pages that carry JSON-LD of their own stay untouched
-(missing-only). Your config-level `jsonLd` - global list or scoped map -
-coexists with the trail; the skip class is a page's own existing
-structured data, never freestruct's own blocks.
+Opt-in auto BreadcrumbList JSON-LD built from each page's own position in the URL tree: the site root first, then one `ListItem` per URL segment, with the page's own title on the tail item. The root page (no segments) ships none, and pages that carry JSON-LD of their own stay untouched (missing-only). Your config-level `jsonLd` - global list or scoped map - coexists with the trail; the skip class is a page's own existing structured data, never freestruct's own blocks.
 
 ```yaml
 breadcrumb: true
@@ -509,13 +437,7 @@ breadcrumb: true
 
 ### article
 
-Per-page article JSON-LD type, scoped by the same slug globs as `jsonLd`.
-Pages in the matching subtree get one `Article` / `TechArticle` /
-`NewsArticle` block built from the page's own title, URL, description and
-og image, plus the per-page comment facts (`author` rides as
-`article:author`, `publishedTime` as `datePublished`). Skipped for pages
-that already carry JSON-LD or that receive a scoped `jsonLd` block; a
-global custom `jsonLd` list coexists.
+Per-page article JSON-LD type, scoped by the same slug globs as `jsonLd`. Pages in the matching subtree get one `Article` / `TechArticle` / `NewsArticle` block built from the page's own title, URL, description and og image, plus the per-page comment facts (`author` rides as `article:author`, `publishedTime` as `datePublished`). Skipped for pages that already carry JSON-LD or that receive a scoped `jsonLd` block; a global custom `jsonLd` list coexists.
 
 ```yaml
 article:
@@ -527,11 +449,7 @@ An invalid type warns at load and ships no block for that key.
 
 ### verification
 
-Site-ownership verification metas, keyed by provider. The engine owns the
-meta `name` spellings (`google-site-verification`, `msvalidate.01` for
-Bing, `yandexVerification`, `pinterest-site-verification`); unknown
-providers warn and ship no tag, and a page carrying the same meta keeps its
-own (missing-only).
+Site-ownership verification metas, keyed by provider. The engine owns the meta `name` spellings (`google-site-verification`, `msvalidate.01` for Bing, `yandexVerification`, `pinterest-site-verification`); unknown providers warn and ship no tag, and a page carrying the same meta keeps its own (missing-only).
 
 ```yaml
 verification:
@@ -541,15 +459,7 @@ verification:
 
 ### locales
 
-hreflang alternates for multilingual sites, keyed by slug glob to a
-language code. A page's own language comes from the most specific matching
-pattern; every sibling pattern contributes one alternate where the page's
-slug would land with that tree's stem swapped in (`/de/**` + the guide page
-= the `/de/guide` alternate, and back). A configured root-document pattern
-adds the `x-default` alternate. This is a stem-swap calculation, not a file
-inventory: a page that does not exist in a sibling language still gets its
-alternate, and its 404 is the SSG's problem. Pages carrying any hreflang of
-their own stay untouched.
+hreflang alternates for multilingual sites, keyed by slug glob to a language code. A page's own language comes from the most specific matching pattern; every sibling pattern contributes one alternate where the page's slug would land with that tree's stem swapped in (`/de/**` + the guide page = the `/de/guide` alternate, and back). A configured root-document pattern adds the `x-default` alternate. This is a stem-swap calculation, not a file inventory: a page that does not exist in a sibling language still gets its alternate, and its 404 is the SSG's problem. Pages carrying any hreflang of their own stay untouched.
 
 ```yaml
 locales:
@@ -559,11 +469,7 @@ locales:
 
 ### llms
 
-Opt-in `llms.txt` emission (the AI-consumable docs-summary convention):
-one H1, the site description as a blockquote, then one markdown link per
-indexable page with its description. Built from the same page set
-sitemap.xml and feed.xml honor, so noindex stays honored everywhere.
-Missing-only: an existing `llms.txt` is never overwritten.
+Opt-in `llms.txt` emission (the AI-consumable docs-summary convention): one H1, the site description as a blockquote, then one markdown link per indexable page with its description. Built from the same page set sitemap.xml and feed.xml honor, so noindex stays honored everywhere. Missing-only: an existing `llms.txt` is never overwritten.
 
 ```yaml
 llms: true

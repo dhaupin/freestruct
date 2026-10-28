@@ -7,13 +7,7 @@ permalink: /playbooks/docs-preview/
 
 # Docs preview (the rootless Jekyll recipe)
 
-CI is the real verifier for anything Jekyll-shaped, but a local build gives a
-faster strict-lint loop than waiting on a push. This sandbox has no root and no
-system Ruby, so the recipe uses a prebuilt, platform-matched toolchain under
-`$HOME` and never touches the repo. The full recipe (the ruby-builder download,
-the binstub shims, the `LD_LIBRARY_PATH` / `RUBYLIB` exports) is recorded in
-[DEPLOY.md](https://github.com/dhaupin/freestruct/blob/main/DEPLOY.md); the
-short form:
+CI is the real verifier for anything Jekyll-shaped, but a local build gives a faster strict-lint loop than waiting on a push. This sandbox has no root and no system Ruby, so the recipe uses a prebuilt, platform-matched toolchain under `$HOME` and never touches the repo. The full recipe (the ruby-builder download, the binstub shims, the `LD_LIBRARY_PATH` / `RUBYLIB` exports) is recorded in [DEPLOY.md](https://github.com/dhaupin/freestruct/blob/main/DEPLOY.md); the short form:
 
 ```bash
 # 1. prebuilt Ruby into $HOME (never the repo), then shim the binstubs
@@ -37,14 +31,9 @@ cd /tmp/fspreview && node /workspace/project/freestruct/bin/freestruct.mjs --str
 cd /tmp/fspreview/docs/_site && python3 -m http.server 12000
 ```
 
-The scratch-copy step is the point: Jekyll writes `_site` beside its source,
-so building in a copy carries every build product away from the repo. The
-`.gitignore` block (`docs/.bundle/`, `docs/vendor/`, `docs/_site/`,
-`docs/.jekyll-cache/`) is belt-and-suspenders on top of that.
+The scratch-copy step is the point: Jekyll writes `_site` beside its source, so building in a copy carries every build product away from the repo. The `.gitignore` block (`docs/.bundle/`, `docs/vendor/`, `docs/_site/`, `docs/.jekyll-cache/`) is belt-and-suspenders on top of that.
 
-Receipt: `labs/receipts/docs-preview-dark.png` and `docs-preview-light.png` -
-the same CLI guide page in both themes, code fences painted by the rouge token
-block.
+Receipt: `labs/receipts/docs-preview-dark.png` and `docs-preview-light.png` - the same CLI guide page in both themes, code fences painted by the rouge token block.
 
 <div class="playbook-next">
 <p><strong>Next:</strong> <a href="/playbooks/pin-bump/">Pin bump</a> - taking a new upstream pin.</p>

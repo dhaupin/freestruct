@@ -2,6 +2,20 @@
 
 All notable changes to freestruct will be documented here.
 
+## [1.2.0] - 2026-10-28
+
+The post-queue engine sweep: the GitHub issue queue is fully closed (#1-#40), so this release hunts the engine corners the queue-era waves never probed. Nine real fixes, each with a red-checked battery pin (battery 121 -> 130).
+
+- Rerun hygiene: `inject-body-start.html` and `inject-footer.html` were appended raw on every pass with no marker, so a second run stacked a duplicate copy and - because the body text then differed - churned the content-derived `freestruct-build` hash every run (defeating the deterministic-hash contract). Both snippets are now marker-wrapped, `stripInjectedRegions()` drops the previous copy at the top of `injectPage`, and `computeBuildHash`'s `stable()` strips the same region, so run 1 = run 2 = run 3
+- `minifyHtml` was rewritten to be verbatim-block aware: the old scanner only recognized BARE `<pre>`/`<script>`/`<style>`/`<textarea>` open tags, so `<pre class="highlight">` was not a block - its indentation collapsed and inline JS with a `//` comment flattened onto one line, commenting out the rest of the script. Block CONTENT (attribute forms included) now survives byte-for-byte while whitespace outside blocks still collapses
+- Cache busting matched asset extensions by SUBSTRING (`assetExts.includes(ext)`), so `/x.cs` (`.cs` is inside `.css`), `/x.tt` (`.ttf`) and `/x.j` (`.js`) all got a bogus `?v=`, while a genuine `/img.PNG` was missed (case-sensitive). It is now a case-insensitive extension SET
+- The link checker only matched double-quoted `href="..."`, so a single-quoted broken link (`href='/gone/'`, valid HTML) sailed through `--strict`; both quote styles are checked now
+- Purge hooks ran without the documented `FREESTRUCT_SITE_URL` / `FREESTRUCT_BUILD_HASH` / `FREESTRUCT_OUTPUT_DIR` env on the child (README and the hooks guide both claimed it); `runPurgeHooks` now passes the same env as `hooks.postBuild`
+- `addLazyLoading` mangled self-closing images: the append used `/>$/`, so `<img ... />` became `<img ... / loading="lazy">` (malformed). The attribute now lands before the close
+- The audit's `grabMeta` used `<meta[^>]` - exactly ONE character before the keyed attribute - so a valid `<meta charset="utf-8" name="description" ...>` was a false `FAIL missing meta description`; it now tolerates a leading attribute
+- The audit's `urlToDisk` did not normalize a `basePath` lacking its leading slash (the mirror of #32 on the og:image on-disk check), so a present image false-warned as missing
+- `-h` was listed in `KNOWN_DEFAULT_DASHES` (so it passed the unknown-flag guard) but never handled, so it rode as the positional output dir and the run died with "Output directory not found: .../-h"; `-h` now aliases `--help`
+
 ## [1.1.0] - 2026-10-25
 
 The first post-stable release: the all-items issue sweep (#17-#24 plus the #25 follow-on only here by owner direction) and the CI tooling that came with it, plus the SEO-gap pass landed inside this same untagged version. Every item below is battery-pinned; the battery grew 49 -> 121.
@@ -37,16 +51,6 @@ The SEO-gap pass (eight additions, all opt-in, missing-only, pinned):
 - Playbooks leg: a new `docs/playbooks/` docs layer - the runbook recipes an agent runs (first run, link triage, baked-output audit, config validation, release gate, phone publish, docs preview, pin bump), each a single-file page indexed in the leg's table and the nav, so the commands live next to the gates they prove (#34)
 - Reusable docs lane: the Pages runbook is promoted to `.github/workflows/docs-lane.yml` (`on: workflow_call`, eight inputs with this repo's defaults), and `docs.yml` thins to a caller that dogfoods it - so the rig projects stop hand-porting ~115 drifted lines and call one lane instead; both pagefind cache scopes and every pinned install survive the move (#31)
 - Table guard (`tableWrap`, on by default): every `<table>` wraps in a `.fs-table-wrap` scroll container, so a wide docs table scrolls inside its own box instead of pinning the whole page width - mobile-safe by construction on any layout. Nested tables wrap once, a table already inside a consumer `.table-wrap` is left alone, and a table-less page is untouched (issue #35)
-- Post-release engine sweep (battery 121 -> 130, nine pins): a pass over the untouched engine corners landed real fixes, each pinned.
-  - Rerun hygiene: body-start/footer snippets are marker-wrapped and a rerun strips the previous copy before re-adding it, so a second pass no longer stacks snippets or churns the content-derived build hash (the body text used to differ every run)
-  - `minifyHtml` was rewritten to be verbatim-block aware: `<pre>`/`<script>`/`<style>`/`<textarea>` content (including attribute forms like `<pre class="highlight">`) survives byte-for-byte, so inline JS with `//` comments and code fences are never collapsed
-  - Cache busting matched asset extensions by SUBSTRING (`.cs` hit `.css`, `.tt` hit `.ttf`, `.j` hit `.js`) and missed uppercase extensions; it is now a case-insensitive extension SET
-  - The link checker only saw double-quoted `href="..."`, so a single-quoted broken link (`href='/gone/'`, valid HTML) sailed through `--strict`; both quote styles are checked now
-  - Purge hooks ran without the documented `FREESTRUCT_SITE_URL` / `FREESTRUCT_BUILD_HASH` / `FREESTRUCT_OUTPUT_DIR` env on the child (README and the hooks guide both claimed it); `runPurgeHooks` now passes the same env as `hooks.postBuild`
-  - `addLazyLoading` mangled self-closing images (`<img ... />` became `<img ... / loading="lazy">`); the attribute now lands before the close
-  - The audit's `grabMeta` used a single-character class before the keyed attribute, so a valid `<meta charset="utf-8" name="description" ...>` was a false `FAIL missing meta description`; it now tolerates a leading attribute
-  - The audit's `urlToDisk` normalized a `basePath` without its leading slash the same way `urls.js` does, so the og:image on-disk check no longer false-warns on sub-path installs
-  - `-h` was listed as a known flag but not handled, so it rode as the positional output dir and the run died with "Output directory not found: .../-h"; `-h` now aliases `--help`
 
 ## [1.0.0] - 2026-10-22
 

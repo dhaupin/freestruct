@@ -1,6 +1,6 @@
 {
   "name": "freestruct",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Post-build SEO layer for static doc sites - works with any SSG",
   "homepage": "https://github.com/dhaupin/freestruct#readme",
   "bugs": "https://github.com/dhaupin/freestruct/issues",
