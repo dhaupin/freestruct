@@ -2554,5 +2554,48 @@ test('pass-hunt: a typo\'d flag rides as NO directory (Pass 26.16)', () => {
   } finally { rmDir(dir); }
 });
 
+test('prose: unwrap-prose joins hard-wrapped paragraphs but never touches structure (#39)', () => {
+  const src = [
+    '---',
+    'title: t',
+    '---',
+    '',
+    'A paragraph that was hard-wrapped at the old',
+    'seventy-two column boundary keeps flowing.',
+    '',
+    '---',
+    '',
+    '- a bullet that also wrapped',
+    '  across two lines',
+    '  - a nested bullet stays nested',
+    '    and its wrap joins too',
+    '',
+    '| a | b |',
+    '|---|---|',
+    '',
+    '```bash',
+    'echo "this line stays',
+    'exactly as written"',
+    '```',
+    '',
+  ].join('\n');
+  const f = path.join(os.tmpdir(), `freestruct-unwrap-${process.pid}-${++tmpSeq}.md`);
+  fs.writeFileSync(f, src);
+  try {
+    const res = spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'unwrap-prose.cjs'), f], { encoding: 'utf8' });
+    assert.strictEqual(res.status, 0, res.stderr);
+    const out = fs.readFileSync(f, 'utf8');
+    assert.includes(out, 'A paragraph that was hard-wrapped at the old seventy-two column boundary keeps flowing.', 'the wrapped paragraph joins into one line');
+    assert.includes(out, '- a bullet that also wrapped across two lines', 'a wrapped bullet joins');
+    assert.includes(out, '  - a nested bullet stays nested and its wrap joins too', 'a nested bullet stays nested and joins');
+    assert.includes(out, 'echo "this line stays\nexactly as written"', 'fenced code is never touched');
+    assert.includes(out, 'title: t', 'frontmatter is preserved');
+    // A bare `---` rule later in the file must NOT open frontmatter (the
+    // labs/TASKS.md regression): prose after it still unwraps.
+    assert.includes(out, 'the old seventy-two', 'the later rule did not swallow the body');
+    assert.ok(out.split('\n')[0] === '---' && out.split('\n')[1] === 'title: t', 'frontmatter block intact');
+  } finally { try { fs.rmSync(f, { force: true }); } catch (e) { /* best-effort */ } }
+});
+
 // done
 console.log('[freestruct battery] complete');

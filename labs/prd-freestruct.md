@@ -1,23 +1,12 @@
 # PRD: Freestruct rehaul (stone handoff)
 
-**Status:** ~~Planning (pre-rehaul)~~ -> **Phases 0-2 complete (see\nlabs/TASKS.md pass log). Phase 3 in progress**. Authored 2026-10-20 from a\nfull code read. Owner calls so far: ESM + node >= 20 (section 4.2), config renamed\n`freestruct.config.yml` w/ back-compat (section 4.3), search.json opt-in (section 4.5),\nnoindex honored by default (section 4.4). **Version frozen at 0.6.0 per owner - do\nnot bump; see labs/TASKS.md VERSION POLICY.**
-**Authors:** prestruct agent session, on behalf of the owner.
-**Reads first:** freestruct README.md, CHANGELOG.md, issue tracker (#2-#8),
-docs/lib/inject.js, package.json.
-**Temp location note:** this PRD is the last piece still living in the
-prestruct repo's /horcrux folder as a handoff mailbox. The brain itself
-(identity/goals/start/progress/lessons) already moved into the vant install
-at models/private/freestruct/, and its public stone
-(freestruct-p_v5frogstone2026.svg) sits beside this file. The PRD belongs in
-the freestruct repo the moment the rehaul starts.
+**Status:** ~~Planning (pre-rehaul)~~ -> **Phases 0-2 complete (see\nlabs/TASKS.md pass log). Phase 3 in progress**. Authored 2026-10-20 from a\nfull code read. Owner calls so far: ESM + node >= 20 (section 4.2), config renamed\n`freestruct.config.yml` w/ back-compat (section 4.3), search.json opt-in (section 4.5),\nnoindex honored by default (section 4.4). **Version frozen at 0.6.0 per owner - do\nnot bump; see labs/TASKS.md VERSION POLICY.** **Authors:** prestruct agent session, on behalf of the owner. **Reads first:** freestruct README.md, CHANGELOG.md, issue tracker (#2-#8), docs/lib/inject.js, package.json. **Temp location note:** this PRD is the last piece still living in the prestruct repo's /horcrux folder as a handoff mailbox. The brain itself (identity/goals/start/progress/lessons) already moved into the vant install at models/private/freestruct/, and its public stone (freestruct-p_v5frogstone2026.svg) sits beside this file. The PRD belongs in the freestruct repo the moment the rehaul starts.
 
 ---
 
 ## 1. Product one-liner
 
-Freestruct is a post-build SEO layer for static doc sites: build with any SSG,
-run one command, get complete SEO/OG/JSON-LD metadata, sitemap, robots, RSS,
-404, search index, and cache-busting across the output tree.
+Freestruct is a post-build SEO layer for static doc sites: build with any SSG, run one command, get complete SEO/OG/JSON-LD metadata, sitemap, robots, RSS, 404, search index, and cache-busting across the output tree.
 
 ---
 
@@ -42,22 +31,12 @@ run one command, get complete SEO/OG/JSON-LD metadata, sitemap, robots, RSS,
 
 Mirroring the prestruct pattern of "locked, documented, do-not-revisit":
 
-- Config-first, no magic: one config file (`freestruct.config.yml` or keep
-  the ssr-config.yml name), validated with structured diagnostics, exit 1 on
-  fatal errors (opt-out flag for CI tolerance).
-- Paths resolve from explicit roots (CLI arg > config > cwd walk-up), never
-  raw process.cwd().
-- Escaped-or-fail: all generated XML escapes values via a shared helper; a
-  value that still produces invalid XML is a loud build error, not a bad
-  sitemap.
-- Strictness is graduated but real: `--strict` turns report-only classes
-  (link check, noindex leaks) into build failures; CI recipes use it, casual
-  runs do not need to.
-- One search story: freestruct owns metadata being Pagefind-friendly
-  (canonical, noindex) and does NOT ship a competing index unless a user
-  opts in.
-- Templates ship WITH the package (or are scaffolded by init/copy-the-example),
-  never resolved from the consumer's CWD by accident.
+- Config-first, no magic: one config file (`freestruct.config.yml` or keep the ssr-config.yml name), validated with structured diagnostics, exit 1 on fatal errors (opt-out flag for CI tolerance).
+- Paths resolve from explicit roots (CLI arg > config > cwd walk-up), never raw process.cwd().
+- Escaped-or-fail: all generated XML escapes values via a shared helper; a value that still produces invalid XML is a loud build error, not a bad sitemap.
+- Strictness is graduated but real: `--strict` turns report-only classes (link check, noindex leaks) into build failures; CI recipes use it, casual runs do not need to.
+- One search story: freestruct owns metadata being Pagefind-friendly (canonical, noindex) and does NOT ship a competing index unless a user opts in.
+- Templates ship WITH the package (or are scaffolded by init/copy-the-example), never resolved from the consumer's CWD by accident.
 
 ---
 
@@ -65,8 +44,7 @@ Mirroring the prestruct pattern of "locked, documented, do-not-revisit":
 
 ### Phase 0 - Safety net + packaging truth (first PR)
 
-Goal: regression-proof the current behavior and make the README honest.
-No behavior changes yet.
+Goal: regression-proof the current behavior and make the README honest. No behavior changes yet.
 
 | Task | Notes |
 |------|-------|
@@ -87,17 +65,13 @@ Goal: same observable behavior, maintainable shape.
 | 1.4 404 pipeline (F7) | Generated 404 gets full SEO pipeline + noindex; custom 404s get the same treatment as everything else; all draws feed the late passes consistently. |
 | 1.5 Strictness profile (F9) | `--strict`: nonzero exit on broken links + noindex leakage. Default run keeps today's report-only posture. |
 
-Every step 1.1-1.5 lands AFTER its regression test exists (Phase 0 makes that
-possible). Behavior parity is asserted by the fixture battery each step.
+Every step 1.1-1.5 lands AFTER its regression test exists (Phase 0 makes that possible). Behavior parity is asserted by the fixture battery each step.
 
 ### Phase 2 - Config contract + honesty
 
-- Config schema: known flags, unknown-flag warnings, structured `[freestruct]`
-  diagnostics, FAST_FAIL exit codes.
-- Document-or-remove every flag (F6 list); README + config example regenerated
-  TOGETHER (and the README example YAML actually parsed by a test, per #8).
-- Template comment drift fixed (footer placement); placeholder substitution
-  either implemented or removed from docs.
+- Config schema: known flags, unknown-flag warnings, structured `[freestruct]` diagnostics, FAST_FAIL exit codes.
+- Document-or-remove every flag (F6 list); README + config example regenerated TOGETHER (and the README example YAML actually parsed by a test, per #8).
+- Template comment drift fixed (footer placement); placeholder substitution either implemented or removed from docs.
 - noindex: sitemap/search/feed honor it by default (owner call per #5).
 
 ### Phase 4 - Release-truth hardening (on frozen 0.6.0; owner freeze per labs/TASKS.md)
@@ -113,40 +87,22 @@ possible). Behavior parity is asserted by the fixture battery each step.
 
 ### Phase 3 - Docs frame + release story
 
-- Port the prestruct/vant docs setup: custom layout, `_data/nav.yml` as the
-  freestruct menu layer, `_plugins/nav_generator.rb` EITHER fixed (generator
-  writes `site.data.nav` or layout reads config) or deleted; docs-audit suite
-  (frontmatter/links/style/language/truthfulness/fiction-signatures gates)
-  ported and wired into CI.
--  README rewritten around a WORKING quick start (install -> config scaffold ->
-  build -> verify), stale claims culled (home.html `v0.2.0` badge), releases
-  flow documented (tags publish, CHANGELOG is the changelog).
-- Decide search.json's fate (F12): **RESOLVED in Phase 2 - kept as opt-in
-  (`searchIndex: true`), docs site stays Pagefind-only.**
-- **update (owner call, this pass): version stays 0.6.0 through this phase;
-  no v1.0.0 tag/bump is baked in - see labs/TASKS.md VERSION POLICY.**
-- **update (this pass): the "home.html v0.2.0 badge" figure no longer exists
-  in the tree (verified by read; no home.html/docs/home.html/docs/index.html
-  found) - the stale-claim sweep targets the live files instead.**
+- Port the prestruct/vant docs setup: custom layout, `_data/nav.yml` as the freestruct menu layer, `_plugins/nav_generator.rb` EITHER fixed (generator writes `site.data.nav` or layout reads config) or deleted; docs-audit suite (frontmatter/links/style/language/truthfulness/fiction-signatures gates) ported and wired into CI.
+-  README rewritten around a WORKING quick start (install -> config scaffold -> build -> verify), stale claims culled (home.html `v0.2.0` badge), releases flow documented (tags publish, CHANGELOG is the changelog).
+- Decide search.json's fate (F12): **RESOLVED in Phase 2 - kept as opt-in (`searchIndex: true`), docs site stays Pagefind-only.**
+- **update (owner call, this pass): version stays 0.6.0 through this phase; no v1.0.0 tag/bump is baked in - see labs/TASKS.md VERSION POLICY.**
+- **update (this pass): the "home.html v0.2.0 badge" figure no longer exists in the tree (verified by read; no home.html/docs/home.html/docs/index.html found) - the stale-claim sweep targets the live files instead.**
 
 ---
 
 ## 4. Open questions (owner calls)
 
-1. **Publish path:** npm (needs a first manual publish + OIDC later) vs
-   documented GitHub-source install? (Unblocks #2.)
-2. **Module runtime:** stay CommonJS (Node >=14 constraint) or move ESM?
-   Prestruct went ESM-first (`"type": "module"`). Recommend ESM + Node >=18.
-3. **Config filename:** keep `ssr-config.yml` (competitor-echo name) or rename
-   `freestruct.config.yml` with a back-compat read?
-4. **noindex in sitemap/RSS:** strict-honor by default, or flag-gated?
-   (#5 owner call.)
+1. **Publish path:** npm (needs a first manual publish + OIDC later) vs documented GitHub-source install? (Unblocks #2.)
+2. **Module runtime:** stay CommonJS (Node >=14 constraint) or move ESM? Prestruct went ESM-first (`"type": "module"`). Recommend ESM + Node >=18.
+3. **Config filename:** keep `ssr-config.yml` (competitor-echo name) or rename `freestruct.config.yml` with a back-compat read?
+4. **noindex in sitemap/RSS:** strict-honor by default, or flag-gated? (#5 owner call.)
 5. **search.json:** keep as opt-in or delete? (F12 / filed report.)
-6. **Stone password:** ~~owner picks~~ RESOLVED: owner picked
-   `v5frogstone2026` (separator-free boot convention). The stone is minted
-   and shipped: `horcrux/freestruct-p_v5frogstone2026.svg` in the prestruct
-   repo (temporary location until the freestruct repo exists as the stone's
-   home). Refresh it at pass end:
+6. **Stone password:** ~~owner picks~~ RESOLVED: owner picked `v5frogstone2026` (separator-free boot convention). The stone is minted and shipped: `horcrux/freestruct-p_v5frogstone2026.svg` in the prestruct repo (temporary location until the freestruct repo exists as the stone's home). Refresh it at pass end:
 
    ```
    cd /home/daytona/vant && node bin/vant.js snapshot --brain freestruct \
@@ -160,50 +116,24 @@ possible). Behavior parity is asserted by the fixture battery each step.
 
 ## 4.1 Path to v1.0.0 (approach steps)
 
-v1.0.0 is the REHAUL release, not the next patch. The prestruct path is the
-playbook, and its two owner-gate lessons transfer directly:
+v1.0.0 is the REHAUL release, not the next patch. The prestruct path is the playbook, and its two owner-gate lessons transfer directly:
 
-1. **Finish Phases 0-2 first.** v1.0.0 earns "1" by semantics: real test
-   battery in CI, module decomposition, honest config contract. A version
-   number cannot make a monolith either of those.
-2. **Version truth in front, not behind:** ~~tag the rehaul release as
-   `v1.0.0` the moment Phase 2 lands~~ **update (owner call, this pass): the
-   version is FROZEN at 0.6.0 - no bump now or at Phase 3's end; see
-   labs/TASKS.md VERSION POLICY. The *aligned-by-CI-pin* idea stands, it just
-   pins 0.6.0 everywhere instead of promoting to v1.0.0.**
-3. **First publish is manual, exactly once.** npm OIDC/Trusted Publisher
-   cannot create a package; the bootstrap publish from a dev machine carries
-   no provenance (adding publishConfig.provenance: true breaks it - the
-   sigstore cert requires a CI identity). Prestruct published this exact
-   runbook: .github/workflows/publish.yml header in dhaupin/prestruct.
-4. **Then the Trusted-Publisher entry** (user dhaupin, repo freestruct,
-   workflow name). After it, every `v*` tag publishes with provenance
-   automatically; the runbook also gates "no tag until the engine is
-   proven by real installs."
-5. **Tarball e2e before the tag.** ~~Fresh-machine install test (real npm
-   pack/install morphology, not repo runs) is the honest proof the quick
-   start works.~~ **DONE (Pass 9): scripts/e2e-install.cjs is committed and
-   CI-gated (test.yml + hard publish gate in publish.yml). Its first run
-   caught two real fresh-install bugs repo runs cannot see: missing
-   package-template fallback (exit 2 on every install) and the
-   symlink-unsafe main-module guard (silent no-op through npm's .bin shim).**
-6. **Dormant-by-default release posture.** Ship the publish workflow merged
-   and inert (fires on v* tags only) so the owner-gate is a tag, not a
-   merge. No publish without the Phase 2 contract being green in CI.
+1. **Finish Phases 0-2 first.** v1.0.0 earns "1" by semantics: real test battery in CI, module decomposition, honest config contract. A version number cannot make a monolith either of those.
+2. **Version truth in front, not behind:** ~~tag the rehaul release as `v1.0.0` the moment Phase 2 lands~~ **update (owner call, this pass): the version is FROZEN at 0.6.0 - no bump now or at Phase 3's end; see labs/TASKS.md VERSION POLICY. The *aligned-by-CI-pin* idea stands, it just pins 0.6.0 everywhere instead of promoting to v1.0.0.**
+3. **First publish is manual, exactly once.** npm OIDC/Trusted Publisher cannot create a package; the bootstrap publish from a dev machine carries no provenance (adding publishConfig.provenance: true breaks it - the sigstore cert requires a CI identity). Prestruct published this exact runbook: .github/workflows/publish.yml header in dhaupin/prestruct.
+4. **Then the Trusted-Publisher entry** (user dhaupin, repo freestruct, workflow name). After it, every `v*` tag publishes with provenance automatically; the runbook also gates "no tag until the engine is proven by real installs."
+5. **Tarball e2e before the tag.** ~~Fresh-machine install test (real npm pack/install morphology, not repo runs) is the honest proof the quick start works.~~ **DONE (Pass 9): scripts/e2e-install.cjs is committed and CI-gated (test.yml + hard publish gate in publish.yml). Its first run caught two real fresh-install bugs repo runs cannot see: missing package-template fallback (exit 2 on every install) and the symlink-unsafe main-module guard (silent no-op through npm's .bin shim).**
+6. **Dormant-by-default release posture.** Ship the publish workflow merged and inert (fires on v* tags only) so the owner-gate is a tag, not a merge. No publish without the Phase 2 contract being green in CI.
 
-Conceptual readiness (doc truth, error taxonomy, docs-audit gates ported in
-Phase 3) rides along so the docs site passes the same gates at v1.0.0.
+Conceptual readiness (doc truth, error taxonomy, docs-audit gates ported in Phase 3) rides along so the docs site passes the same gates at v1.0.0.
 
 ---
 
 ## 5. Success criteria
 
-- `npm test` in CI: fixture battery green; every artifact (sitemap.xml,
-  feed.xml, robots.txt, 404, search.json, escaped output) byte-asserted.
-- Fresh-machine install follows the README and produces a complete output
-  tree from a real SSG build (verified by the installed package, not repo runs).
-- inject.js is no longer a 577-line god-file: testable modules, explicit
-  roots, zero cwd surprises.
+- `npm test` in CI: fixture battery green; every artifact (sitemap.xml, feed.xml, robots.txt, 404, search.json, escaped output) byte-asserted.
+- Fresh-machine install follows the README and produces a complete output tree from a real SSG build (verified by the installed package, not repo runs).
+- inject.js is no longer a 577-line god-file: testable modules, explicit roots, zero cwd surprises.
 - The docs site passes the same audit gates prestruct and vant pass.
 - The age of unverifiable versions ends: tags + releases + README all agree.
 
@@ -211,58 +141,25 @@ Phase 3) rides along so the docs site passes the same gates at v1.0.0.
 
 ## 5.5 Docs-pipleline learnings from prestruct + vant (2026-10-21)
 
-Focused "absorb" pass over dhaupin/prestruct (full clone read) and
-dhaupin/vant docs pipeline, ahead of Phases 2-3.
+Focused "absorb" pass over dhaupin/prestruct (full clone read) and dhaupin/vant docs pipeline, ahead of Phases 2-3.
 
 ### Ground truth: who actually consumes freestruct today
-- **vant /docs does NOT run freestruct.** No ssr-config.yml, no _freestruct
-templates, no injector step in docs/deploy workflow. Its docs.yml is pure
-Jekyll + Pagefind (workflow header says "copied from prestruct's docs
-workflow"). The freestruct references in vant are the brain files
-(models/private/freestruct) and a nav comment.
-- **freestruct DOES consume itself** in docs.yml (Jekyll -> freestruct inject
--> Pagefind -> artifact deploy). That recursive loop is the dogfood value.
+- **vant /docs does NOT run freestruct.** No ssr-config.yml, no _freestruct templates, no injector step in docs/deploy workflow. Its docs.yml is pure Jekyll + Pagefind (workflow header says "copied from prestruct's docs workflow"). The freestruct references in vant are the brain files (models/private/freestruct) and a nav comment.
+- **freestruct DOES consume itself** in docs.yml (Jekyll -> freestruct inject -> Pagefind -> artifact deploy). That recursive loop is the dogfood value.
 
 ### Tidbits / fixes to adopt
-1. Pagefind via official npm dist: vant replaced the curl-scrape-TAR dance
-with `npm i --no-save pagefind` + `npx pagefind --site _site` (pass 316;
-predeploy of version pinning off mutable latest). freestruct docs.yml still
-uses `npm install -g pagefind` - port the npm-dist pattern.
-2. Workflow jekyll-leg safety: vant's build step inlines `cd docs && bundle
-exec jekyll build` rather than trusting step-level working-directory; pair
-this with freestruct#14's root-build-script fix (done for the npm script,
-workflow keeps working-directory + inline cd as belt-and-suspenders).
-3. Docs frame model (vant + prestruct): presentation lives in a custom
-no-theme layout; nav is a single source file (_data/nav.yml, grouped by
-section, one entry per page-with-permalink) read DIRECTLY by the layout.
-vant's nav file calls itself "freestruct menu layer" - the design freestruct's
-nav_generator.rb was meant to produce automatically. Phase 3 decision:
-either fix the generator to write site.data.nav, or delete it and adopt the
-single-source nav file with a docs audit that keeps it in sync.
-4. Prestruct's docs audit gates (checked-scripts/check-docs-style/links/
-frontmatter/language/truthfulness/fiction-signatures.cjs) are the gating
-pattern to port in Phase 3, plus `lint:docs` wiring.
-5. Canonical lesson is live: vant layouts emit `page.url | absolute_url`
-(- the same inheritance chain that produced freestruct#12's http://
-canonicals). Scheme truth must be pinned at _config.yml.
-6. Prestruct PRD lesson (W1 engine-drift): their published qc.test failing
-because init/ and example/ engine copies drifted. Mirror for freestruct:
-freestruct ships docs/_freestruct templates inside the package (Phase 1
-whitelist), consumer scaffolding must come from the package never cwd
-(F3, Phase 2/3 packaging work + tarball e2e).
+1. Pagefind via official npm dist: vant replaced the curl-scrape-TAR dance with `npm i --no-save pagefind` + `npx pagefind --site _site` (pass 316; predeploy of version pinning off mutable latest). freestruct docs.yml still uses `npm install -g pagefind` - port the npm-dist pattern.
+2. Workflow jekyll-leg safety: vant's build step inlines `cd docs && bundle exec jekyll build` rather than trusting step-level working-directory; pair this with freestruct#14's root-build-script fix (done for the npm script, workflow keeps working-directory + inline cd as belt-and-suspenders).
+3. Docs frame model (vant + prestruct): presentation lives in a custom no-theme layout; nav is a single source file (_data/nav.yml, grouped by section, one entry per page-with-permalink) read DIRECTLY by the layout. vant's nav file calls itself "freestruct menu layer" - the design freestruct's nav_generator.rb was meant to produce automatically. Phase 3 decision: either fix the generator to write site.data.nav, or delete it and adopt the single-source nav file with a docs audit that keeps it in sync.
+4. Prestruct's docs audit gates (checked-scripts/check-docs-style/links/ frontmatter/language/truthfulness/fiction-signatures.cjs) are the gating pattern to port in Phase 3, plus `lint:docs` wiring.
+5. Canonical lesson is live: vant layouts emit `page.url | absolute_url` (- the same inheritance chain that produced freestruct#12's http:// canonicals). Scheme truth must be pinned at _config.yml.
+6. Prestruct PRD lesson (W1 engine-drift): their published qc.test failing because init/ and example/ engine copies drifted. Mirror for freestruct: freestruct ships docs/_freestruct templates inside the package (Phase 1 whitelist), consumer scaffolding must come from the package never cwd (F3, Phase 2/3 packaging work + tarball e2e).
 
 ---
 
 ## 6. Cross-references
 
-- Body of defect ledger: freestruct issues #2-#8 (six already filed,
-  plus the new-field reports from this session).
-- The prestruct rehaul playbook this PRD mirrors: prestruct labs/prd.md,
-  AGENTS.md (lessons), and the ported docs-audit suite (scripts/check-*.cjs
-  in the prestruct repo - copy targets for Phase 3).
-- Canonical brain: vant install models/private/freestruct/ (identity, goals,
-  start, progress, lessons) - updated at pass end and encoded into the
-  public stone horcrux/freestruct-p_v5frogstone2026.svg.
-- Publish-path precedent + release runbook prestruct shipped first:
-  dhaupin/prestruct .github/workflows/publish.yml (manual bootstrap ->
-  Trusted Publisher -> tag-driven publishes).
+- Body of defect ledger: freestruct issues #2-#8 (six already filed, plus the new-field reports from this session).
+- The prestruct rehaul playbook this PRD mirrors: prestruct labs/prd.md, AGENTS.md (lessons), and the ported docs-audit suite (scripts/check-*.cjs in the prestruct repo - copy targets for Phase 3).
+- Canonical brain: vant install models/private/freestruct/ (identity, goals, start, progress, lessons) - updated at pass end and encoded into the public stone horcrux/freestruct-p_v5frogstone2026.svg.
+- Publish-path precedent + release runbook prestruct shipped first: dhaupin/prestruct .github/workflows/publish.yml (manual bootstrap -> Trusted Publisher -> tag-driven publishes).
