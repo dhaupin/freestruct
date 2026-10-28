@@ -2600,6 +2600,41 @@ test('prose: unwrap-prose joins hard-wrapped paragraphs but never touches struct
   } finally { try { fs.rmSync(f, { force: true }); } catch (e) { /* best-effort */ } }
 });
 
+// ---------- playbooks leg (#34) ----------
+// The playbooks leg is the family-scaffold shape guides/ does not carry: one
+// page per runbook recipe, each with a permalink under /playbooks/ and a row
+// in the index table. This pin holds the shape so a half-added recipe (page on
+// disk, no index row, or a nav entry with no page) cannot ship.
+
+test('docs: the playbooks leg ships one page per recipe, indexed and in the nav (#34)', () => {
+  const pbDir = path.join(ROOT, 'docs', 'playbooks');
+  assert.ok(fs.existsSync(pbDir), 'docs/playbooks/ exists (the playbooks leg)');
+  const pages = fs.readdirSync(pbDir).filter((f) => f.endsWith('.md')).sort();
+  assert.ok(pages.includes('index.md'), 'the leg carries an index page');
+  assert.ok(pages.length >= 9, `the leg ships the index plus the recipes (found ${pages.length} files)`);
+
+  const index = fs.readFileSync(path.join(pbDir, 'index.md'), 'utf8');
+  const fm = (t) => (t.match(/^---\n([\s\S]*?)\n---/) || [])[1] || '';
+  assert.includes(fm(index), 'permalink: /playbooks/', 'the index owns the /playbooks/ permalink');
+
+  for (const f of pages) {
+    if (f === 'index.md') continue;
+    const text = fs.readFileSync(path.join(pbDir, f), 'utf8');
+    const block = fm(text);
+    assert.includes(block, 'title:', `${f} carries a title`);
+    assert.includes(block, 'description:', `${f} carries a description`);
+    const perm = (block.match(/^permalink:\s*(\S+)/m) || [])[1];
+    assert.ok(perm && perm.startsWith('/playbooks/'), `${f} carries a /playbooks/ permalink (got ${perm})`);
+    assert.ok(index.includes(`](${perm})`), `the index table links ${f} by its permalink ${perm}`);
+  }
+
+  // The nav is the menu layer: the leg's pages are listed (the audit gate's
+  // reverse check also holds this, but the pin keeps it in the battery).
+  const nav = fs.readFileSync(path.join(ROOT, 'docs', '_data', 'nav.yml'), 'utf8');
+  assert.includes(nav, 'url: /playbooks/', 'the nav lists the playbooks leg');
+  assert.includes(nav, 'url: /playbooks/first-run/', 'the nav lists a recipe page');
+});
+
 // ---------- ship-from-download lane (#38) ----------
 // The generic phone publish lane is family-reusable (zero repo imports), so
 // these pins drive it through the runner seam: no npm, no network. The gate

@@ -229,7 +229,7 @@ The first post-stable release, carried by the all-items issue sweep (#17-#25 plu
 - Structured `og.image` - `{ src, width, height, alt, allowSvg }` with the companion tags and the SVG warn/strict ladder
 - Per-page OG-image generation - `ogImageGeneration` through the optional `@resvg/resvg-js` rasterizer
 - Latent hardening - every config/page-carried substitute now rides function replacers ($-expansion cannot corrupt output), plus the docs-layout dead-CSS removal
-- CI - packstruct manifest lint joined the push/PR battery alongside the crashtest pack selftest; the battery grew 49 -> 75 -> 117 pins
+- CI - packstruct manifest lint joined the push/PR battery alongside the crashtest pack selftest; the battery grew 49 -> 75 -> 118 pins
 - Release gate - `npm run check` composes the battery + docs audit + pack selftest, and `prepublishOnly` runs it, so a dirty tree cannot publish
 - Audit signal - config-gated absences (`og:image` / `twitter:image` not configured) print once with an affected-page count instead of once per page
 - basePath links - root-absolute hrefs carrying the configured `basePath` resolve against the tree, so a baseurl'd site passes `--strict`

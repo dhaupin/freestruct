@@ -46,6 +46,27 @@
     - title: CLI Reference
       url: /guides/cli
 
+- title: Playbooks
+  items:
+    - title: Playbooks
+      url: /playbooks/
+    - title: First run
+      url: /playbooks/first-run/
+    - title: Link triage
+      url: /playbooks/link-triage/
+    - title: Baked-output audit
+      url: /playbooks/baked-output-audit/
+    - title: Config validation
+      url: /playbooks/config-validation/
+    - title: Release gate
+      url: /playbooks/release-gate/
+    - title: Phone publish
+      url: /playbooks/phone-publish/
+    - title: Docs preview
+      url: /playbooks/docs-preview/
+    - title: Pin bump
+      url: /playbooks/pin-bump/
+
 - title: Contributions
   items:
     - title: Voice & Style
