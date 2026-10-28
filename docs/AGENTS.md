@@ -165,7 +165,7 @@ window.doSearch = async function(q, resultsEl) {
 - PageFind needs WASM initialization (`await pagefind.init()`)
 - Can't use `importmap` - doesn't handle WASM modules
 - Dynamic `import()` loads pagefind + initializes in one step
-- Modal is custom HTML in header.html (not automatic PageFindUI)
+- Modal is custom HTML in the default layout (not automatic PageFindUI)
 
 ### Gotchas
 - Path must include baseurl: `/pagefind/pagefind.js`

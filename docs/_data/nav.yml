@@ -8,7 +8,7 @@
 #   check-docs-links       - every URL listed here resolves to a page
 #   check-docs-nav         - every naviagted page is listed exactly once
 #
-# Shape (matches docs/_includes/header.html and docs/_layouts/default.html):
+# Shape (matches docs/_layouts/default.html):
 # - title: <section title>
 #   items:
 #     - title: <link text>
