@@ -159,6 +159,65 @@ test('README, package.json and CHANGELOG agree on one version (1.2.0 owner pin)'
   assert.strictEqual(pkg.version, '1.2.0', 'version pinned at 1.2.0 by owner call - see the VERSION POLICY in labs/TASKS.md first');
 });
 
+// ---------- version-truth census (issue #41) ----------
+// package.json is THE single version source. Any living surface that names the
+// CURRENT version is a hand-synced second truth, and hand-sync dies quietly -
+// the release-day stale-README catch is the one-mortem this leg retires. The
+// leg derives the version from package.json and refuses every living surface
+// that drifted. LAWFUL others stay out of scope: range pins (^1.0.0) bind 1.x
+// compatibility, dated era rows (CHANGELOG sections, the release posts, the
+// pass log's dated entries) keep their era wording by design, and a workflow
+// comment naming another package's version is not ours to move.
+
+// The living surfaces that hand-copy the current version, each with the
+// claim's own regex (anchored to the claim line, so a dated era row - which
+// says "1.2.0" about the past - never matches). A claim's capture must equal
+// the root version or the leg names file/line/claim/truth.
+const VERSION_CLAIMS = [
+  { file: 'README.md', re: /^- Current release: \*\*(\d+\.\d+\.\d+)\*\*/m, label: 'README current-release line' },
+  { file: 'AGENTS.md', re: /everything ships under \*\*(\d+\.\d+\.\d+)\*\*/, label: 'AGENTS version pin' },
+  { file: 'CONTRIBUTING.md', re: /The version is pinned at (\d+\.\d+\.\d+)/, label: 'CONTRIBUTING version pin' },
+  { file: 'DEPLOY.md', re: /the pinned \*\*(\d+\.\d+\.\d+)\*\*/, label: 'DEPLOY battery line' },
+  { file: 'DEPLOY.md', re: /currently ships under one number, `(\d+\.\d+\.\d+)`/, label: 'DEPLOY version-truth paragraph' },
+  { file: 'labs/TASKS.md', re: /the pin wall enforces (\d+\.\d+\.\d+) everywhere/, label: 'labs/TASKS reminder line' },
+  { file: '.github/workflows/release.yml', re: /^#\s+git tag v(\d+\.\d+\.\d+)$/m, label: 'release.yml tag example' },
+];
+
+test('version census: the living version claims are non-empty and derive from package.json (#41)', () => {
+  const pkg = JSON.parse(read('.', 'package.json'));
+  assert.ok(/^\d+\.\d+\.\d+$/.test(pkg.version), 'package.json version must be a plain X.Y.Z the census can derive');
+  // The scaffold kit's version stamp is the "side truth" (freestruct ships no
+  // second package.json); it must equal the root exactly.
+  const side = read('.', 'init/VERSION').trim();
+  assert.strictEqual(side, pkg.version, 'init/VERSION drifted from package.json - the release commit moves them together');
+  // Every claim pattern must match at least once, or the census has silently
+  // stopped seeing a surface it is meant to guard (a broken regex must fail
+  // loudly, never degrade to a green pass).
+  for (const { file, re, label } of VERSION_CLAIMS) {
+    const m = read('.', file).match(re);
+    assert.ok(m, `census spec lost its shape: ${label} (${file}) did not match - fix the claim regex, do not drop the surface`);
+    assert.strictEqual(m[1], pkg.version, `${label} (${file}) carries ${m[1]}, package.json says ${pkg.version} - move them together or drop the number`);
+  }
+});
+
+test('version census: no living surface hand-copies a stale version (#41)', () => {
+  const root = JSON.parse(read('.', 'package.json')).version;
+  const stale = [];
+  for (const { file, re, label } of VERSION_CLAIMS) {
+    const body = read('.', file);
+    re.lastIndex = 0;
+    const g = new RegExp(re.source, re.flags.includes('g') ? re.flags : re.flags + 'g');
+    let m;
+    while ((m = g.exec(body)) !== null) {
+      if (m[1] !== root) {
+        const line = body.slice(0, m.index).split('\n').length;
+        stale.push(`${file}:${line} ${label} carries ${m[1]}, truth is ${root}`);
+      }
+    }
+  }
+  assert.deepEqual(stale, [], stale.length ? `stale version claims found:\n${stale.join('\n')}` : '');
+});
+
 test('README quickstart YAML example actually parses (issue #8)', () => {
   const readme = read('.', 'README.md');
   const block = (readme.match(/```yaml\n([\s\S]*?)```/) || [])[1];

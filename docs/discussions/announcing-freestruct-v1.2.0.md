@@ -13,7 +13,7 @@ description: The v1.2.0 Discussions release post, per the Creadev family release
 
 # freestruct v1.2.0
 
-freestruct is a post-build SEO layer for static doc sites. v1.2.0 is a hardening release: with the issue queue fully closed (#1-#40), this pass walked the engine corners the queue-era waves never probed and shipped nine real fixes, each with a battery pin. No new config surface - just fewer quiet mistakes. This post ships with the v1.2.0 tag:
+freestruct is a post-build SEO layer for static doc sites. v1.2.0 is everything since the v1.1.0 tag: the family sweep and the docs/tooling wave that followed it, then a hardening pass that walked the engine corners the queue-era waves never probed. With the issue queue fully closed (#1-#40), nine real fixes landed, each with a battery pin, plus the issue #41 version-truth census leg. No new config surface - just fewer quiet mistakes. This post ships with the v1.2.0 tag:
 
 ```bash
 npm i -D freestruct
@@ -21,7 +21,9 @@ npm i -D freestruct
 
 ## What landed
 
-**Reruns are idempotent now.** The custom body-start and footer snippets (`inject-body-start.html`, `inject-footer.html`) were appended raw on every pass with nothing marking them as freestruct's own, so a second run stacked a duplicate copy - and because the body text then differed, it churned the content-derived `freestruct-build` hash on every run, defeating the deterministic-hash contract that keeps CDN caches honest. The snippets are now marker-wrapped, the injector strips the previous copy before re-adding it, and the hash computation ignores the same region, so run 1, run 2 and run 3 are byte-identical.
+**The family sweep and docs wave (post-tag).** The link checker now resolves root-absolute hrefs against the configured `basePath`, so a baseurl'd site's nav passes `--strict`; config-gated audit absences (`og:image`, `twitter:image`) collapse to one line with an affected-page count; and the release gate is composed - `npm run check` (battery + docs audit + pack selftest) runs from `prepublishOnly`. The init kit seeds the family JSON-LD identity, the Pages runbook is promoted to a reusable `workflow_call` lane, every `actions/cache` step pins one major, and a new playbooks leg puts the runbook recipes next to the gates they prove. The 72-column commit-time habit is retired: living prose flows, and `scripts/unwrap-prose.cjs` keeps it that way.
+
+**The engine sweep.** The custom body-start and footer snippets (`inject-body-start.html`, `inject-footer.html`) were appended raw on every pass with nothing marking them as freestruct's own, so a second run stacked a duplicate copy - and because the body text then differed, it churned the content-derived `freestruct-build` hash on every run, defeating the deterministic-hash contract that keeps CDN caches honest. The snippets are now marker-wrapped, the injector strips the previous copy before re-adding it, and the hash computation ignores the same region, so run 1, run 2 and run 3 are byte-identical.
 
 **The minifier respects verbatim blocks.** `minifyHtml` only recognized bare `<pre>`/`<script>`/`<style>`/`<textarea>` open tags, so a fence like `<pre class="highlight">` was not treated as a block at all: its indentation collapsed and, worse, inline JavaScript carrying a `//` comment flattened onto a single line - commenting out the rest of the script. The pass is now verbatim-block aware (attribute forms included): block content survives byte-for-byte while whitespace outside blocks still collapses.
 
@@ -35,7 +37,7 @@ npm i -D freestruct
 
 ## Quality layer
 
-The fixture battery grew from 121 pins to 130, one red-checked pin per fix. The sweep hunted the surfaces the earlier queue-era waves had left untouched: the minifier, the cache-bust matcher, the link checker, the purge-hook runner, the lazy-load pass, and two audit helpers, plus the CLI flag table. Every fix was reproduced first (a failing pin or an offline probe), then corrected, then re-pinned. CI runs the full gate set on every push and pull request - the battery, the seven-gate docs audit, template sync lockstep, the tarball e2e, the crashtest pack selftest, and a live docs deploy that dogfoods freestruct against its own freshly built site.
+The fixture battery grew from 121 pins to 130, one red-checked pin per fix, and the issue #41 version-truth census leg added two more (130 -> 132): it derives the version from `package.json` and refuses every living surface that hand-copied the current one - the README current-release line, the AGENTS/CONTRIBUTING/DEPLOY pins, the pass-log reminder, the `release.yml` tag example, and the `init/VERSION` stamp - while range pins, dated era rows and other packages' versions stay out of scope by design. The sweep hunted the surfaces the earlier queue-era waves had left untouched: the minifier, the cache-bust matcher, the link checker, the purge-hook runner, the lazy-load pass, and two audit helpers, plus the CLI flag table. Every fix was reproduced first (a failing pin or an offline probe), then corrected, then re-pinned. CI runs the full gate set on every push and pull request - the battery, the seven-gate docs audit, template sync lockstep, the tarball e2e, the crashtest pack selftest, and a live docs deploy that dogfoods freestruct against its own freshly built site.
 
 ## Links
 

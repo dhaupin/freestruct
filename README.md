@@ -215,12 +215,12 @@ Two shipped surfaces beyond the engine:
 
 - Versions live in one place: `package.json`, pinned in CI against the README/CHANGELOG truth. Single source, no drift.
 - `CHANGELOG.md` is the changelog; releases are tagged (`v*`) and CHANGELOG-truthful or they don't ship.
-- Current release: **1.2.0** (the post-queue engine sweep: nine fixes across the untouched engine corners, all battery-pinned; see `labs/TASKS.md` for the version policy).
+- Current release: **1.2.0** (everything since the v1.1.0 tag: the family sweep, the docs/tooling wave, the post-queue engine sweep, and the issue #41 version-truth census leg; see `labs/TASKS.md` for the version policy).
 - Deployment truth lives in [DEPLOY.md](DEPLOY.md): the GitHub Pages pipeline (this repo's own docs site deploys through it) and the npm release runbook.
 
 ## v1.2.0
 
-The post-queue engine sweep. The GitHub issue queue is fully closed (#1-#40), so this release hunts the engine corners the queue-era waves never probed - nine real fixes, each with a battery pin (121 -> 130):
+Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, then the post-queue engine sweep - with the GitHub issue queue fully closed (#1-#40), the engine corners the queue-era waves never probed got nine real fixes, each with a battery pin (121 -> 130), plus the issue #41 version-truth census leg (130 -> 132):
 
 - Rerun hygiene - body-start/footer snippets are marker-wrapped and a rerun drops the previous copy before re-adding it, so a second pass no longer stacks snippets or churns the content-derived build hash
 - Verbatim-block-aware `minifyHtml` - `<pre class="...">`/`<script>`/`<style>`/`<textarea>` content (attribute forms included) survives byte-for-byte, so code fences and inline JS with `//` comments are never collapsed
@@ -230,6 +230,14 @@ The post-queue engine sweep. The GitHub issue queue is fully closed (#1-#40), so
 - Lazy-load fix - self-closing `<img ... />` stays well-formed instead of getting a dangling `/ loading="lazy"`
 - Audit fixes - `grabMeta` tolerates a leading attribute (no more false `missing meta description`), and `urlToDisk` normalizes a slash-less `basePath`
 - CLI - `-h` now aliases `--help` instead of riding as the positional output dir
+- Version truth - a census leg derives the version from `package.json` and refuses every living surface that hand-copied the current one (README line, AGENTS/CONTRIBUTING/DEPLOY pins, the pass-log reminder, the `release.yml` tag example, `init/VERSION`)
+- basePath links - root-absolute hrefs carrying the configured `basePath` resolve against the tree, so a baseurl'd site passes `--strict`
+- Release gate - `npm run check` composes the battery + docs audit + pack selftest, and `prepublishOnly` runs it, so a dirty tree cannot publish
+- Audit signal - config-gated absences (`og:image` / `twitter:image` not configured) print once with an affected-page count instead of once per page
+- Table guard - a default-on `tableWrap` pass wraps wide tables in a scroll container so every downstream site is mobile-safe by construction
+- Init kit - the starter config seeds the family JSON-LD identity, so scaffolded ports ship founder + maintainer from birth
+- Docs - the playbooks leg (one recipe per runbook, indexed and in the nav), the rootless local docs-preview recipe, the full rouge token vocabulary, and the retired 72-column hard-wrap (living prose flows, `scripts/unwrap-prose.cjs` keeps it that way)
+- CI - the Pages runbook promoted to a reusable `workflow_call` lane (`docs-lane.yml`) with `docs.yml` a thin caller, every `actions/cache` step pinned to one major, and the phone-publish lane (`scripts/ship-from-download.cjs`)
 
 ## v1.1.0
 
@@ -242,11 +250,7 @@ The first post-stable release, carried by the all-items issue sweep (#17-#25 plu
 - Structured `og.image` - `{ src, width, height, alt, allowSvg }` with the companion tags and the SVG warn/strict ladder
 - Per-page OG-image generation - `ogImageGeneration` through the optional `@resvg/resvg-js` rasterizer
 - Latent hardening - every config/page-carried substitute now rides function replacers ($-expansion cannot corrupt output), plus the docs-layout dead-CSS removal
-- CI - packstruct manifest lint joined the push/PR battery alongside the crashtest pack selftest; the battery grew 49 -> 75 -> 121 pins
-- Release gate - `npm run check` composes the battery + docs audit + pack selftest, and `prepublishOnly` runs it, so a dirty tree cannot publish
-- Audit signal - config-gated absences (`og:image` / `twitter:image` not configured) print once with an affected-page count instead of once per page
-- basePath links - root-absolute hrefs carrying the configured `basePath` resolve against the tree, so a baseurl'd site passes `--strict`
-- Table guard - a default-on `tableWrap` pass wraps wide tables in a scroll container so every downstream site is mobile-safe by construction
+- CI - packstruct manifest lint joined the push/PR battery alongside the crashtest pack selftest; the battery grew 49 -> 75 -> 103 pins
 
 ## v1.0.0
 

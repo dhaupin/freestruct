@@ -49,7 +49,7 @@ Deployment needs the GitHub Pages environment (`github-pages`) already configure
 
 Every push and pull request runs:
 
-1. `npm test` - the fixture battery (130 pins), including the version-truth pin that enforces the triple agreement (README / package.json / CHANGELOG) and the pinned **1.2.0** (owner call, 2026-10-28).
+1. `npm test` - the fixture battery (132 pins), including the version-truth pin that enforces the triple agreement (README / package.json / CHANGELOG) and the issue #41 census leg that derives the version from package.json and refuses every living surface (README line, AGENTS/CONTRIBUTING/DEPLOY pins, the pass-log reminder, the `release.yml` tag example, `init/VERSION`) that drifted; the pinned **1.2.0** (owner call, 2026-10-28).
 2. Docs audit (`npm run lint:docs`) - frontmatter, links, nav symmetry, style, truthfulness, English-only language gate, and the engine-header comment format gate.
 3. Tarball e2e (`npm run e2e`) - real `npm pack` -> install into a throwaway project -> run the README quick start through the bin shim -> assert artifacts + injections + exit shapes.
 4. Crashtest pack selftest (`npm run packs:selftest`) - the pack must hold a hardened Freestruct build and trip a deliberately regressed one.
@@ -98,7 +98,7 @@ NPM_TOKEN=npm_xxx node scripts/ship-from-download.cjs \
 
 The token rides `NPM_TOKEN` (or `NPM_SHIP_TOKEN`, or `--token-file`), expands from env into a staged one-line `.npmrc` that is unlinked in a finally - it never lands in argv (ps-safe), on disk, or in the log. Refusals are named with exit 0/1/2; `--clean` removes only the staged root, on every exit, so a failed run cannot block the retry.
 
-The version truth is enforced in CI: the battery pin refuses any README / package.json / CHANGELOG triplet that disagrees. Everything currently ships under one number, `1.2.0` (bumped from the 1.1.0 post-stable surface on 2026-10-28, carrying the post-queue engine sweep; the trail: the 0.6.0 freeze was lifted to 0.9.0, promoted to 1.0.0 on 2026-10-22, then to 1.1.0 on 2026-10-25; `labs/TASKS.md` VERSION POLICY has the trail) - a future bump is one edit in those three places plus `init/VERSION`, then the pin keeps them honest.
+The version truth is enforced in CI: the battery pin refuses any README / package.json / CHANGELOG triplet that disagrees, and the issue #41 census leg derives the version from package.json and refuses every living surface that hand-copied it (README line, AGENTS/CONTRIBUTING/DEPLOY pins, the pass-log reminder, the `release.yml` tag example, `init/VERSION`) - range pins (`^1.0.0`), dated era rows and other packages' versions stay out of scope. Everything currently ships under one number, `1.2.0` (bumped from the 1.1.0 post-stable surface on 2026-10-28, carrying the post-queue engine sweep; the trail: the 0.6.0 freeze was lifted to 0.9.0, promoted to 1.0.0 on 2026-10-22, then to 1.1.0 on 2026-10-25; `labs/TASKS.md` VERSION POLICY has the trail) - a future bump is one edit in those three places plus `init/VERSION`, then the pin keeps them honest.
 
 ---
 
