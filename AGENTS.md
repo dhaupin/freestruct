@@ -24,14 +24,14 @@ Engineering history and the house rules, written for an AI agent (or human) pick
 
 | Path        | What it is                                                            |
 |-------------|-----------------------------------------------------------------------|
-| `engine/`   | The shipped runtime: `inject.js` orchestrator + the eight lib modules |
+| `engine/`   | The shipped runtime: `inject.js` orchestrator + the thirteen lib modules |
 | `engine/_freestruct/` | Canonical packaged templates (the ONLY place to edit them)   |
 | `bin/freestruct.mjs`  | Thin CLI shim consumers install (`npm run build` style entry) |
 | `init/`     | Consumer scaffold kit (starter config + template copies, version-stamped) |
 | `docs/`     | The docs site, and the worked example itself: Jekyll + Freestruct + Pagefind |
 | `packs/`    | The crashtest extension surface (one pack: `freestruct-docs-shapes`)   |
 | `scripts/`  | CI/tooling: template sync, docs audit, tarball e2e, pack selftest, language gate |
-| `test/`     | `node test/run.js` - the fixture battery (132 pins) + version truth     |
+| `test/`     | `node test/run.js` - the fixture battery (133 pins) + version truth     |
 | `labs/`     | PRD + pass log: where plans and history live                          |
 | `horcrux/`  | The stone (brain snapshot, refresh convention in the PRD)              |
 

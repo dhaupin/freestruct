@@ -140,10 +140,14 @@ Configuration for the cache busting system.
 
 ```yaml
 cacheBusting:
-  hash: true              # generate build hash (default: true)
-  assetQueryParam: true   # add ?v=hash to assets (default: true)
+  assetQueryParam: true     # add ?v=hash to assets (default: true)
   hashInCanonicalUrl: false # add ?v=hash to canonical (default: false)
+  purge:                    # optional purge commands (see runHooks below)
+    - name: cloudflare
+      command: "curl -X DELETE https://api.cloudflare.com/..."
 ```
+
+A build hash is always generated - there is no switch for it (`cacheBusting.hash` is retired).
 
 ### runHooks
 
@@ -173,7 +177,7 @@ runHooks: true
 
 hooks:
   postBuild:
-    - node scripts/faqp-schema.mjs
+    - node scripts/faq-schema.mjs
     - npm run seo:audit
 ```
 

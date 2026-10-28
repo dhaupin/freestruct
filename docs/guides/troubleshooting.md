@@ -108,7 +108,7 @@ If CDN caches don't update:
 2. Verify asset URLs have new `?v=` param
 3. Manually purge CDN if needed
 
-The hash should change every build.
+The hash is content-derived: it flips when your page content (or config) changes, and stays identical on an unchanged rebuild. If a deploy changed nothing, the hash is meant to stay the same - busting happens exactly when there is new content to fetch.
 
 ---
 

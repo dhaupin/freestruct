@@ -218,6 +218,44 @@ test('version census: no living surface hand-copies a stale version (#41)', () =
   assert.deepEqual(stale, [], stale.length ? `stale version claims found:\n${stale.join('\n')}` : '');
 });
 
+// ---------- count census (issue #43) ----------
+// The version census above pins one class of hand-copied number; this pins the
+// other: counts a living page asserts about the repo (test-battery size, engine
+// module count). Both are DERIVED here from source, never hand-written, so a
+// doc line can only ever say the true number. A claim's regex is anchored to the
+// sentence that states the fact, so historical prose ("grew 49 -> 75 -> 103
+// pins") never matches. A broken regex fails loudly instead of going green.
+const ENGINE_MODULES = fs.readdirSync(path.join(ROOT, 'engine'))
+  .filter((f) => f.endsWith('.js') && f !== 'inject.js').length;
+const BATTERY_TESTS = (fs.readFileSync(path.join(ROOT, 'test', 'run.js'), 'utf8')
+  .match(/^test\(/gm) || []).length;
+
+const COUNT_CLAIMS = [
+  { file: 'docs/index.md', re: /a (\d+)-test battery/, derive: () => BATTERY_TESTS, label: 'homepage battery size' },
+  { file: 'AGENTS.md', re: /inject\.js` orchestrator \+ the (\w+) lib modules/, words: true, derive: () => ENGINE_MODULES, label: 'AGENTS engine module count' },
+  { file: 'AGENTS.md', re: /the fixture battery \((\d+) pins\)/, derive: () => BATTERY_TESTS, label: 'AGENTS battery size' },
+  { file: 'CONTRIBUTING.md', re: /one orchestrator \+ (\w+) modules/, words: true, derive: () => ENGINE_MODULES, label: 'CONTRIBUTING engine module count' },
+  { file: 'CONTRIBUTING.md', re: /the battery \((\d+) pins\)/, derive: () => BATTERY_TESTS, label: 'CONTRIBUTING battery size' },
+  { file: 'DEPLOY.md', re: /the fixture battery \((\d+) pins\)/, derive: () => BATTERY_TESTS, label: 'DEPLOY battery size' },
+];
+
+const NUM_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+  'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty'];
+
+test('count census: living count claims are derived from source, never hand-copied (#43)', () => {
+  assert.ok(BATTERY_TESTS > 0, 'the count census must see the battery');
+  assert.ok(ENGINE_MODULES > 0, 'the count census must see the engine modules');
+  for (const { file, re, words, derive, label } of COUNT_CLAIMS) {
+    const m = read('.', file).match(re);
+    assert.ok(m, `count census spec lost its shape: ${label} (${file}) did not match - fix the claim regex, do not drop the surface`);
+    const expected = derive();
+    const got = words ? NUM_WORDS.indexOf(m[1]) : Number(m[1]);
+    assert.ok(got >= 0, `${label} (${file}) names "${m[1]}", which is not a known number word`);
+    assert.strictEqual(got, expected, `${label} (${file}) says ${m[1]} (${got}); source says ${expected} - derive it, do not hand-copy`);
+  }
+});
+
+
 test('README quickstart YAML example actually parses (issue #8)', () => {
   const readme = read('.', 'README.md');
   const block = (readme.match(/```yaml\n([\s\S]*?)```/) || [])[1];

@@ -90,22 +90,17 @@ jobs:
 
 ## Environment Variables
 
-For private sites, use secrets:
+For private sites, pass secrets to the run through the environment:
 
 ```yaml
 - name: Run freestruct
   run: npx freestruct
   env:
-    SITE_URL: ${{ secrets.SITE_URL }}
-    API_KEY: ${{ secrets.API_KEY }}
+    FREESTRUCT_URL: ${{ secrets.SITE_URL }}
+    CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_TOKEN }}
 ```
 
-Access in config:
-
-```yaml
-site:
-  url: $SITE_URL
-```
+`FREESTRUCT_URL` is the one env override the engine reads: it replaces `site.url` for staging-style runs and announces the swap on stdout. Every other value comes from the config file, and purge/hook commands read their own env vars at run time (`$SITE_URL`, `$BUILD_HASH`, `$OUTPUT_DIR` are substituted into the command, and the same three ship as `FREESTRUCT_SITE_URL` / `FREESTRUCT_BUILD_HASH` / `FREESTRUCT_OUTPUT_DIR` on the child process).
 
 ---
 
@@ -199,7 +194,7 @@ The Freestruct npm package ships `js-yaml` as its own dependency, so a package i
 ```bash
 # repo checkout only:
 # ensure package.json has:
-"js-yaml": "^4.1.0"
+"js-yaml": "^5.5.0"
 ```
 
 Using `npx freestruct` without a local install? npx fetches the package with its dependency the first time (`npx --yes freestruct` skips the prompt).

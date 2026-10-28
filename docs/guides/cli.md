@@ -7,7 +7,7 @@ permalink: /guides/cli/
 
 # CLI Reference
 
-One binary, one default run, three side commands. Everything here is battery-pinned in `test/run.js` (the truthfulness gate holds the docs to it).
+One binary, one default run, five side commands. Everything here is battery-pinned in `test/run.js` (the truthfulness gate holds the docs to it).
 
 ## The Default Run
 
@@ -74,15 +74,17 @@ Post-deploy semantics: the `<key>.txt` ownership file is emitted during the free
 ```bash
 npx freestruct help
 npx freestruct --help
+npx freestruct -h
 ```
 
-Subcommand and flag do the same thing: print the command table plus the exit-code contract and exit `0`.
+Subcommand and flags do the same thing: print the command table plus the exit-code contract and exit `0`.
 
 ## Flags
 
 | Flag | Effect |
 |------|--------|
 | `--version` | Print the package version, exit `0` |
+| `-h`, `--help` | Print the command table and exit `0` (same as `help`) |
 | `--strict` | Broken internal links fail the build (`exit 1`) instead of reporting |
 | `--tolerant` | Fatal config/output errors log and exit `0` (CI tolerance mode) |
 | `<outputDir>` | Positional output-directory override (bare word, not a subcommand) |

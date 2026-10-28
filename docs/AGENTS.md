@@ -19,7 +19,7 @@ Engineering decisions and technical details for Freestruct docs and the Freestru
 
 - **No SSG dependencies** - Works with ANY static site generator
 - **No plugins** - Pure post-build layer, doesn't touch your SSG
-- **Zero runtime deps** - Can run with just Node.js built-ins (optional js-yaml for config)
+- **One runtime dependency** - `js-yaml` for config parsing; the engine itself is vanilla Node.js ESM
 - **One command** - `node bin/freestruct.mjs` after your SSG builds
 
 ### Key Files
@@ -28,7 +28,7 @@ Engineering decisions and technical details for Freestruct docs and the Freestru
 |------|---------|
 | `engine/inject.js` | Engine entry + CLI orchestrator (vanilla Node.js ESM) |
 | `docs/freestruct.config.yml` | Configuration for site metadata, CDN hooks, cache busting (legacy name `ssr-config.yml` still read) |
-| `docs/_includes/inject-brand.html` | HTML template with `{{placeholder}}` tokens |
+| `engine/_freestruct/inject-brand.html` | Canonical HTML template with `{{placeholder}}` tokens (synced to `docs/_freestruct/` and `init/docs/_freestruct/`) |
 
 ### Architecture
 
@@ -58,15 +58,15 @@ Your SSG Build (ANY - Jekyll/Hugo/Docusaurus/VitePress/MkDocs)
 ### How inject.js Works
 
 1. **Load config**: Reads `freestruct.config.yml` via js-yaml
-2. **Generate hash**: SHA1 of config + timestamp (8 chars)
+2. **Generate hash**: SHA1 of config + sorted pre-injection page content (8 chars)
 3. **Find HTML files**: Recursive scan of outputDir
 4. **Per-file injection**:
    - Extract title/description from existing HTML
-   - Build canonical URL with `?v={hash}`
+   - Build canonical URL (with `?v={hash}` only when `hashInCanonicalUrl: true`)
    - Replace template placeholders
    - Insert before `</head>`
 5. **Generate sitemap.xml** and **404.html**
-6. **Run purge hooks** (if configured)
+6. **Run purge hooks** (if configured and `runHooks: true`)
 
 ### Template Placeholders
 
@@ -75,7 +75,7 @@ Your SSG Build (ANY - Jekyll/Hugo/Docusaurus/VitePress/MkDocs)
 | `{{pageTitle}}` | Extracted from `<title>` or config.site.name |
 | `{{pageDescription}}` | Extracted from `<meta description>` or config |
 | `{{pageUrl}}` | Computed from file path |
-| `{{canonicalUrl}}` | site.url + pageUrl + ?v=hash |
+| `{{canonicalUrl}}` | site.url + pageUrl (+ `?v=hash` when `hashInCanonicalUrl: true`) |
 | `{{siteUrl}}` | config.site.url |
 | `{{siteName}}` | config.site.name |
 | `{{siteDescription}}` | config.site.description |
@@ -138,7 +138,7 @@ Available variables: `$SITE_URL`, `$BUILD_HASH`, `$OUTPUT_DIR`
 - Custom modal UI (not PageFindUI widget)
 
 ### Key files
-- `docs/_includes/header.html` - Contains search modal and JS
+- `docs/_layouts/default.html` - Carries the search modal markup and JS (there is no `_includes/`; the frame is a single self-contained layout)
 - `docs/_config.yml` - `search.provider: pagefind`
 
 ### Pattern used (copied from prestruct)
@@ -195,11 +195,11 @@ Just set `outputDir` in `freestruct.config.yml` or pass as argument.
 
 ## Theme Structure (Jekyll)
 
-- `_includes/` - Partial templates (header, footer, inject-brand.html)
-- `_layouts/` - Page templates (default, home, page)
-- `assets/scss/` - Styles
+- `_layouts/` - Page templates (`default.html` carries the whole frame: header, sidebar, search modal, theme switch; `page.html` is a passthrough)
+- `_data/nav.yml` - The single nav source both the sidebar and the audit read
+- `_freestruct/` - Staged template overrides (synced copy of the canonical `engine/_freestruct/`)
 
-No `_theme/` folder - not needed for this simple theme.
+No `_includes/` and no `_sass/`: the frame is one self-contained layout with inline tokens, and every page's markdown h1 is the heading.
 
 ---
 
@@ -280,9 +280,9 @@ Create or edit these files to add custom code. Files auto-load if they exist.
 
 ### Adding a new SEO feature
 
-1. Add placeholders to `inject-brand.html`
-2. Handle replacement in `inject.js::injectFile()`
-3. Document in `docs/guides/freestruct-config.md` (the Freestruct.config.yml Reference page)
+1. Add placeholders to `engine/_freestruct/inject-brand.html` (the canonical template; sync to the copies)
+2. Handle replacement in `engine/seo.js::injectPage()` (the replacements map)
+3. Document in `docs/guides/freestruct-config.md` (the Freestruct.config.yml Reference page), and pin it in `test/run.js`
 
 ### Testing locally
 
@@ -293,7 +293,7 @@ Create or edit these files to add custom code. Files auto-load if they exist.
 ### Important quirks
 
 - 404.html files get the full pipeline now (canonical included), with an explicit `robots noindex` meta (issue #11 fix); generated AND custom 404s get the same treatment
-- JSON-LD in inject-brand.html is static (not per-page)
+- JSON-LD: the Organization/WebSite blocks are per-site, and `jsonLd`/`article.scoped`/`breadcrumb` add per-page structured data (all missing-only)
 - Purge hooks are REAL and wired (`engine/hooks.js`), but gated: they only execute when `runHooks: true` is set in config; configured-but-unenabled hooks just log the skipped command (battery-pinned both ways)
 - `preserveExistingMeta` is a RETIRED config key (missing-only injection is unconditional now); configuring it produces a named warning
 - Missing-only injection: existing tags are never overwritten

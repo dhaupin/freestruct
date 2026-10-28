@@ -18,7 +18,7 @@ Electrically honest design rules that PRs must keep:
 - **basePath is one contract** - every generated URL (canonical, sitemap loc, robots pointer, feed links, 404 home link) goes through `pageUrlFor`
 - **The version is pinned at 1.2.0** (bumped from the 1.1.0 post-stable surface on 2026-10-28) until the owner moves it again
 
-Where to change things: the runtime lives in `engine/` (one orchestrator + eight modules; see the [engineering-decisions page](https://freestruct.creadev.org/engineering-decisions)), templates are canonical at `engine/_freestruct/`, and the consumer scaffold kit is `init/`. `docs/` is both the documented site and the worked example.
+Where to change things: the runtime lives in `engine/` (one orchestrator + thirteen modules; see the [engineering-decisions page](https://freestruct.creadev.org/engineering-decisions)), templates are canonical at `engine/_freestruct/`, and the consumer scaffold kit is `init/`. `docs/` is both the documented site and the worked example.
 
 ## Before you open a PR
 
@@ -26,7 +26,7 @@ CI runs the same commands locally, so test like CI:
 
 ```bash
 npm install
-npm test                     # the battery (41 pins)
+npm test                     # the battery (133 pins)
 npm run lint:docs            # docs audit: 7 gates incl. English-only prose
 npm run sync:check           # template copies in lockstep
 npm run e2e                  # tarball e2e (fresh-install quick start)

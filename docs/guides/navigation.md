@@ -1,12 +1,12 @@
 ---
 title: Navigation
-description: How the docs menu works - one data file, rendered by one partial
+description: How the docs menu works - one data file, rendered by one layout
 nav_order: 3
 ---
 
 # Navigation
 
-Freestruct's docs menu is a **single data file**: `docs/_data/nav.yml`. The `header.html` include and the `default.html` sidebar both render the same `site.data.nav` structure, so the top nav and the sidebar can never drift apart.
+Freestruct's docs menu is a **single data file**: `docs/_data/nav.yml`. The `default.html` layout renders `site.data.nav` into the sidebar (there is no separate top nav), so there is exactly one place nav can live and it cannot drift.
 
 ## The Shape
 

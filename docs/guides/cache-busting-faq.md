@@ -14,9 +14,9 @@ Every time you deploy, your SSG (Jekyll, Hugo, Docusaurus) generates fresh HTML.
 
 You rebuild your docs. Deploy. But users still see old content. You check the CMS/SSG - it says deployed. You check the CDN - it says everything is fine. But your user in Berlin is still seeing last week's version.
 
-This is the "I'm so fucking sick of this" moment.
+This is the "why isn't my docs updating" moment.
 
-Freestruct solves this by injecting a unique hash into every build. The HTML is different. CDNs must re-fetch. Browser cache is bypassed via query params.
+Freestruct solves this by injecting a unique, content-derived hash into every build. The HTML fingerprint changes, and every asset URL carries `?v={hash}`, so a CDN that keys on URL or content sees something new to fetch.
 
 ## Why can't I just use Cache-Control headers?
 
@@ -34,17 +34,17 @@ Two mechanisms for different layers:
 
 1. **`<meta name="freestruct-build">`** - For debugging and verification. Shows which build is deployed.
 
-2. **`?v=` query param on canonical** - This is the real cache buster. When a CDN sees a new URL, it treats it as new content.
+2. **`?v=` query param on canonical** - This is the real cache buster, and it is opt-in: set `cacheBusting.hashInCanonicalUrl: true`. When a CDN sees a new URL, it treats it as new content.
 
-Both are generated automatically. You don't need to do anything.
+The `freestruct-build` meta is always injected; the canonical query param is not (a versioned canonical is a deliberate choice, not a default).
 
 ## Will this break my existing SEO?
 
 No. It improves it:
 
-- Canonical URLs with `?v=` are still valid canonicals
-- Search engines understand versioned URLs
-- The hash is content-derived: it changes only when your content changes, so search engines see a new URL exactly when there is genuinely new content to crawl
+- Asset URLs carry `?v=` by default, and versioned asset URLs are standard practice
+- Canonical URLs stay clean by default (the `?v=` on canonical is opt-in), so search engines see one stable canonical
+- The hash is content-derived: it changes only when your content changes, so nothing churns on a rebuild that changed nothing
 
 ## My CDN already has auto-purge. Why do I need this?
 
@@ -65,7 +65,7 @@ Yes! This is actually why we built it:
 - GitHub's CDN can be slow to propagate
 - Custom domains via CloudFlare need manual purge
 
-With Freestruct, every commit automatically busts caches. No manual purge needed.
+With Freestruct, every commit flips the content hash and rewrites asset URLs - so caches keyed on URL or content refresh on their own. Aggressive edge caches that ignore both still want a purge hook.
 
 ## Does this work with Netlify/Vercel?
 
@@ -81,11 +81,11 @@ Yes! Both have their own CDNs:
 Without purge hooks configured:
 - Every run derives a content hash; it flips when page content changes
 - `<meta name="freestruct-build">` is injected
-- Canonical URLs get `?v={hash}`
-- CDNs see different content (different HTML fingerprint)
+- Asset URLs get `?v={hash}` (this is the default buster)
+- CDNs see different content (different HTML fingerprint, different asset URLs)
 - Browser caches are bypassed
 
-You get ~80% of the benefit automatically. Purge hooks are the bonus for aggressive cache layers.
+You get the freshness benefit automatically. Purge hooks are the bonus for aggressive cache layers that ignore URL changes.
 
 ## Can the hash collide? What if two builds have the same hash?
 
@@ -166,7 +166,7 @@ No security concerns:
 5. Make a small change to any page
 6. Rebuild and deploy
 7. Check again - the hash changed, because the content changed
-8. Check canonical URL carries the new `?v=` parameter
+8. Check asset URLs carry the new `?v=` parameter
 
 An unchanged rebuild keeps the same hash - that is the CDN-friendliness contract; busting happens exactly when content does.
 

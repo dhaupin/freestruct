@@ -45,6 +45,10 @@
       url: /guides/freestruct-config
     - title: CLI Reference
       url: /guides/cli
+    - title: Environment Reference
+      url: /guides/environment
+    - title: Packs
+      url: /guides/packs
 
 - title: Playbooks
   items:

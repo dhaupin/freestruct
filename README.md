@@ -127,7 +127,7 @@ npx freestruct audit            # verify the baked output (heads + sitemap/
 ### DX
 
 - Config schema with loud `[freestruct] config warning` diagnostics; unknown and retired keys never die silently
-- Link validation (report-only by default, `--strict` to make fatal - our own docs CI runs `--strict` and it has already caught three production 404s)
+- Link validation (report-only by default, `--strict` to make fatal - our own docs CI runs `--strict` so a broken internal link fails the Pages build before it ships)
 - `freestruct audit` verifies the baked output independently - per-page head hygiene, the 404 noindex contract, sitemap/robots sanity - with an exit code for CI (`0` clean, `1` findings, `--json` digest for annotations); it reads only the output dir, so it checks any SSG's build with freestruct applied
 - IndexNow support (issue #19): freestruct is the component that already owns the sitemap, so the key file (the keyLocation ownership proof) ships into the output during the run and `freestruct indexnow` POSTs the baked URL list to api.indexnow.org afterwards - deploy first (keyLocation must resolve), submission is the post-deploy step, and `--dry-run` prints the request body for CI
 - Slug-glob scoped config (issue #25): `jsonLd` accepts the legacy object/list forms or a map keyed by page-slug globs (`/` exact, `/blog/*` one segment, `/guides/**` a sub-tree) so page-specific schema lands only where it is meant to; `og.scoped` does the same for og image variants with the most specific match winning. Missing-only holds everywhere, malformed entries warn loudly and skip only themselves
@@ -194,7 +194,7 @@ The same gateway covers the general postBuild seam - commands that chain after t
 runHooks: true
 hooks:
   postBuild:
-    - node scripts/faqp-schema.mjs
+    - node scripts/faq-schema.mjs
     - npm run seo:audit
 ```
 
@@ -220,7 +220,7 @@ Two shipped surfaces beyond the engine:
 
 ## v1.2.0
 
-Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, then the post-queue engine sweep - with the GitHub issue queue fully closed (#1-#40), the engine corners the queue-era waves never probed got nine real fixes, each with a battery pin (121 -> 130), plus the issue #41 version-truth census leg (130 -> 132):
+Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, then the post-queue engine sweep - with the GitHub issue queue fully closed (#1-#40), the engine corners the queue-era waves never probed got nine real fixes, each with a battery pin (121 -> 130), plus the issue #41 version-truth census leg (130 -> 132) and the issue #43 count census (132 -> 133):
 
 - Rerun hygiene - body-start/footer snippets are marker-wrapped and a rerun drops the previous copy before re-adding it, so a second pass no longer stacks snippets or churns the content-derived build hash
 - Verbatim-block-aware `minifyHtml` - `<pre class="...">`/`<script>`/`<style>`/`<textarea>` content (attribute forms included) survives byte-for-byte, so code fences and inline JS with `//` comments are never collapsed
@@ -231,6 +231,8 @@ Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, the
 - Audit fixes - `grabMeta` tolerates a leading attribute (no more false `missing meta description`), and `urlToDisk` normalizes a slash-less `basePath`
 - CLI - `-h` now aliases `--help` instead of riding as the positional output dir
 - Version truth - a census leg derives the version from `package.json` and refuses every living surface that hand-copied the current one (README line, AGENTS/CONTRIBUTING/DEPLOY pins, the pass-log reminder, the `release.yml` tag example, `init/VERSION`)
+- Count census - the same trick for the hand-copied counts: the homepage battery size and the engine module counts are derived from source and refused when they drift (issue #43)
+- Doc truthfulness - the cache-busting FAQ/config reference drop the retired `cacheBusting.hash` and the canonical-by-default claim, and new environment + packs reference pages fill the gaps
 - basePath links - root-absolute hrefs carrying the configured `basePath` resolve against the tree, so a baseurl'd site passes `--strict`
 - Release gate - `npm run check` composes the battery + docs audit + pack selftest, and `prepublishOnly` runs it, so a dirty tree cannot publish
 - Audit signal - config-gated absences (`og:image` / `twitter:image` not configured) print once with an affected-page count instead of once per page
@@ -257,7 +259,7 @@ The first post-stable release, carried by the all-items issue sweep (#17-#25 plu
 First stable release. It carries the full rehaul-era stack (accumulated under the 0.6.0 freeze, promoted truthfully as 0.9.0), the prestruct port wave, and the toolchain maturity landed on 2026-10-22:
 
 - Config renamed to `freestruct.config.yml` with legacy read; schema-checked with loud diagnostics; FAST_FAIL exit codes + `--tolerant`
-- Module decomposition: the engine is `engine/` (one orchestrator + eight modules) with `bin/` shim and shipped templates; `init/` is the consumer scaffold kit; template copies provably in sync via CI
+- Module decomposition: the engine is `engine/` (one orchestrator + nine modules) with `bin/` shim and shipped templates; `init/` is the consumer scaffold kit; template copies provably in sync via CI
 - `searchIndex` opt-in; noindex honored across sitemap/feed/search/404; basePath contract across every generated URL (canonical, sitemap, feed, robots pointer, 404 home link)
 - Honest XML: escaped values, per-page `lastmod`, per-page RSS dates; escaped-or-fail on un-escapable content
 - Docs: single-source nav, audit gates wired to CI (style, truthfulness, English-only language gate, engine comment format), the docs CI itself runs `--strict` plus the crashtest pack dogfood

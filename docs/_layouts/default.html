@@ -232,7 +232,7 @@
         {% endfor %}
     </aside>
 
-    <main class="main">
+    <main class="main{% if page.layout == 'landing' %} main-landing{% endif %}">
         {{ content }}
         <div class="doc-footer">
             freestruct is <a href="https://github.com/dhaupin/freestruct">open source</a> -

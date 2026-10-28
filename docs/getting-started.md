@@ -97,11 +97,13 @@ Open any generated HTML file. You should see in the `<head>`:
 
 ```html
 <meta name="description" content="What your site does">
-<link rel="canonical" href="https://yoursite.com/?v=abc123">
+<link rel="canonical" href="https://yoursite.com/">
 <meta property="og:title" content="Page Title | Your Site Name">
 <meta name="twitter:card" content="summary">
 <meta name="freestruct-build" content="abc123">
 ```
+
+The canonical carries a `?v=abc123` query param only when you set `cacheBusting.hashInCanonicalUrl: true` (off by default).
 
 If you see those tags, you're ready to ship.
 
