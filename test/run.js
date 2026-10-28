@@ -186,6 +186,33 @@ test('.github/workflows/*.yml are all parseable YAML (a dead SSG gate must never
   }
 });
 
+test('cache steps ride one pinned actions/cache major (the #29 straggler class)', () => {
+  const wfDir = path.join(ROOT, '.github', 'workflows');
+  const files = fs.readdirSync(wfDir).filter(f => f.endsWith('.yml'));
+  const versions = new Map();
+  for (const f of files) {
+    const text = fs.readFileSync(path.join(wfDir, f), 'utf8');
+    for (const m of text.matchAll(/uses:\s*actions\/cache@(v\d+)/g)) {
+      if (!versions.has(m[1])) versions.set(m[1], []);
+      versions.get(m[1]).push(f);
+    }
+  }
+  assert.ok(versions.size > 0, 'at least one actions/cache step is present');
+  assert.strictEqual(versions.size, 1, `every actions/cache step rides ONE major (found ${[...versions.entries()].map(([v, fs2]) => `${v} in ${fs2.join(',')}`).join('; ')})`);
+  const [major] = versions.keys();
+  assert.ok(Number(major.slice(1)) >= 6, `actions/cache is pinned at v6+ (found ${major})`);
+});
+
+test('docs layout: the rouge token block covers the common vocabulary (#30)', () => {
+  const layout = fs.readFileSync(path.join(ROOT, 'docs', '_layouts', 'default.html'), 'utf8');
+  assert.ok(/Rouge token colors/.test(layout), 'the rouge token block is present');
+  // bash/js fences emit these families; each must carry a rule or the fence
+  // renders half-painted (the #30 monochrome report).
+  for (const cls of ['nb', 'nf', 'nv', 's', 's1', 's2', 'sb', 'si', 'c', 'c1', 'k', 'kd', 'nt', 'gp']) {
+    assert.ok(new RegExp(`\\.highlight \\.${cls}\\b`).test(layout), `the token block styles .${cls}`);
+  }
+});
+
 // ---------- crashtest pack surface (packs/, the one-surface extension model) ----------
 
 test('packs/ surface: a README ships, every public pack.json is schemaVersion 1, and each entry satisfies the scenario contract (name/description/attacks)', async () => {
