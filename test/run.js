@@ -625,6 +625,51 @@ test('default run: reading-time, last-modified and lazy-loading metas land on pa
   } finally { rmDir(dir); }
 });
 
+test('table guard (issue #35): wide tables wrap in a scroll container, nested wrap once, idempotent, opt-out', () => {
+  const dir = scenario('main', {
+    'docs/ssr-config.yml': [
+      'site:', '  name: Foo Docs', '  url: https://docs.example.com',
+      '  description: A test docs site', '',
+    ].join('\n'),
+    'docs/_site/tables.html': '<html><head><title>Tables</title></head><body><h1>Tables</h1>'
+      + '<table><tr><td>plain</td></tr></table>'
+      + '<div class="printable"><table><tr><td>after printable</td></tr></table></div>'
+      + '<div class="table-wrap"><table><tr><td>already</td></tr></table></div>'
+      + '<table><tr><td>outer<table><tr><td>inner</td></tr></table></td></tr></table>'
+      + '</body></html>',
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/tables.html');
+    // 3 wrappers: plain, printable-neighbour, outer (the nested inner shares its outer's)
+    assert.strictEqual((html.match(/fs-table-wrap/g) || []).length, 3, 'exactly the outermost tables wrap');
+    assert.includes(html, '<div class="fs-table-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%"><table><tr><td>plain</td></tr></table></div>',
+      'the plain table is wrapped with the inline scroll container');
+    assert.includes(html, '<div class="printable"><div class="fs-table-wrap"',
+      'a table after an unrelated class="printable" div still wraps (delimited-segment match)');
+    assert.includes(html, '<div class="table-wrap"><table><tr><td>already</td></tr></table></div>',
+      'a consumer .table-wrap is left alone (no double container)');
+    assert.includes(html, 'outer<table>', 'the nested table stays inside its outer wrap');
+    // idempotent: a second pass must not stack wrappers
+    runInject(dir);
+    assert.strictEqual((read(dir, 'docs/_site/tables.html').match(/fs-table-wrap/g) || []).length, 3,
+      'a second run does not stack wrappers');
+  } finally { rmDir(dir); }
+
+  // opt-out + a table-less page is a no-op (no rewrite, no hash flip)
+  const dir2 = scenario('main', {
+    'docs/ssr-config.yml': [
+      'site:', '  name: Foo Docs', '  url: https://docs.example.com',
+      '  description: A test docs site', 'tableWrap: false', '',
+    ].join('\n'),
+    'docs/_site/tables.html': '<html><head><title>Tables</title></head><body><h1>T</h1><table><tr><td>x</td></tr></table></body></html>',
+  });
+  try {
+    runInject(dir2);
+    assert.ok(!read(dir2, 'docs/_site/tables.html').includes('fs-table-wrap'), 'tableWrap: false opts out');
+  } finally { rmDir(dir2); }
+});
+
 // ---------- artifacts ----------
 
 test('sitemap.xml: escaped URLs, per-page lastmod, noindex pages excluded (FIXED #5/#9)', () => {
@@ -844,6 +889,7 @@ test('config disabling every feature: artifacts absent, page passthrough minimal
       'readingTime: false',
       'lastModified: false',
       'lazyLoad: false',
+      'tableWrap: false',
       'linkCheck: false',
       'searchIndex: false',
       'cacheBusting:',

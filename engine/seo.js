@@ -664,3 +664,61 @@ export function addLazyLoading(filePath) {
   });
   fs.writeFileSync(filePath, html);
 }
+
+/**
+ * Wrap every <table> in a scroll container so a wide table scrolls inside its
+ * own box instead of pinning the whole page to the table's min-content width
+ * (issue #35: on a ~426px phone a wide docs table clipped the H1, the nav and
+ * everything else). The wrapper carries the class (for consumer theming) plus
+ * the scroll properties inline, so the guard holds by construction on any
+ * layout, including ones whose CSS predates the rule.
+ *
+ * Depth-aware so nested tables wrap once (the outermost); idempotent (a table
+ * already inside a table-ish wrapper is skipped, so runs never stack); and it
+ * leaves the tree untouched when there is no table to wrap (no rewrite, no
+ * spurious build-hash flip).
+ */
+export function addTableWrap(filePath) {
+  let html = fs.readFileSync(filePath, 'utf8');
+  if (!/<table[\s>]/i.test(html)) return;
+
+  // Depth-aware span scan: record [start, end) of each OUTERMOST table block.
+  const tagRe = /<table\b[^>]*>|<\/table\s*>/gi;
+  const spans = [];
+  let depth = 0;
+  let start = -1;
+  let m;
+  while ((m = tagRe.exec(html)) !== null) {
+    if (/^<\/table/i.test(m[0])) {
+      if (depth > 0) {
+        depth--;
+        if (depth === 0) spans.push([start, tagRe.lastIndex]);
+      }
+    } else {
+      if (depth === 0) start = m.index;
+      depth++;
+    }
+  }
+
+  // Skip a table whose immediate ancestor is already a table-style wrapper
+  // (ours from a prior pass, or a consumer's own .table-wrap/.table-responsive).
+  // "table" must be a DELIMITED class segment: "printable"/"portable" do not
+  // count, so a table after an unrelated div still wraps.
+  const wrapped = /<div\b[^>]*\bclass=["']([^"']*)["'][^>]*>\s*$/i;
+  const tableish = (cls) => cls.split(/\s+/).some((tok) => /^table([-_]|$)|[-_]table([-_]|$)/i.test(tok));
+  const todo = spans.filter(([s]) => {
+    const mm = html.slice(0, s).match(wrapped);
+    return !(mm && tableish(mm[1]));
+  });
+  if (todo.length === 0) return;
+
+  // Insert from the end backward so earlier offsets stay valid.
+  let out = html;
+  for (let i = todo.length - 1; i >= 0; i--) {
+    const [s, e] = todo[i];
+    out = out.slice(0, s)
+      + '<div class="fs-table-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%">'
+      + out.slice(s, e) + '</div>' + out.slice(e);
+  }
+  fs.writeFileSync(filePath, out);
+}

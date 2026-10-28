@@ -105,6 +105,15 @@ lazyLoad: true   # adds lazy loading (on by default)
 lazyLoad: false  # skip
 ```
 
+### tableWrap
+
+Wrap wide tables so they scroll inside their own box instead of pinning the whole page to the table's min-content width. A wide docs table on a phone otherwise clips the heading and the nav along with it. Default on; each `<table>` becomes `<div class="fs-table-wrap" style="overflow-x:auto;...">...</div>`. The wrapper carries the scroll properties inline so the guard holds on any layout, and a table already inside a `.table-wrap`-style container is left alone (no double container). `tableWrap: false` opts out.
+
+```yaml
+tableWrap: true   # wrap tables in a scroll container (on by default)
+tableWrap: false  # skip
+```
+
 ### linkCheck
 
 Check internal links for broken references.

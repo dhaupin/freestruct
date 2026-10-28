@@ -220,6 +220,7 @@ Full key list (unknown or retired keys produce warnings, not silence):
 | `readingTime`                          | `true`         | Inject `<meta name="reading-time">`                                                                  |
 | `lastModified`                         | `true`         | Inject `<meta name="last-modified">`                                                                 |
 | `lazyLoad`                             | `true`         | Add `loading="lazy"` to images                                                                        |
+| `tableWrap`                            | `true`         | Wrap wide `<table>`s in a scroll container so they never pin the page width (mobile-safe by construction) |
 | `linkCheck`                            | `true`         | Validate internal links (report-only; `--strict` makes them fatal)                                    |
 | `searchIndex`                          | `false`        | **Opt-in**: generate `search.json` for client-side search                                             |
 | `minify`                               | `false`        | Experimental HTML minifier (preserves `pre`/`script`/`style`/`textarea`)                              |
@@ -327,13 +328,15 @@ The first post-stable release, carried by the all-items issue sweep
   function replacers ($-expansion cannot corrupt output), plus the
   docs-layout dead-CSS removal
 - CI - packstruct manifest lint joined the push/PR battery alongside the
-  crashtest pack selftest; the battery grew 49 -> 75 -> 109 pins
+  crashtest pack selftest; the battery grew 49 -> 75 -> 110 pins
 - Release gate - `npm run check` composes the battery + docs audit + pack
   selftest, and `prepublishOnly` runs it, so a dirty tree cannot publish
 - Audit signal - config-gated absences (`og:image` / `twitter:image` not
   configured) print once with an affected-page count instead of once per page
 - basePath links - root-absolute hrefs carrying the configured `basePath`
   resolve against the tree, so a baseurl'd site passes `--strict`
+- Table guard - a default-on `tableWrap` pass wraps wide tables in a scroll
+  container so every downstream site is mobile-safe by construction
 
 ## v1.0.0
 

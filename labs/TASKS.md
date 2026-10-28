@@ -1061,7 +1061,7 @@ The full-surface walk's remaining finding; battery 102 -> 103:
 ### Pass 26.17 - the family-sweep queue (done, same session, post-26.16)
 
 The open queue's real bugs and gate work, worked top-down; battery
-103 -> 109:
+103 -> 110:
 
 - **linkcheck ignored basePath (fixed, #32):** the highest-value family
   bug. `engine/linkcheck.js` resolved root-absolute hrefs against the
@@ -1098,9 +1098,21 @@ The open queue's real bugs and gate work, worked top-down; battery
   the teeth still run there; pinned both shapes.
 - **straggler pin (fixed, #29):** `docs.yml` pagefind cache moved
   `actions/cache@v4` -> `@v6`, matching every other cache step.
-- Trail aligned at 108: README trail, AGENTS house table, CHANGELOG 1.1.0
-  line, the announcement's quality layer, DEPLOY's battery line +
-  prepublish note, and the CLI guide's audit section (the collapse rule).
-- Gates: battery 108/108, docs audit, sync lockstep, packs selftest
+- **table guard (fixed, #35):** the engine gains a `tableWrap` late pass
+  (default-on) that wraps every outermost `<table>` in a
+  `.fs-table-wrap` scroll container with the overflow properties inline, so
+  a wide docs table scrolls inside its own box instead of pinning the whole
+  page to the table's min-content width (the live phone capture: a wide table
+  clipped the H1 and the brand nav). Depth-aware (nested tables wrap once),
+  idempotent (a table already inside a `.table-wrap`-style div is skipped, so
+  runs never stack), and a no-op on table-less pages (no rewrite, no build-hash
+  flip). `tableWrap: false` opts out. Pinned: wrapper shape + inline style,
+  the delimited-segment skip (class `printable` does not count), nested-once,
+  idempotency, and the opt-out.
+- Trail aligned at 110: README trail + config table, AGENTS house table,
+  CHANGELOG 1.1.0 line, the announcement's quality layer, DEPLOY's battery
+  line + prepublish note, the CLI guide's audit section (the collapse rule),
+  and the config guide's `tableWrap` section.
+- Gates: battery 110/110, docs audit, sync lockstep, packs selftest
   (skip locally, teeth in CI), tarball e2e.
 

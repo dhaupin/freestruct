@@ -7,7 +7,7 @@ All notable changes to freestruct will be documented here.
 The first post-stable release: the all-items issue sweep (#17-#24 plus the
 #25 follow-on only here by owner direction) and the CI tooling that came
 with it, plus the SEO-gap pass landed inside this same untagged version.
-Every item below is battery-pinned; the battery grew 49 -> 109.
+Every item below is battery-pinned; the battery grew 49 -> 110.
 
 The SEO-gap pass (eight additions, all opt-in, missing-only, pinned):
 
@@ -75,6 +75,12 @@ The SEO-gap pass (eight additions, all opt-in, missing-only, pinned):
   and the release gate is composed - `npm run check` plus a `prepublishOnly`
   hook, with `packs:selftest` degrading to a named skip when no crashtest
   checkout is present (#32, #28, #37, #29)
+- Table guard (`tableWrap`, on by default): every `<table>` wraps in a
+  `.fs-table-wrap` scroll container, so a wide docs table scrolls inside its
+  own box instead of pinning the whole page width - mobile-safe by
+  construction on any layout. Nested tables wrap once, a table already inside
+  a consumer `.table-wrap` is left alone, and a table-less page is untouched
+  (issue #35)
 
 ## [1.0.0] - 2026-10-22
 

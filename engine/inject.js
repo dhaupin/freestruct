@@ -36,7 +36,7 @@ import { pathToFileURL, fileURLToPath } from 'url';
 
 import { loadConfig } from './config.js';
 import { getHtmlFiles, buildPages, computeBuildHash, htmlIsNoindex, hasSeoType } from './scan.js';
-import { injectPage, addReadingTime, addLastModified, addLazyLoading } from './seo.js';
+import { injectPage, addReadingTime, addLastModified, addLazyLoading, addTableWrap } from './seo.js';
 import { generateSitemap, generateRobots, generateFeed } from './xmllike.js';
 import { generate404, pipeline404 } from './notfound.js';
 import { checkLinks } from './linkcheck.js';
@@ -308,6 +308,9 @@ export function runInject(options = {}) {
     if (config.readingTime !== false) for (const page of latePages) addReadingTime(page.file);
     if (config.lastModified !== false) for (const page of latePages) addLastModified(page.file);
     if (config.lazyLoad !== false) for (const page of latePages) addLazyLoading(page.file);
+    // table guard (issue #35): wrap wide tables so every downstream site is
+    // mobile-safe by construction. Default-on; `tableWrap: false` opts out.
+    if (config.tableWrap !== false) for (const page of latePages) addTableWrap(page.file);
 
     // noindex is honored by default (owner decision, issue #5):
     // noindex pages never ship into sitemap/feed/search

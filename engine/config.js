@@ -20,6 +20,7 @@ export const KNOWN_CONFIG_KEYS = Object.freeze([
   'site', 'twitter', 'og', 'author', 'jsonLd', 'basePath', 'outputDir', 'minify', 'runHooks',
   'generateSitemap', 'generateFeed', 'generate404', 'generateRobots',
   'readingTime', 'lastModified', 'lazyLoad', 'linkCheck', 'searchIndex',
+  'tableWrap',
   'cacheBusting', 'hooks', 'indexNow', 'ogImageGeneration',
   'search', 'breadcrumb', 'verification', 'llms', 'locales', 'article',
 ]);
