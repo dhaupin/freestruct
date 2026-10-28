@@ -3,6 +3,13 @@ node_modules/
 docs/node_modules/
 docs/_site/
 
+# --- local Jekyll preview never taints the tree (issue #36) ---
+# docs/Gemfile.lock is INTENTIONALLY tracked here (CI resolves against it);
+# everything else a local `bundle`/`jekyll` run can drop stays out.
+docs/.bundle/
+docs/vendor/
+docs/.jekyll-cache/
+
 # --- toolchain caches that must never enter git ---
 .npm/
 *.tsbuildinfo

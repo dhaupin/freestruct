@@ -1117,6 +1117,20 @@ The open queue's real bugs and gate work, worked top-down; battery
   Person `jsonLd` entry (placeholder handle + jobTitle). Pinned by running the
   kit config verbatim through the battery: schema-clean (no unknown-key warn),
   founder Person present, maintainer name/jobTitle present.
+- **local docs preview recipe (fixed, #36):** the docs Jekyll stack ran only
+  in CI, so docs tokens were verified by live curl after push and every strict
+  iteration waited on the Pages build. The rootless recipe (prebuilt
+  ruby-builder toolchain under `$HOME`, shimmed binstubs, `LD_LIBRARY_PATH` +
+  `RUBYLIB` for the moved prefix, scratch-copy build, strict run, local
+  server) is recorded in DEPLOY.md, with `.gitignore` belt-and-suspenders
+  (`docs/.bundle/`, `docs/vendor/`, `docs/.jekyll-cache/`; `Gemfile.lock`
+  stays tracked). Receipts: `labs/receipts/docs-preview-{dark,light}.png`
+  (verified end to end on Debian 13: bundle 35 gems, jekyll build, freestruct
+  strict "All links OK").
+- **docs highlighting (fixed, #30):** the layout's rouge token block covered
+  only six token families, so bash/js fences rendered half-painted. The block
+  now spans the full common vocabulary; the fence-language half was already
+  satisfied (all 121 fences tagged).
 - Trail aligned at 111: README trail + config table, AGENTS house table,
   CHANGELOG 1.1.0 line, the announcement's quality layer, DEPLOY's battery
   line + prepublish note, the CLI guide's audit section (the collapse rule),

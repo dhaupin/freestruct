@@ -78,6 +78,11 @@ The SEO-gap pass (eight additions, all opt-in, missing-only, pinned):
 - Init kit: the starter config seeds the family JSON-LD identity - the
   Creadev.org founder `author` block plus a maintainer Person - so scaffolded
   ports ship ownership from birth instead of rediscovering it later (#33)
+- Local docs preview: the DEPLOY guide records the rootless Jekyll recipe
+  (prebuilt ruby-builder toolchain under `$HOME`, shimmed binstubs,
+  scratch-copy build, strict run, local server), with `.gitignore`
+  belt-and-suspenders (`docs/.bundle/`, `docs/vendor/`, `docs/.jekyll-cache/`)
+  and dark+light receipt frames in `labs/receipts/` (#36)
 - Docs code fences: the rouge token block on `docs/_layouts/default.html`
   grew to the full common vocabulary (nb/nf/nv/sb/se/si/cs/ch/kv/nc/nd/fm/gi/gd
   and friends), so bash/js fences paint every token instead of only the six

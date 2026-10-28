@@ -144,6 +144,64 @@ new cache key = fresh install, done consciously.
 
 ---
 
+## Local docs preview (issue #36)
+
+CI is the real verifier for anything Jekyll-shaped, but a local build gives a
+faster strict-lint loop than waiting on a push. This sandbox has no root and no
+system Ruby, so the recipe uses a prebuilt, platform-matched toolchain under
+`$HOME` and never touches the repo (verified on Debian 13/x64 against the
+`ruby-3.4.12-ubuntu-24.04-x64` asset; ruby-builder tags are the VERSION - a
+`toolcache` tag 404s):
+
+```bash
+# 1. Unpack the prebuilt Ruby into $HOME (never the repo)
+mkdir -p ~/rubies && cd ~/rubies
+curl -sL -o ruby.tar.gz \
+  https://github.com/ruby/ruby-builder/releases/download/ruby-3.4.12/ruby-3.4.12-ubuntu-24.04-x64.tar.gz
+tar xzf ruby.tar.gz          # -> ~/rubies/x64
+
+# 2. libruby.so lives in the unpacked lib tree; the shipped binstubs bake a
+#    /opt/hostedtoolcache shebang, so shim each through the interpreter
+for t in bundle gem rake jekyll; do
+  printf '#!/bin/sh\nexec "$HOME/rubies/x64/bin/ruby" "$HOME/rubies/x64/bin/%s" "$@"\n' "$t" \
+    > ~/rubies/shims/$t; chmod +x ~/rubies/shims/$t; done
+
+# 3. Env: gems resolve under the unpacked prefix; RubyGems needs RUBYLIB when
+#    the prefix moves. The ubuntu asset links libyaml-0.so.2 - if the sandbox
+#    lacks it, drop the Debian lib into ~/rubies/x64/lib.
+export PATH="$HOME/rubies/shims:$HOME/rubies/x64/bin:$PATH"
+export GEM_HOME="$HOME/rubies/x64/lib/ruby/gems/3.4.0" GEM_PATH="$GEM_HOME"
+export LD_LIBRARY_PATH="$HOME/rubies/x64/lib"
+export RUBYLIB="$HOME/rubies/x64/lib/ruby/3.4.0:$HOME/rubies/x64/lib/ruby/3.4.0/x86_64-linux"
+
+# 4. Build from a scratch COPY: jekyll writes _site beside the source, so the
+#    copy carries every build product away from the tree. freestruct discovers
+#    the config by walking up from cwd, so keep the docs/ name.
+rm -rf /tmp/fspreview && mkdir -p /tmp/fspreview && cp -r docs /tmp/fspreview/docs
+rm -rf /tmp/fspreview/docs/_site
+cd /tmp/fspreview/docs && bundle install && bundle exec jekyll build
+
+# 5. Strict run from the scratch root (config walk-up finds docs/freestruct.config.yml)
+cd /tmp/fspreview && node /workspace/project/freestruct/bin/freestruct.mjs --strict
+
+# 6. Serve under the real baseurl (symlink <webroot>/<baseurl> -> _site when a
+#    baseurl is set) and capture dark+light frames; the theme key is
+#    localStorage 'freestruct-theme' = 'light' (else dark).
+cd /tmp/fspreview/docs/_site && python3 -m http.server 12000
+```
+
+The `.gitignore` block (`docs/.bundle/`, `docs/vendor/`, `docs/_site/`,
+`docs/.jekyll-cache/`) is belt-and-suspenders: even with the scratch-copy
+recipe, an accidental in-tree build taints nothing. `docs/Gemfile.lock` stays
+tracked here - CI resolves against it - unlike eyestruct's recipe, which drops
+that one ignore line.
+
+Receipt: `labs/receipts/docs-preview-dark.png` and `docs-preview-light.png`
+(the same CLI guide page in both themes, code fences painted by the rouge
+token block from issue #30).
+
+---
+
 ## Tracked artifacts (what NOT to commit)
 
 - `labs/crashledger.json`, `labs/hardening.md`, `labs/run-meta.json` -
