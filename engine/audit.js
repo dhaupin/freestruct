@@ -47,16 +47,27 @@ function grabMeta(head, attrHasKey, name) {
   const keyRe = new RegExp(`<meta\\b[^>]*\\b${attrHasKey}=["']${name}["'][^>]*>`, 'i');
   const tag = head.match(keyRe);
   if (!tag) return null;
-  const content = tag[0].match(/content=["']([^"']*)["']/i);
-  return content ? content[1] : null;
+  const content = attrValue(tag[0], 'content');
+  return content;
+}
+
+// Quoted-attribute reader. The naive `["']([^"']*)["']` stopped at the FIRST
+// quote of either kind, so any value holding the other quote (a description
+// with an apostrophe - "this repo's docs") was truncated at the apostrophe.
+// The backreference forces the closing quote to match the opening one, so the
+// value survives intact. Unquoted values fall through to a bare read.
+function attrValue(tag, attr) {
+  const quoted = tag.match(new RegExp(`\\b${attr}=(["'])([\\s\\S]*?)\\1`, 'i'));
+  if (quoted) return quoted[2];
+  const bare = tag.match(new RegExp(`\\b${attr}=([^\\s>]+)`, 'i'));
+  return bare ? bare[1] : null;
 }
 
 function grabCanonical(head) {
   const link = head.match(/<link[^>]+rel=["']canonical["'][^>]*>/i)
-    || head.match(/<link[^>]+href=["']([^"']+)["'][^>]+rel=["']canonical["'][^>]*>/i);
+    || head.match(/<link[^>]+href=["'][^"']+["'][^>]+rel=["']canonical["'][^>]*>/i);
   if (!link) return null;
-  const href = link[0].match(/href=["']([^"']+)["']/i);
-  return href ? href[1] : null;
+  return attrValue(link[0], 'href');
 }
 
 /** Count every occurrence of a head shape - the duplicate-class probe. */

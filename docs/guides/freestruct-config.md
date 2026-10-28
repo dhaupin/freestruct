@@ -1,8 +1,10 @@
 ---
 title: Freestruct.config.yml Reference
-description: Complete reference for freestruct.config.yml options
+description: The complete reference for freestruct.config.yml - every option, its default and its shape, from site metadata and cache busting to JSON-LD, images and discovery
 nav_order: 11
 ---
+
+# Freestruct.config.yml Reference
 
 ## Overview
 

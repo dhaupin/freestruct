@@ -1,8 +1,10 @@
 ---
 title: Feature Roadmap
-description: Planned features and open issues
+description: The Freestruct feature roadmap - shipped work like cache busting and purge hooks, why each is agnostic, and what future enhancements remain open
 nav_order: 13
 ---
+
+# Feature Roadmap
 
 ## Cache Busting Feature
 

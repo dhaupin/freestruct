@@ -1,10 +1,12 @@
 ---
 title: Configuration
-description: Configure Freestruct for your doc site
+description: Configure Freestruct for your doc site - site metadata, CDN hooks, cache busting and the output directory, with a quick example and the supported SSGs
 nav_order: 2
 ---
 
-## Configure
+# Configuration
+
+## Overview
 
 See the [Freestruct.config.yml Reference](/guides/freestruct-config) for complete options. Newer surface it covers: `hooks.postBuild` (general post-build commands behind the `runHooks` gate), `indexNow` (key emission + the `freestruct indexnow` post-deploy submission), `ogImageGeneration` (per-page branded OG images), and the slug-glob scoped maps (`jsonLd: {"/blog/**": [...], ...}` plus `og.scoped` image variants).
 

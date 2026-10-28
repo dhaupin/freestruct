@@ -217,7 +217,7 @@ When working on the docs theme:
 - Use `{{ 'path' | relative_url }}` for internal paths in layouts (respects baseurl)
 - Use relative links without leading slashes in markdown: `href="guides/foo"` not `href="/guides/foo"`
 - Favicon should match header brand logo (in both layout and render)
-- Index needs h1 from frontmatter title or content
+- Every page needs exactly one h1 from its markdown body (the layout is a passthrough, so the page's own `# ` heading is the only h1 the baked HTML gets; a page opening on `##` ships with none)
 
 ### Template Example
 

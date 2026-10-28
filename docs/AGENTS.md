@@ -1,6 +1,6 @@
 ---
 title: Engineering Decisions
-description: Technical details for Freestruct
+description: Engineering decisions and technical details for Freestruct docs and the tool itself - architecture, the SEO injection system, cache busting, search and the build
 nav_order: 14
 permalink: /engineering-decisions
 ---

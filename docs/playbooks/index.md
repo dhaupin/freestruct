@@ -1,6 +1,6 @@
 ---
 title: Playbooks
-description: The runbook recipes an agent runs against this repo - first run, link triage, the baked-output audit, config validation, the release gate, the phone publish lane, the local docs preview, and a pin bump.
+description: The runbook recipes an agent runs against this repo - first run, link triage, the baked-output audit, config validation, the release gate, phone publish and more
 nav_order: 16
 permalink: /playbooks/
 ---

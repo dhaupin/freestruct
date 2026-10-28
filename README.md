@@ -220,7 +220,7 @@ Two shipped surfaces beyond the engine:
 
 ## v1.2.0
 
-Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, then the post-queue engine sweep - with the GitHub issue queue fully closed (#1-#40), the engine corners the queue-era waves never probed got nine real fixes, each with a battery pin (121 -> 130), plus the issue #41 version-truth census leg (130 -> 132) and the issue #43 count census (132 -> 133):
+Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, then the post-queue engine sweep - with the GitHub issue queue fully closed (#1-#40), the engine corners the queue-era waves never probed got nine real fixes, each with a battery pin (121 -> 130), plus the issue #41 version-truth census leg (130 -> 132), the issue #43 count census (132 -> 133), and the post-merge staging pass (133 -> 134):
 
 - Rerun hygiene - body-start/footer snippets are marker-wrapped and a rerun drops the previous copy before re-adding it, so a second pass no longer stacks snippets or churns the content-derived build hash
 - Verbatim-block-aware `minifyHtml` - `<pre class="...">`/`<script>`/`<style>`/`<textarea>` content (attribute forms included) survives byte-for-byte, so code fences and inline JS with `//` comments are never collapsed
@@ -229,6 +229,8 @@ Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, the
 - Purge hooks - `FREESTRUCT_SITE_URL` / `FREESTRUCT_BUILD_HASH` / `FREESTRUCT_OUTPUT_DIR` now reach the child, matching `hooks.postBuild` and the docs
 - Lazy-load fix - self-closing `<img ... />` stays well-formed instead of getting a dangling `/ loading="lazy"`
 - Audit fixes - `grabMeta` tolerates a leading attribute (no more false `missing meta description`), and `urlToDisk` normalizes a slash-less `basePath`
+- Audit quote fix - `grabMeta`/`grabCanonical` read a quoted attribute up to its matching quote, so a description holding an apostrophe ("this repo's docs") is measured at full length instead of truncated at the apostrophe
+- Docs h1 gate - the docs audit now fails any living page without exactly one top-level `# ` heading; seven pages that opened on `##` or prose (a rig-adoption regression) gained their missing h1
 - CLI - `-h` now aliases `--help` instead of riding as the positional output dir
 - Version truth - a census leg derives the version from `package.json` and refuses every living surface that hand-copied the current one (README line, AGENTS/CONTRIBUTING/DEPLOY pins, the pass-log reminder, the `release.yml` tag example, `init/VERSION`)
 - Count census - the same trick for the hand-copied counts: the homepage battery size and the engine module counts are derived from source and refused when they drift (issue #43)

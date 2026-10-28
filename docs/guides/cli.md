@@ -1,6 +1,6 @@
 ---
 title: CLI Reference
-description: Every freestruct command, flag and exit code
+description: Every Freestruct command, flag and exit code - the default run plus the side commands, what each one does, and the exit codes CI can branch on
 nav_order: 15
 permalink: /guides/cli/
 ---

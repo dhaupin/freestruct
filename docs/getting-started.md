@@ -1,8 +1,10 @@
 ---
 title: Getting Started
-description: Get Freestruct running in 5 minutes
+description: Get Freestruct running in 5 minutes - install the npm package, build your site, inject SEO and verify the output, with a step-by-step walkthrough and a CI/CD hook
 nav_order: 1
 ---
+
+# Getting Started
 
 This guide walks you through setting up Freestruct. If you hit any snags, the [FAQ](/guides/cache-busting-faq) might help.
 

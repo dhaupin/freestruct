@@ -1,8 +1,10 @@
 ---
 title: CI/CD
-description: Deploy Freestruct with GitHub Actions
+description: Deploy Freestruct with any CI/CD - a GitHub Actions walkthrough, a full workflow example, the environment variables, and Netlify, Vercel and GitLab recipes
 nav_order: 6
 ---
+
+# CI/CD
 
 Freestruct integrates with any CI/CD. Here's how with GitHub Actions.
 

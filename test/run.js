@@ -1854,6 +1854,23 @@ test('audit: a valid description meta with a leading attribute is not a false FA
   } finally { rmDir(dir); }
 });
 
+test('audit: an attribute value carrying the OTHER quote kind is read whole (apostrophe bug fix)', () => {
+  const dir = scenario('main');
+  try {
+    runInject(dir);
+    const idx = path.join(dir, 'docs/_site/index.html');
+    // A description with an apostrophe ("this repo's docs") used to truncate at
+    // the apostrophe, so the audit measured a short length and warned
+    // "outside 70-165" on a perfectly good description.
+    const desc = "this repo's docs - a scratch copy, a strict run, and a local server for previewing";
+    fs.writeFileSync(idx, fs.readFileSync(idx, 'utf8')
+      .replace(/<meta name="description"[^>]*>/i, `<meta name="description" content="${desc}">`));
+    const out = spawnSync(process.execPath, [INJECT, 'audit'], { cwd: dir, encoding: 'utf8' });
+    assert.ok(!/WARN index\.html: description \d+ chars/.test(out.stdout),
+      'an apostrophe inside the description does not fake a length warning\n' + out.stdout);
+  } finally { rmDir(dir); }
+});
+
 test('audit: duplicate head tags ride the FAIL class (never engine-caused - missing-only cannot duplicate)', () => {
   const dir = scenario('main');
   try {

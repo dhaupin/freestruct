@@ -1,8 +1,10 @@
 ---
 title: Cache Busting FAQ
-description: Common questions about Freestruct's cache busting system
+description: Answers to common questions about Freestruct's cache busting - why you need it, how it differs from Cache-Control and asset hashing, and how to verify a fresh deploy
 nav_order: 5
 ---
+
+# Cache Busting FAQ
 
 ## Why do I need this? My site is already built.
 

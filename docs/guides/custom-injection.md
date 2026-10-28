@@ -1,6 +1,6 @@
 ---
 title: Custom Injection
-description: Add custom code via injection hooks
+description: Add custom code via Freestruct's injection hooks - the template files that auto-load at each slot, how they override the packaged defaults, and how to stage your own
 nav_order: 7
 ---
 

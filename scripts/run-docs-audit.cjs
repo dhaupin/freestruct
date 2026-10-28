@@ -259,9 +259,18 @@ function gateStyle() {
     const lines = fs.readFileSync(f, 'utf8').split('\n');
     let inFence = false;
     let lastHeading = 0;
+    let h1Count = 0;
+    let inFm = false;
     lines.forEach((line, i) => {
       const n = i + 1;
-      if (/^\s*```/.test(line)) {
+      // Frontmatter is frame, not prose: its `#` comment lines (the
+      // discussions posts carry them) are not headings, and it opens only at
+      // line 1 (same rule as the unwrap tool). The flag gates ONLY the
+      // heading logic below - the trailing-whitespace / dash / emoji checks
+      // still see frontmatter lines, exactly as they always did.
+      if (n === 1 && line === '---') { inFm = true; }
+      else if (inFm && line === '---') { inFm = false; }
+      if (!inFm && /^\s*```/.test(line)) {
         if (!inFence && !/^```[a-zA-Z0-9_-]+/.test(line.replace(/^\s*/, '').replace(/\s+$/, ''))) {
           collect([], rel, n, 'opening code fence has no language tag (use ```text to be explicit)');
         }
@@ -269,9 +278,10 @@ function gateStyle() {
         return;
       }
       if (inFence) return;
-      const h = line.match(/^(#+)\s/);
+      const h = !inFm && line.match(/^(#+)\s/);
       if (h) {
         const level = h[1].length;
+        if (level === 1) h1Count++;
         if (lastHeading && level > lastHeading + 1) {
           collect([], rel, n, `heading level skip h${lastHeading} -> h${level}`);
         }
@@ -295,6 +305,15 @@ function gateStyle() {
       if (h && line.match(/^(#+)\s/) && line.includes('|')) collect([], rel, n, 'pipe in heading (breaks table detect on some renderers)');
       if (!inFence && /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(proseLine)) collect([], rel, n, 'emoji/dingbat in prose');
     });
+    // Every living docs page needs exactly one h1, from its markdown body.
+    // The layout is a passthrough (the page's own `#` is the heading), so a
+    // page opening on `##` or prose ships with NO h1 at all - the rig-adoption
+    // regression this rule now pins. README is exempt: it is not a rendered
+    // page (no frontmatter), and its top heading is prose-anchored by design.
+    if (rel !== 'README.md') {
+      if (h1Count === 0) collect([], rel, 1, 'no h1 (docs pages need exactly one top-level `# ` heading)');
+      else if (h1Count > 1) collect([], rel, 1, h1Count + ' h1 headings (docs pages need exactly one)');
+    }
   }
 }// ---------------------------------------------------------------------------
 // Gate: truthfulness

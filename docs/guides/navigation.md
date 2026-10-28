@@ -1,6 +1,6 @@
 ---
 title: Navigation
-description: How the docs menu works - one data file, rendered by one layout
+description: How the Freestruct docs menu works - one data file rendered by one layout, so the nav lives in exactly one place and cannot drift
 nav_order: 3
 ---
 
