@@ -297,6 +297,7 @@ Create or edit these files to add custom code. Files auto-load if they exist.
 - Purge hooks are REAL and wired (`engine/hooks.js`), but gated: they only execute when `runHooks: true` is set in config; configured-but-unenabled hooks just log the skipped command (battery-pinned both ways)
 - `preserveExistingMeta` is a RETIRED config key (missing-only injection is unconditional now); configuring it produces a named warning
 - Missing-only injection: existing tags are never overwritten
+- Derived numbers are never hand-copied: `package.json` is the single version source and `test/run.js` is the single battery-size source. Two census legs derive them and refuse any living page that drifted (README/AGENTS/CONTRIBUTING/DEPLOY pins, `init/VERSION`, the homepage count); historical prose and dated era rows stay out of scope by design
 
 ---
 
