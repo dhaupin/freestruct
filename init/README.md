@@ -29,7 +29,10 @@ cp -r node_modules/freestruct/init/docs .
 Then:
 
 1. Edit `docs/freestruct.config.yml`: `site.name` and `site.url` are required;
-   adjust `site.description` to fit.
+   adjust `site.description` to fit. The starter also seeds the family
+   identity - an `author` block (the Creadev.org founder) and a `jsonLd`
+   maintainer Person - so scaffolded ports ship ownership from birth; set the
+   maintainer handle to your own.
 2. Let your SSG build. `npx freestruct` discovers the output dir
    (default `docs/_site`; override via the `outputDir` config key or a
    positional CLI argument).

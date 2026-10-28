@@ -7,6 +7,22 @@ site:
   url: https://example.com/docs
   description: My documentation
 
+# Family JSON-LD identity (owner standard): the founder ships as a schema.org
+# Person under "founder" on the injected Organization block, and a maintainer
+# Person is appended after the built-in Organization + WebSite blocks
+# (missing-only, so pages that arrive with their own ld+json stay untouched).
+# Fill in the maintainer handle for your repo; the author block is the family
+# default and needs no edit.
+author:
+  name: Creadev.org
+  url: https://creadev.org
+
+jsonLd:
+  - "@type": Person
+    name: your-github-handle
+    url: https://github.com/your-github-handle
+    jobTitle: My Docs maintainer
+
 # The rest is optional; see the README Configuration table for the list.
 # basePath: /project-docs      # when the output tree is served under a prefix
 # searchIndex: true            # opt-in: generate search.json

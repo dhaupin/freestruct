@@ -7,7 +7,7 @@ All notable changes to freestruct will be documented here.
 The first post-stable release: the all-items issue sweep (#17-#24 plus the
 #25 follow-on only here by owner direction) and the CI tooling that came
 with it, plus the SEO-gap pass landed inside this same untagged version.
-Every item below is battery-pinned; the battery grew 49 -> 110.
+Every item below is battery-pinned; the battery grew 49 -> 111.
 
 The SEO-gap pass (eight additions, all opt-in, missing-only, pinned):
 
@@ -75,6 +75,9 @@ The SEO-gap pass (eight additions, all opt-in, missing-only, pinned):
   and the release gate is composed - `npm run check` plus a `prepublishOnly`
   hook, with `packs:selftest` degrading to a named skip when no crashtest
   checkout is present (#32, #28, #37, #29)
+- Init kit: the starter config seeds the family JSON-LD identity - the
+  Creadev.org founder `author` block plus a maintainer Person - so scaffolded
+  ports ship ownership from birth instead of rediscovering it later (#33)
 - Table guard (`tableWrap`, on by default): every `<table>` wraps in a
   `.fs-table-wrap` scroll container, so a wide docs table scrolls inside its
   own box instead of pinning the whole page width - mobile-safe by

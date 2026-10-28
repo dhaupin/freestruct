@@ -379,6 +379,21 @@ test('defaults: no author key means no JSON-LD founder; author ships Person with
   } finally { rmDir(bare); }
 });
 
+test('init kit (issue #33): the starter config seeds the family identity - founder + maintainer JSON-LD, no unknown keys', () => {
+  // The shipped init kit config, verbatim, must scaffold ownership from birth.
+  const seeded = fs.readFileSync(path.join(ROOT, 'init', 'docs', 'freestruct.config.yml'), 'utf8');
+  const dir = scenario('main', { 'docs/ssr-config.yml': seeded });
+  try {
+    const stdout = runInject(dir);
+    assert.ok(!/unknown config key/.test(stdout), 'the seeded starter config is schema-clean');
+    const html = read(dir, 'docs/_site/index.html');
+    assert.includes(html, '"founder": { "@type": "Person", "name": "Creadev.org", "url": "https://creadev.org" }',
+      'the author block ships the family founder');
+    assert.includes(html, '"name":"your-github-handle"', 'the jsonLd maintainer placeholder reaches the page');
+    assert.includes(html, '"jobTitle":"My Docs maintainer"', 'the maintainer jobTitle is wired');
+  } finally { rmDir(dir); }
+});
+
 test('per-page freestruct comment overrides the injected tags and warns loudly', () => {
   const files = [
     'site:',

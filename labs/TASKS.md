@@ -1061,7 +1061,7 @@ The full-surface walk's remaining finding; battery 102 -> 103:
 ### Pass 26.17 - the family-sweep queue (done, same session, post-26.16)
 
 The open queue's real bugs and gate work, worked top-down; battery
-103 -> 110:
+103 -> 111:
 
 - **linkcheck ignored basePath (fixed, #32):** the highest-value family
   bug. `engine/linkcheck.js` resolved root-absolute hrefs against the
@@ -1109,10 +1109,18 @@ The open queue's real bugs and gate work, worked top-down; battery
   flip). `tableWrap: false` opts out. Pinned: wrapper shape + inline style,
   the delimited-segment skip (class `printable` does not count), nested-once,
   idempotency, and the opt-out.
-- Trail aligned at 110: README trail + config table, AGENTS house table,
+- **init kit identity seed (fixed, #33):** the starter config scaffolded
+  `site:` only, so ports that copied the kit shipped with no founder or
+  maintainer JSON-LD until someone hand-added the blocks (every identity leg
+  filed family-side was the same rediscovery). The starter now seeds the
+  family identity: the Creadev.org founder `author` block plus a maintainer
+  Person `jsonLd` entry (placeholder handle + jobTitle). Pinned by running the
+  kit config verbatim through the battery: schema-clean (no unknown-key warn),
+  founder Person present, maintainer name/jobTitle present.
+- Trail aligned at 111: README trail + config table, AGENTS house table,
   CHANGELOG 1.1.0 line, the announcement's quality layer, DEPLOY's battery
   line + prepublish note, the CLI guide's audit section (the collapse rule),
   and the config guide's `tableWrap` section.
-- Gates: battery 110/110, docs audit, sync lockstep, packs selftest
+- Gates: battery 111/111, docs audit, sync lockstep, packs selftest
   (skip locally, teeth in CI), tarball e2e.
 
