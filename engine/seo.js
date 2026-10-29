@@ -97,10 +97,15 @@ function breadcrumbJsonLd(page, config) {
   let acc = '';
   segs.forEach((seg, i) => {
     acc += '/' + seg;
+    // The LEAF item is the current page: use its own canonical slug, so a
+    // directory page's breadcrumb URL matches its canonical ('/guide/', not
+    // the segment-join '/guide' the intermediate levels use). Intermediate
+    // segments have no page of their own, so the join stays their URL.
+    const isLeaf = i === segs.length - 1;
     items.push({
       position: i + 2,
-      name: (i === segs.length - 1 && page.title) ? page.title : seg.replace(/[-_]/g, ' '),
-      url: pageUrlFor(config, acc),
+      name: (isLeaf && page.title) ? page.title : seg.replace(/[-_]/g, ' '),
+      url: pageUrlFor(config, isLeaf ? page.slug : acc),
     });
   });
   return {
@@ -624,6 +629,13 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
   let seo = template;
   for (const [k, v] of Object.entries(replacements)) seo = seo.split(k).join(v);
   if (customJsonLd) seo += customJsonLd;
+  // A page (and site) with no description source anywhere must not ship an
+  // EMPTY description tag: `content=""` is a present-but-empty description,
+  // worse to a crawler than none, and the engine's own audit then fails the
+  // page it just decorated. Omit the description-bearing lines instead.
+  if (!pageDescription) {
+    seo = seo.replace(/^[^\n]*<meta (name="description"|property="og:description"|name="twitter:description")[^\n]*>\n?/gim, '');
+  }
   // image tags ship only when an og image exists (config-level or per-page)
   if (!ogImageFull) {
     seo = seo.replace(/^[^\n]*<meta (property="og:image"|name="twitter:image")[^\n]*>\n?/gim, '');
@@ -646,6 +658,15 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
   const hasJsonLd = hasSeoType(html, 'jsonld');
   const hasCanonical = hasSeoType(html, 'canonical');
 
+  // Per-tag missing-only within a SET: the og/twitter gates are group-level
+  // (og:title/og:description; twitter:card/twitter:title), but a page can ship
+  // a PARTIAL set - e.g. its own og:url with no og:title. The group gate is
+  // then false, the whole config set injects, and the page ends up with TWO
+  // og:url tags (the engine's own audit only counts og:title, so the duplicate
+  // shipped green). Filter each candidate tag against the page's own head.
+  const pageHasMeta = (attr, key) => new RegExp('<meta[^>]+' + attr + '=["\']'
+    + String(key).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '["\']', 'i').test(html);
+
   let seoInjection = '';
   // FIX (was 0.4.x wart): plain description meta now really reaches bare pages
   if (!hasSeoType(html, 'description')) {
@@ -653,32 +674,59 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
     if (descMatch) seoInjection += '\n' + descMatch[0];
   }
   if (!hasOg) {
-    const ogMatch = seo.match(/<meta property="og:[^"]*"[^>]*>/gi);
-    if (ogMatch) seoInjection += '\n' + ogMatch.join('\n');
+    const ogTags = (seo.match(/<meta property="og:[^"]*"[^>]*>/gi) || [])
+      .filter((tag) => {
+        const key = (tag.match(/property=["'](og:[^"']*)["']/i) || [])[1];
+        // og:image is handled SLOT-level below (issue #46): a page carrying
+        // its own og basics still needs the config image, so the image is
+        // injected there for every page shape, never inside this group gate.
+        return key && key !== 'og:image' && !pageHasMeta('property', key);
+      });
+    if (ogTags.length) seoInjection += '\n' + ogTags.join('\n');
+    // article:* companions for per-page article facts
+    const articleTags = [];
+    if (overrides?.publishedTime && !pageHasMeta('property', 'article:published_time')) articleTags.push('<meta property="article:published_time" content="' + escAttr(overrides.publishedTime) + '">');
+    if (overrides?.author && !pageHasMeta('property', 'article:author')) articleTags.push('<meta property="article:author" content="' + escAttr(overrides.author) + '">');
+    if (overrides?.section && !pageHasMeta('property', 'article:section')) articleTags.push('<meta property="article:section" content="' + escAttr(overrides.section) + '">');
+    if (articleTags.length) seoInjection += '\n' + articleTags.join('\n');
+  } else if (overrides && [overrides.ogType, overrides.publishedTime, overrides.author, overrides.section].some(v => v !== undefined)) {
+    pageWarn(page, 'page ships its own Open Graph tags; og/author per-page overrides were not applied');
+  }
+  if (!hasTwitter) {
+    const twTags = (seo.match(/<meta name="twitter:[^"]*"[^>]*>/gi) || [])
+      .filter((tag) => {
+        const key = (tag.match(/name=["'](twitter:[^"']*)["']/i) || [])[1];
+        // twitter:image is SLOT-level, same rule as og:image (issue #46).
+        return key && key !== 'twitter:image' && !pageHasMeta('name', key);
+      });
+    if (twTags.length) seoInjection += '\n' + twTags.join('\n');
+  } else if (overrides && overrides.twitterCard !== undefined) {
+    pageWarn(page, 'page ships its own Twitter tags; the twitterCard override was not applied');
+  }
+
+  // Image slots are SLOT-level, not set-level (issue #46): the og/twitter
+  // group gates above mark a page "covered" as soon as it ships its own
+  // og:title (or twitter:card), so a host layout that hand-writes its own og
+  // basics NEVER received the config og.image - the share image was starved on
+  // every page of such a site, while the canonical in the same head was
+  // correct. Inject the image (and its companions) whenever the page itself
+  // lacks og:image / twitter:image, independent of the group gate.
+  if (ogImageFull && !pageHasMeta('property', 'og:image')) {
+    seoInjection += '\n<meta property="og:image" content="' + escAttr(ogImageFull) + '">';
     // issue #20: the structured og.image object form also emits its
     // companions; only when the shipped image IS the config object - a
-    // per-page override ships its own image and replaces the set wholesale.
-    if (ogImageFull && companionsSource && !hasPerpageOgImage) {
+    // per-page override ships its own image and replaces the set wholesale
+    // (companionsSource is null then).
+    if (companionsSource) {
       const companions = [];
       if (companionsSource.width !== undefined && companionsSource.width !== '') companions.push('<meta property="og:image:width" content="' + escAttr(companionsSource.width) + '">');
       if (companionsSource.height !== undefined && companionsSource.height !== '') companions.push('<meta property="og:image:height" content="' + escAttr(companionsSource.height) + '">');
       if (companionsSource.alt !== undefined && companionsSource.alt !== '') companions.push('<meta property="og:image:alt" content="' + escAttr(companionsSource.alt) + '">');
       if (companions.length) seoInjection += '\n' + companions.join('\n');
     }
-    // article:* companions for per-page article facts
-    const articleTags = [];
-    if (overrides?.publishedTime) articleTags.push('<meta property="article:published_time" content="' + escAttr(overrides.publishedTime) + '">');
-    if (overrides?.author) articleTags.push('<meta property="article:author" content="' + escAttr(overrides.author) + '">');
-    if (overrides?.section) articleTags.push('<meta property="article:section" content="' + escAttr(overrides.section) + '">');
-    if (articleTags.length) seoInjection += '\n' + articleTags.join('\n');
-  } else if (overrides && [overrides.ogType, overrides.ogImage, overrides.publishedTime, overrides.author, overrides.section].some(v => v !== undefined)) {
-    pageWarn(page, 'page ships its own Open Graph tags; og/author per-page overrides were not applied');
   }
-  if (!hasTwitter) {
-    const twMatch = seo.match(/<meta name="twitter:[^"]*"[^>]*>/gi);
-    if (twMatch) seoInjection += '\n' + twMatch.join('\n');
-  } else if (overrides && overrides.twitterCard !== undefined) {
-    pageWarn(page, 'page ships its own Twitter tags; the twitterCard override was not applied');
+  if (ogImageFull && !pageHasMeta('name', 'twitter:image')) {
+    seoInjection += '\n<meta name="twitter:image" content="' + escAttr(ogImageFull) + '">';
   }
   if (overrides && overrides.description !== undefined && hasSeoType(html, 'description')) {
     pageWarn(page, 'page has its own description meta; the description override was not applied');
@@ -749,7 +797,13 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
     if (!fs.existsSync(snippetPath)) return null;
     let snippet = fs.readFileSync(snippetPath, 'utf8');
     for (const [k, v] of Object.entries(replacements)) snippet = snippet.split(k).join(v);
-    return snippet.replace(/<!--[\s\S]*?-->/g, '');
+    const stripped = snippet.replace(/<!--[\s\S]*?-->/g, '');
+    // The shipped snippet templates are comments-only (placeholders/docs for
+    // the consumer to edit), so they strip to whitespace. Injecting that wraps
+    // an empty region in the markers on EVERY page (and the footer's dozen
+    // blank lines): treat a comments-only snippet as absent, not as an empty
+    // injection.
+    return stripped.trim() === '' ? null : stripped;
   }
 
   // Snippet bodies (issue #24): snippet/config-carried text always rides

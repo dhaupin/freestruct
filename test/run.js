@@ -820,6 +820,79 @@ test('default run: missing-only gate leaves pages that already ship SEO untouche
   } finally { rmDir(dir); }
 });
 
+test('missing-only is SLOT-level for the share image: a page with its own og basics still gets the config og:image (issue #46)', () => {
+  // A host layout that hand-writes its own og:title/description/url/type/
+  // site_name (a documented convention) makes the group-level og gate see the
+  // page as covered, so the config og.image was starved on EVERY page of such
+  // a site - the share preview blanked while the canonical in the same head
+  // was correct. The image slots (og:image / twitter:image) are now slot-level:
+  // injected whenever the page itself lacks them, independent of the group gate.
+  const dir = scenario('main');
+  try {
+    const idx = path.join(dir, 'docs/_site/index.html');
+    let html = fs.readFileSync(idx, 'utf8');
+    html = html.replace('</head>', [
+      '<meta property="og:title" content="Hand written">',
+      '<meta property="og:description" content="Hand written desc">',
+      '<meta property="og:url" content="https://docs.example.com/">',
+      '<meta property="og:type" content="website">',
+      '<meta property="og:site_name" content="Foo Docs">',
+      '</head>',
+    ].join('\n'));
+    fs.writeFileSync(idx, html);
+
+    runInject(dir);
+    const out = read(dir, 'docs/_site/index.html');
+    assert.strictEqual((out.match(/property="og:image"/g) || []).length, 1,
+      'the config og:image reaches an og-owning page exactly once');
+    assert.includes(out, '<meta property="og:image" content="https://docs.example.com/og.png">');
+    assert.strictEqual((out.match(/name="twitter:image"/g) || []).length, 1,
+      'twitter:image is slot-level too');
+    assert.strictEqual((out.match(/property="og:title"/g) || []).length, 1,
+      'the page own og:title is not duplicated');
+
+    // A page that ships its OWN og:image keeps it (slot already filled).
+    const own = path.join(dir, 'docs/_site/own-image.html');
+    fs.writeFileSync(own, '<html><head><title>Own</title>'
+      + '<meta property="og:title" content="Own">'
+      + '<meta property="og:image" content="https://cdn.example.com/mine.png">'
+      + '</head><body><h1>o</h1></body></html>');
+    runInject(dir);
+    const ownOut = read(dir, 'docs/_site/own-image.html');
+    assert.strictEqual((ownOut.match(/property="og:image"/g) || []).length, 1, 'own og:image not duplicated');
+    assert.includes(ownOut, 'https://cdn.example.com/mine.png', 'own og:image preserved');
+    assert.ok(!/<meta property="og:image" content="https:\/\/docs\.example\.com\/og\.png">/.test(ownOut), 'the config image meta does not override a page own image');
+  } finally { rmDir(dir); }
+});
+
+test('a partial staged inject-brand.html warns that it replaces the whole head (issue #46)', () => {
+  // A staged docs/_freestruct/inject-brand.html REPLACES the packaged head
+  // template outright (no per-slot merge), so a host file that carries only
+  // "the layer the layout lacks" silently drops canonical + the rest on every
+  // page. The run names the omitted core slots; a full set stays silent.
+  const dir = scenario('main', {
+    'docs/_freestruct/inject-brand.html': '<meta property="og:title" content="{{pageTitle}}">\n',
+  });
+  try {
+    const out = runInject(dir);
+    assert.includes(out, 'config warning: staged docs/_freestruct/inject-brand.html REPLACES', 'loud template-shape warning');
+    assert.includes(out, '{{canonicalUrl}}', 'names the omitted core slot');
+  } finally { rmDir(dir); }
+
+  const full = scenario('main', {
+    'docs/_freestruct/inject-brand.html': [
+      '<meta name="description" content="{{pageDescription}}">',
+      '<link rel="canonical" href="{{canonicalUrl}}">',
+      '<meta property="og:title" content="{{pageTitle}}">',
+      '',
+    ].join('\n'),
+  });
+  try {
+    const out = runInject(full);
+    assert.ok(!/REPLACES the packaged head template/.test(out), 'a template carrying the core slots stays silent');
+  } finally { rmDir(full); }
+});
+
 test('missing-only: an UPPER-CASE description meta still suppresses injection (case-insensitive gate)', () => {
   const dir = scenario('main');
   try {
@@ -1159,6 +1232,76 @@ test('default run: custom snippets get comments stripped + placeholders substitu
     assert.match(html, /<meta name="build-tag" content="[0-9a-f]{8}">/, 'snippet {{buildHash}} substituted');
     assert.ok(!html.includes('This comment must be stripped'), 'snippet comments removed');
     assert.ok(!html.includes('{{siteUrl}}'), 'no raw placeholders survive');
+  } finally { rmDir(dir); }
+});
+
+test('pass-hunt: a comments-only snippet template injects nothing (no empty marker regions)', () => {
+  // The shipped inject-body-start.html / inject-footer.html are comments-only
+  // (placeholders + examples for the consumer to edit). Stripping comments left
+  // whitespace, which the old code injected as an empty marker-wrapped region
+  // on every page (the footer's dozen blank lines included). A comments-only
+  // snippet must be treated as absent.
+  const dir = scenario('main', {
+    'docs/_freestruct/inject-body-start.html': '<!-- Custom body start -->\n<!-- Placeholders: {{siteName}} -->\n',
+    'docs/_freestruct/inject-footer.html': '<!-- Custom footer -->\n\n<!-- <script src="{{siteUrl}}/x.js"></script> -->\n',
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/index.html');
+    assert.ok(!html.includes('<!-- freestruct:snippet -->'), 'no empty snippet region is injected');
+    assert.ok(!html.includes('<!-- /freestruct:snippet -->'), 'no empty snippet close marker is injected');
+  } finally { rmDir(dir); }
+});
+
+test('pass-hunt: a page and site with no description ship no empty description tags (the audit would fail them)', () => {
+  // No site.description, no page meta description: the injected head must omit
+  // the description-bearing lines entirely. The old code rendered content=""
+  // for name=description / og:description / twitter:description, and the
+  // engine's own audit then FAILed the page for a "missing meta description"
+  // (an empty one) it had just written.
+  const dir = scenario('main', {
+    'docs/ssr-config.yml': [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+    ].join('\n') + '\n',
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/index.html');
+    assert.ok(!/name="description"/.test(html), 'no empty name=description');
+    assert.ok(!/property="og:description"/.test(html), 'no empty og:description');
+    assert.ok(!/name="twitter:description"/.test(html), 'no empty twitter:description');
+    // the rest of the injected set still lands
+    assert.includes(html, '<meta property="og:title" content="Home | Foo Docs">');
+    assert.includes(html, '<meta name="twitter:card" content="summary">');
+  } finally { rmDir(dir); }
+});
+
+test('pass-hunt: a page with a PARTIAL og/twitter set gets no duplicate tags (per-tag missing-only)', () => {
+  // Group-level missing-only: the og gate is og:title/og:description, so a page
+  // shipping only its own og:url (or only twitter:image) leaves the group gate
+  // FALSE and the whole config set injected - a duplicate og:url the engine's
+  // own audit (which counts only og:title) shipped green. Each candidate tag is
+  // now filtered against the page's own head.
+  const dir = scenario('main', {
+    'docs/_site/partial.html': [
+      '<html><head><title>Partial</title>',
+      '<meta property="og:url" content="https://custom.example.com/keep">',
+      '<meta name="twitter:image" content="https://custom.example.com/tw.png">',
+      '</head><body><h1>p</h1></body></html>',
+    ].join('\n'),
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/partial.html');
+    assert.strictEqual((html.match(/property="og:url"/g) || []).length, 1, 'no duplicate og:url');
+    assert.includes(html, 'content="https://custom.example.com/keep"', 'the page\'s own og:url is kept');
+    assert.strictEqual((html.match(/name="twitter:image"/g) || []).length, 1, 'no duplicate twitter:image');
+    assert.includes(html, 'content="https://custom.example.com/tw.png"', 'the page\'s own twitter:image is kept');
+    // the rest of the set still fills in (missing-only per tag)
+    assert.includes(html, '<meta property="og:title" content="Partial | Foo Docs">');
+    assert.includes(html, '<meta name="twitter:card" content="summary_large_image">');
   } finally { rmDir(dir); }
 });
 
@@ -2375,6 +2518,37 @@ test('audit: duplicate head tags ride the FAIL class (never engine-caused - miss
   } finally { rmDir(dir); }
 });
 
+test('audit: a page shipping a PARTIAL og/twitter set warns, not fails (matches the group-level injection gate)', () => {
+  // The engine's missing-only gate is group-level: a page carrying only its
+  // own og:title makes the gate back off the whole og group, so og:description
+  // is legitimately absent. The audit's FAIL core class (og:title/description,
+  // twitter:card/title) failed that absence anyway - a false FAIL on output the
+  // engine is contractually right to produce (SSG-owned partial sets). The FAIL
+  // now fires only when the page carries NO tag of the set at all.
+  const dir = scenario('main', {
+    'docs/_site/partial.html': [
+      '<html><head><title>Partial</title>',
+      '<meta name="description" content="A partial page description that is long enough to pass the band">',
+      '<meta property="og:title" content="Partial own title">',
+      '<meta name="twitter:card" content="summary">',
+      '</head><body><h1>Partial</h1></body></html>',
+    ].join('\n'),
+  });
+  try {
+    runInject(dir);
+    const out = spawnSync(process.execPath, [INJECT, 'audit'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(out.status, 0, 'a partial-set page is not a FAIL\n' + out.stdout);
+    assert.includes(out.stdout, 'og:description absent (page ships a partial og set', 'og companion is report-grade');
+    assert.includes(out.stdout, 'twitter:title absent (page ships a partial twitter set', 'twitter companion is report-grade');
+    // A page with NO og tag at all still FAILs (the class the check exists for).
+    const bare = path.join(dir, 'docs/_site/bare.html');
+    fs.writeFileSync(bare, '<html><head><title>Bare</title></head><body><h1>Bare</h1></body></html>');
+    const out2 = spawnSync(process.execPath, [INJECT, 'audit'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(out2.status, 1, 'a bare page still fails the core class');
+    assert.includes(out2.stdout, 'FAIL bare.html: missing og:title');
+  } finally { rmDir(dir); }
+});
+
 test('audit: the 404 noindex contract is checked independently of the og set (issue #18)', () => {
   const dir = scenario('main');
   try {
@@ -2931,7 +3105,9 @@ test('breadcrumb: true builds BreadcrumbList from the URL tree; root ships none;
     const guide = read(dir, 'docs/_site/guide/index.html');
     assert.ok(/BreadcrumbList/.test(guide), 'the deep page gets the trail');
     assert.includes(guide, '"item":"https://docs.example.com/"', 'the trail starts at the site root');
-    assert.includes(guide, '"item":"https://docs.example.com/guide"', 'the trail names the owning directory');
+    // The leaf item is the page itself: its URL matches the page's canonical
+    // (a directory page keeps its trailing slash), not the segment-join shape.
+    assert.includes(guide, '"item":"https://docs.example.com/guide/"', 'the trail leaf matches the page canonical');
     const own = read(dir, 'docs/_site/own-ld.html');
     assert.ok(!/BreadcrumbList/.test(own), 'a page with its own JSON-LD stays untouched');
   } finally { rmDir(dir); }

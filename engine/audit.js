@@ -226,12 +226,26 @@ export function auditOutput({ outputDir, config, json = false, capture = false }
       ['duplicate meta description', /<meta[^>]+name=["']description["']/gi],
       ['multiple <title> elements', /<title[^>]*>/gi],
       ['duplicate og:title', /<meta[^>]+property=["']og:title["']/gi],
+      ['duplicate og:description', /<meta[^>]+property=["']og:description["']/gi],
+      ['duplicate twitter:title', /<meta[^>]+name=["']twitter:title["']/gi],
+      ['duplicate twitter:card', /<meta[^>]+name=["']twitter:card["']/gi],
     ]) {
       if (countHead(head, dup[1]) > 1) fail(label, dup[0]);
     }
 
+    // og/twitter CORE class. FAIL only when the page carries NO tag of the
+    // set at all: that is the "the engine failed to inject on a bare page"
+    // case the class exists to catch. A page shipping a PARTIAL set of its
+    // own (an SSG theme emitting only og:title, say) makes the engine's
+    // group-level missing-only gate back off the whole group BY DESIGN, so
+    // its missing companions are report-grade - failing them punished the
+    // very contract (SSG-owned partial sets) the injection rule preserves,
+    // and the audit cannot tell an SSG-owned partial head from an engine one.
+    const ogAny = countHead(head, /<meta[^>]+property=["']og:[^"']*["']/gi);
     for (const prop of OG_CORE) {
-      if (!grabMeta(head, 'property', prop)) fail(label, 'missing ' + prop);
+      if (grabMeta(head, 'property', prop)) continue;
+      if (ogAny === 0) fail(label, 'missing ' + prop);
+      else warn(label, prop + ' absent (page ships a partial og set; SSG-owned partial sets keep contract)');
     }
     for (const prop of OG_SET) {
       if (!grabMeta(head, 'property', prop)) {
@@ -241,8 +255,11 @@ export function auditOutput({ outputDir, config, json = false, capture = false }
     if (!grabMeta(head, 'property', 'og:image')) {
       configGate('og:image', label);
     }
+    const twAny = countHead(head, /<meta[^>]+name=["']twitter:[^"']*["']/gi);
     for (const name of TW_CORE) {
-      if (!grabMeta(head, 'name', name)) fail(label, 'missing ' + name);
+      if (grabMeta(head, 'name', name)) continue;
+      if (twAny === 0) fail(label, 'missing ' + name);
+      else warn(label, name + ' absent (page ships a partial twitter set; SSG-owned partial sets keep contract)');
     }
     for (const name of TW_SET) {
       // Symmetry with the engine's own late pass (seo.js): without a
