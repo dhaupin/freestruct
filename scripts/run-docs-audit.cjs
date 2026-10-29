@@ -1,9 +1,14 @@
 #!/usr/bin/env node
 /**
- * Docs audit runner (ported from dhaupin/prestruct scripts/check-docs-*.cjs).
+ * Docs audit caller (freestruct's gate set over the shared runner).
  *
- * One gate-family for freestruct's docs truth. Four checks, all conservative:
- * only PROVEN violations fail.
+ * The runner (scripts/lib/docs-audit.cjs) owns discovery, the findings list,
+ * the per-gate count line, and gate selection; this file owns freestruct's
+ * GATE SET and its voice/exit. prestruct is the intended second caller of the
+ * same runner (prestruct#75), so the two repos share ONE runner shape and
+ * differ only in gates, globs and allow-lists.
+ *
+ * freestruct's gates (all conservative - only PROVEN violations fail):
  *
  *   frontmatter   every docs page carries title + description; nav_order is
  *                 an integer; permalink (when present) is absolute
@@ -13,69 +18,31 @@
  *                 every real page is listed exactly once (the menu layer is
  *                 explicit; stowaway pages fail the gate)
  *   style         fenced blocks carry a language tag; no heading level
- *                 skips; no trailing whitespace
+ *                 skips; no trailing whitespace; pipe-table shape; hyphens
+ *                 not em/en dashes; no emoji; exactly one h1 per page
  *   truthfulness  CLI flags used in docs/README exist in the injector; top
  *                 level config keys in yaml examples exist in the schema or
  *                 the documented-retired allowlist
+ *   language      English-only prose (scripts/check-language.cjs owns the
+ *                 logic; the gate shells out so one command covers it)
+ *   codefmt       every engine source opens with its own path in a header
  *
  * Exit 1 on any finding, evidence inline.
  * Run: node scripts/run-docs-audit.cjs [gate ...]
  */
 'use strict';
 
-const fs = require('fs');
 const path = require('path');
+const { runDocsAudit } = require('./lib/docs-audit.cjs');
 
 const ROOT = path.resolve(__dirname, '..');
-const DOCS = path.join(ROOT, 'docs');
-const NAV_FILE = path.join(DOCS, '_data', 'nav.yml');
-
-const findings = [];
-const collect = (lines, rel, n, msg) => findings.push(`${rel}:${n}: ${msg}`);
-
-// ---------------------------------------------------------------------------
-// File discovery: docs markdown + README (truthful prose lives in both)
-// ---------------------------------------------------------------------------
-
-const files = [];
-(function walk(d) {
-  for (const f of fs.readdirSync(d, { withFileTypes: true })) {
-    if (f.isDirectory()) {
-      if (f.name.startsWith('_')) continue; // _data/_layouts/_includes/_freestruct are frame, not prose
-      walk(path.join(d, f.name));
-    } else if (f.name.endsWith('.md')) {
-      files.push(path.join(d, f.name));
-    }
-  }
-})(DOCS);
-files.push(path.join(ROOT, 'README.md'));
-
-const relOf = (p) => path.relative(ROOT, p);
-
-// ---------------------------------------------------------------------------
-// Frontmatter helpers
-// ---------------------------------------------------------------------------
-
-const fmBlock = (text) => {
-  const m = text.match(/^---\n([\s\S]*?)\n---/);
-  return m ? m[1] : null;
-};
-
-const pageUrl = (relDocPath, fm) => {
-  // A page's deployment URL: permalink if declared, else the Jekyll path shape
-  if (fm) {
-    const p = fm.match(/^permalink:\s*(\S+)/m);
-    if (p) return p[1];
-  }
-  const base = relDocPath === 'index.md' ? 'index' : relDocPath;
-  return '/' + base.replace(/\.md$/, '');
-};
 
 // ---------------------------------------------------------------------------
 // Gate: frontmatter
 // ---------------------------------------------------------------------------
 
-function gateFrontmatter() {
+function gateFrontmatter(ctx) {
+  const { files, relOf, collect, fs, fmBlock, path } = ctx;
   for (const f of files) {
     if (path.basename(f) === 'README.md') continue; // no frontmatter domain there
     const rel = relOf(f);
@@ -104,17 +71,8 @@ function gateFrontmatter() {
 // Gate: links
 // ---------------------------------------------------------------------------
 
-const urlSet = new Set(files.map((f) => {
-  const t = fs.readFileSync(f, 'utf8');
-  return urlKey(pageUrl(relOf(f).replace(/^docs\//, ''), fmBlock(t)));
-}));
-
-function resolveUrl(u) {
-  // '/foo/bar' or '/foo/bar.html' or '/' -> true when a page owns it
-  return urlSet.has(urlKey(u));
-}
-
-function gateLinks() {
+function gateLinks(ctx) {
+  const { files, relOf, collect, fs, path, resolveUrl } = ctx;
   for (const f of files) {
     const rel = relOf(f);
     const lines = fs.readFileSync(f, 'utf8').split('\n');
@@ -150,17 +108,12 @@ function gateLinks() {
 // Gate: nav (single menu layer, both directions)
 // ---------------------------------------------------------------------------
 
-function urlKey(u) {
-  // Canonical key for a deployment url: '/' or 'x.html' both normalize
-  const stem = String(u).replace(/^\/+|\/+$/g, '').replace(/\.html$/, '');
-  return '/' + (stem === '' || stem === 'index' ? 'index' : stem);
-}
-
-function parseNav() {
+function parseNav(ctx) {
   // Minimal flat parse of docs/_data/nav.yml: sections + {title, url} items
+  const { fs, navFile } = ctx;
   const nav = [];
   let section = null;
-  fs.readFileSync(NAV_FILE, 'utf8').split('\n').forEach((line) => {
+  fs.readFileSync(navFile, 'utf8').split('\n').forEach((line) => {
     if (/^\s*#/.test(line) || !line.trim()) return;
     const sec = line.match(/^- title: (.+)$/);
     if (sec && !line.startsWith(' ')) { section = { title: sec[1].trim().replace(/^["']|["']$/g, ''), items: [] }; nav.push(section); return; }
@@ -172,8 +125,9 @@ function parseNav() {
   return nav;
 }
 
-function gateNav() {
-  const nav = parseNav();
+function gateNav(ctx) {
+  const { files, relOf, findings, fs, path, fmBlock, urlKey, pageUrl, resolveUrl } = ctx;
+  const nav = parseNav(ctx);
   const listed = {};
   for (const section of nav) {
     if (!section.items.length) findings.push(`nav: section "${section.title}" has no items`);
@@ -203,15 +157,15 @@ function gateNav() {
 // gate shells out to it so the single audit command covers every gate.
 // ---------------------------------------------------------------------------
 
-function gateLanguage() {
+function gateLanguage(ctx) {
   const { execFileSync } = require('child_process');
   try {
-    execFileSync(process.execPath, [path.join(ROOT, 'scripts', 'check-language.cjs')], {
-      cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'],
+    execFileSync(process.execPath, [path.join(ctx.root, 'scripts', 'check-language.cjs')], {
+      cwd: ctx.root, stdio: ['ignore', 'pipe', 'pipe'],
     });
   } catch (err) {
-    for (const line of String(err.stdout || '').trim().split('\n').filter(Boolean)) findings.push(line);
-    if (!err.stdout) findings.push(`language: checker failed to run: ${err.message}`);
+    for (const line of String(err.stdout || '').trim().split('\n').filter(Boolean)) ctx.findings.push(line);
+    if (!err.stdout) ctx.findings.push(`language: checker failed to run: ${err.message}`);
   }
 }
 
@@ -225,19 +179,16 @@ function gateLanguage() {
 // six headers behind saying 'docs/lib/...' for a week).
 // ---------------------------------------------------------------------------
 
-function gateCodeFormat() {
-  const dir = path.join(ROOT, 'engine');
+function gateCodeFormat(ctx) {
+  const { root, findings, fs, path } = ctx;
+  const dir = path.join(root, 'engine');
   for (const f of fs.readdirSync(dir).sort()) {
     if (!f.endsWith('.js')) continue;
     const rel = `engine/${f}`;
     const raw = fs.readFileSync(path.join(dir, f), 'utf8');
     const lines = raw.split('\n');
     // A shebang (needed when a source file is invoked directly) counts as
-    // line 0: the header lands on line 2. Header comment must start
-    //   // engine/<file>.js - <one-line purpose in English>
-    // so a reader grepping any comment lands on a file that says where it
-    // is. The path check is what keeps truth after moves (the house
-    // rehaul left six headers behind saying 'docs/lib/...' for a week).
+    // line 0: the header lands on line 2.
     const offset = raw.startsWith('#!') ? 1 : 0;
     const rel2 = `${rel}:${offset + 1}`;
     const first = lines[offset];
@@ -253,7 +204,9 @@ function gateCodeFormat() {
 // ---------------------------------------------------------------------------
 // Gate: style
 // ---------------------------------------------------------------------------
-function gateStyle() {
+
+function gateStyle(ctx) {
+  const { files, relOf, collect, fs } = ctx;
   for (const f of files) {
     const rel = relOf(f);
     const lines = fs.readFileSync(f, 'utf8').split('\n');
@@ -315,13 +268,16 @@ function gateStyle() {
       else if (h1Count > 1) collect([], rel, 1, h1Count + ' h1 headings (docs pages need exactly one)');
     }
   }
-}// ---------------------------------------------------------------------------
+}
+
+// ---------------------------------------------------------------------------
 // Gate: truthfulness
 // ---------------------------------------------------------------------------
 
 // Flags the injector CLI actually parses (truth source: engine/inject.js).
-function cliFlags() {
-  const src = fs.readFileSync(path.join(ROOT, 'engine', 'inject.js'), 'utf8');
+function cliFlags(root) {
+  const fs = require('fs');
+  const src = fs.readFileSync(path.join(root, 'engine', 'inject.js'), 'utf8');
   const flags = new Set();
   for (const m of src.matchAll(/['"]--([a-zA-Z][\w-]*)['"]/g)) flags.add(m[1]);
   flags.add('help').add('h').add('version').add('V');
@@ -329,7 +285,8 @@ function cliFlags() {
 }
 
 // Config schema keys (truth source: engine/config.js README + test/fixture).
-function schemaKeys() {
+function schemaKeys(root) {
+  const fs = require('fs');
   // Truth source: the KNOWN_CONFIG_KEYS list + nested cache keys in config.js:
   // those are the keys the schema accepts without warning.
   const keys = new Set([
@@ -338,7 +295,7 @@ function schemaKeys() {
     'lastModified', 'lazyLoad', 'linkCheck', 'minify', 'runHooks',
     'twitter', 'og', 'cacheBusting',
   ]);
-  const src = fs.readFileSync(path.join(ROOT, 'engine', 'config.js'), 'utf8');
+  const src = fs.readFileSync(path.join(root, 'engine', 'config.js'), 'utf8');
   const known = src.match(/KNOWN_CONFIG_KEYS = Object\.freeze\(\[([\s\S]*?)\]\)/);
   if (known) for (const m of known[1].matchAll(/'([a-zA-Z][\w]*)'/g)) keys.add(m[1]);
   for (const m of src.matchAll(/\['([^']+)'(?:,\s*'[^']+')*\s*\]/g)) { // nested key lists
@@ -350,9 +307,10 @@ function schemaKeys() {
 // Keys documented AS retired are true statements too.
 const RETIRED_OK = new Set(['generateNav', 'preserveExistingMeta', 'hash', 'nav', 'index', 'getting-started', 'guides', 'contributing', 'url', 'username']);
 
-function gateTruthfulness() {
-  const flags = cliFlags();
-  const keys = schemaKeys();
+function gateTruthfulness(ctx) {
+  const { files, relOf, findings, fs } = ctx;
+  const flags = cliFlags(ctx.root);
+  const keys = schemaKeys(ctx.root);
   for (const f of files) {
     const rel = relOf(f);
     const lines = fs.readFileSync(f, 'utf8').split('\n');
@@ -405,15 +363,20 @@ const gates = {
   codefmt: gateCodeFormat,
 };
 
-const requested = process.argv.slice(2);
-const runGates = requested.length ? requested : Object.keys(gates);
-for (const name of runGates) {
-  if (!gates[name]) { console.error(`unknown gate: ${name} (have ${Object.keys(gates).join(', ')})`); process.exit(2); }
-  const before = findings.length;
-  gates[name]();
-  console.log(`[gate] ${name}: ${findings.length - before} finding(s)`);
+let result;
+try {
+  result = runDocsAudit({
+    root: ROOT,
+    gates,
+    names: process.argv.slice(2),
+    log: (line) => console.log(line),
+  });
+} catch (err) {
+  console.error(err.message);
+  process.exit(2);
 }
 
+const { findings } = result;
 if (findings.length) {
   console.error(`\ndocs audit FAILED - ${findings.length} finding(s):`);
   for (const f of findings) console.error('  ' + f);

@@ -3480,6 +3480,47 @@ test('claims gate: the fiction-signature gate ships, runs clean, and is wired in
   } finally { try { fs.rmSync(probe, { force: true }); } catch (e) { /* best-effort */ } }
 });
 
+// ---------- shared docs-audit runner (prestruct#75) ----------
+
+test('docs audit: the runner is shared and config-driven, and the caller owns voice + exit (prestruct#75)', () => {
+  // The light first step of the family convergence: the runner (discovery,
+  // findings list, per-gate count line, gate selection) lives in a standalone
+  // module a second repo can require, and the caller (freestruct's gate set)
+  // owns the report text and exit code - so freestruct's report-only voice is
+  // never baked into the shared runner.
+  const lib = path.join(ROOT, 'scripts', 'lib', 'docs-audit.cjs');
+  assert.ok(fs.existsSync(lib), 'the shared runner module ships at scripts/lib/docs-audit.cjs');
+  const mod = require(lib);
+  assert.strictEqual(typeof mod.runDocsAudit, 'function', 'the runner exports runDocsAudit');
+  assert.strictEqual(typeof mod.fmBlock, 'function', 'the generic frontmatter helper is shared');
+  assert.strictEqual(typeof mod.urlKey, 'function', 'the generic url-key helper is shared');
+  assert.strictEqual(typeof mod.discoverFiles, 'function', 'discovery is shared, not per-gate');
+
+  // The caller keeps its own gate set + voice: the runner never prints the
+  // final report and never exits.
+  const src = fs.readFileSync(lib, 'utf8');
+  assert.ok(!/process\.exit/.test(src), 'the runner never exits (the caller owns the exit code)');
+  assert.ok(!/docs audit: all gates clean|docs audit FAILED/.test(src),
+    'the runner never prints freestruct\'s report voice (the caller owns it)');
+  const caller = fs.readFileSync(path.join(ROOT, 'scripts', 'run-docs-audit.cjs'), 'utf8');
+  assert.includes(caller, "require('./lib/docs-audit.cjs')", 'the caller requires the shared runner');
+
+  // A second caller can drive the SAME runner with a DIFFERENT gate set and
+  // its own log sink - the proof the shape is shareable.
+  const seen = [];
+  const result = mod.runDocsAudit({
+    root: ROOT,
+    gates: { probe: (ctx) => ctx.collect([], 'probe.md', 1, 'probe finding') },
+    names: ['probe'],
+    log: (l) => seen.push(l),
+  });
+  assert.deepStrictEqual(result.findings, ['probe.md:1: probe finding'], 'a foreign gate set drives the runner');
+  assert.deepStrictEqual(seen, ['[gate] probe: 1 finding(s)'], 'the runner emits the per-gate count through the caller log');
+  // An unknown gate name is a hard error the caller can catch (exit 2 upstream).
+  assert.throws(() => mod.runDocsAudit({ root: ROOT, gates: {}, names: ['nope'] }), /unknown gate: nope/,
+    'an unknown gate throws so the caller decides the exit');
+});
+
 // ---------- playbooks leg (#34) ----------
 // The playbooks leg is the family-scaffold shape guides/ does not carry: one
 // page per runbook recipe, each with a permalink under /playbooks/ and a row
