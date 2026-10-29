@@ -31,7 +31,7 @@ Engineering history and the house rules, written for an AI agent (or human) pick
 | `docs/`     | The docs site, and the worked example itself: Jekyll + Freestruct + Pagefind |
 | `packs/`    | The crashtest extension surface (one pack: `freestruct-docs-shapes`)   |
 | `scripts/`  | CI/tooling: template sync, docs audit, tarball e2e, pack selftest, language gate |
-| `test/`     | `node test/run.js` - the fixture battery (145 pins) + version truth     |
+| `test/`     | `node test/run.js` - the fixture battery (146 pins) + version truth     |
 | `labs/`     | PRD + pass log: where plans and history live                          |
 | `horcrux/`  | The stone (brain snapshot, refresh convention in the PRD)              |
 

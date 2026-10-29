@@ -1180,6 +1180,37 @@ test('search.json: noindex excluded (FIXED #5), slug-based urls, field shape sta
   } finally { rmDir(dir); }
 });
 
+test('search.json: content and heading carry plain text, never script/style bodies or tags (bug fix)', () => {
+  const dir = scenario('main', {
+    'docs/ssr-config.yml': [
+      'site:', '  name: Foo Docs', '  url: https://docs.example.com',
+      '  description: A test docs site', 'searchIndex: true',
+    ].join('\n') + '\n',
+    'docs/_site/leaky.html': [
+      '<html><head><title>Leaky</title></head><body>',
+      '<h1>Title <em>with</em> <code>markup</code></h1>',
+      '<p>Visible prose</p>',
+      '<script>var token = "SHOULD_NOT_INDEX";</script>',
+      '<style>.x{color:red}</style>',
+      '</body></html>',
+    ].join('\n') + '\n',
+  });
+  try {
+    runInject(dir);
+    const idx = JSON.parse(read(dir, 'docs/_site/search.json'));
+    const entry = idx.find(e => e.url === 'https://docs.example.com/leaky');
+    assert.ok(entry, 'leaky page is indexed');
+    // Before the fix the body pass stripped tags only, so a script/style body
+    // shipped its raw source into the index; the h1 pass returned inner HTML.
+    assert.ok(!entry.content.includes('SHOULD_NOT_INDEX'), 'script body is not in the index');
+    assert.ok(!entry.content.includes('color:red'), 'style body is not in the index');
+    assert.ok(!/<[a-z]/i.test(entry.content), 'content carries no tags');
+    assert.ok(!/<[a-z]/i.test(entry.heading), 'heading carries no tags');
+    assert.strictEqual(entry.heading, 'Title with markup', 'heading is the readable text of the h1');
+    assert.includes(entry.content, 'Visible prose', 'visible prose is kept');
+  } finally { rmDir(dir); }
+});
+
 // ---------- 404 pipeline (Phase 1.4: full treatment for both kinds) ----------
 
 test('generated 404: full SEO pipeline + advertised noindex now shipped (FIXED #11)', () => {

@@ -492,3 +492,13 @@ Continuing the same walk into the late passes, a rerun-idempotency probe over th
 - **Trail aligned at 145:** README trail + v1.2.0 section (one new bullet), CHANGELOG 1.2.0 entry (one new bullet), the announcement prose, and the derived count surfaces via the count census.
 - Gates: battery 145/145, docs audit (7 gates clean), sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run build` (Jekyll + inject) + `freestruct audit docs/_site` (0 failures, 0 warnings).
 - Next pass: cut the v1.2.0 tag (owner-gated - the user said NOT yet).
+
+### Pass 26.24 - the search-index text pass (done, same session, post-26.23)
+
+The same walk turned to `search.js`, the one opt-in artifact whose whole payload is page text:
+
+- **`search.json` shipped raw markup into the index (fixed):** the content pass stripped tags with `replace(/<[^>]+>/g, ' ')` only, so an inline `<script>` body (JS source) and a `<style>` body (CSS rules) flowed into the indexed text - not page content, and a token leak into a consumer-visible JSON that any front-end search UI would surface. The heading pass was worse: it returned the h1's inner HTML verbatim, so a heading with inline markup (`<h1>Title <em>x</em></h1>`) landed in the index with its `<em>`/`<code>` tags intact (rendered as literal text or stripped unpredictably downstream). A shared `readableText` helper drops script/style bodies and comments, strips every tag, and decodes entities; both `content` and `heading` route through it. Pinned: a page with an inline script/style and a marked-up h1 indexes only its visible prose and a tag-free heading.
+- **Walk coverage (checked, no bug):** `llms.js` (titles/descriptions come from the entity-decoded extractors and `oneline` flattens newlines - no markup can reach it), the feed body (title/description only), the sitemap (urls + lastmod), and `decodeEntities` coverage of named/numeric/apostrophe forms.
+- **Trail aligned at 146:** README trail + v1.2.0 section (one new bullet), CHANGELOG 1.2.0 entry (one new bullet), the announcement prose, and the derived count surfaces via the count census.
+- Gates: battery 146/146, docs audit (7 gates clean), sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run build` (Jekyll + inject) + `freestruct audit docs/_site` (0 failures, 0 warnings).
+- Next pass: cut the v1.2.0 tag (owner-gated - the user said NOT yet).
