@@ -822,6 +822,59 @@ test('minify: verbatim blocks survive byte-for-byte and attribute-form tags are 
   } finally { rmDir(dir); }
 });
 
+test('cache-busting: asset links shown in a code example are left as-is, live ones still bust (bug fix)', () => {
+  const dir = scenario('main', {
+    'docs/_site/code.html': [
+      '<html><head><title>Code</title></head><body>',
+      '<pre><code>&lt;link href="/style.css"&gt;</code></pre>',
+      '<code>&lt;script src="/app.js"&gt;&lt;/script&gt;</code>',
+      '<script>var s = \'<link href="/inline.css">\';</script>',
+      '<link rel="stylesheet" href="/real.css">',
+      '<script src="/live.js"></script>',
+      '</body></html>',
+    ].join('\n') + '\n',
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/code.html');
+    // A docs page that SHOWS a link must not have its example rewritten.
+    assert.includes(html, '&lt;link href="/style.css"&gt;', 'the <pre><code> example is not busted');
+    assert.includes(html, '&lt;script src="/app.js"&gt;', 'the inline-code example is not busted');
+    assert.includes(html, "'<link href=\"/inline.css\">'", 'a link inside a script body is not busted');
+    // Live attributes still bust.
+    assert.match(html, /href="\/real\.css\?v=[0-9a-f]{8}"/, 'a live stylesheet link is busted');
+    assert.match(html, /<script src="\/live\.js\?v=[0-9a-f]{8}"><\/script>/, 'a live script src is busted');
+    // Rerun idempotency: the protected regions survive a second pass unchanged.
+    runInject(dir);
+    const again = read(dir, 'docs/_site/code.html');
+    assert.includes(again, '&lt;link href="/style.css"&gt;', 'example still intact after a rerun');
+    assert.match(again, /href="\/real\.css\?v=[0-9a-f]{8}"/, 'live asset still single-busted after a rerun');
+  } finally { rmDir(dir); }
+});
+
+test('cache-busting: an asset carrying an existing query or fragment is still busted (bug fix)', () => {
+  const dir = scenario('main', {
+    'docs/_site/queried.html': [
+      '<html><head><title>Queried</title></head><body>',
+      '<link rel="stylesheet" href="/style.css?foo=bar">',
+      '<link rel="stylesheet" href="/legacy.css#iefix">',
+      '<script src="/app.js?x=1"></script>',
+      '<img src="/pic.png?a=b#frag">',
+      '</body></html>',
+    ].join('\n') + '\n',
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/queried.html');
+    // Before the fix the raw value's "ext" was '.css?foo=bar' / '.css#iefix',
+    // so the asset missed the set and was never busted (stale at the edge).
+    assert.match(html, /href="\/style\.css\?foo=bar&v=[0-9a-f]{8}"/, 'an existing query keeps its param and gains v=');
+    assert.match(html, /href="\/legacy\.css\?v=[0-9a-f]{8}#iefix"/, 'a fragment is preserved after the injected query');
+    assert.match(html, /src="\/app\.js\?x=1&v=[0-9a-f]{8}"/, 'a script with a query is busted');
+    assert.match(html, /src="\/pic\.png\?a=b&v=[0-9a-f]{8}#frag"/, 'query + fragment both survive, v= inserted');
+  } finally { rmDir(dir); }
+});
+
 test('cache-busting: only real asset extensions are busted, case-insensitively (bug fix)', () => {
   const dir = scenario('main', {
     'docs/_site/exts.html': [
@@ -858,6 +911,24 @@ test('linkcheck: single-quoted hrefs are checked too, so --strict catches them (
     assert.ok(!/-> \/ok\//.test(out), 'a resolvable single-quoted link is not flagged');
     const strict = runInjectFailing(dir, ['--strict']);
     assert.strictEqual(strict.status, 1, '--strict fails on the single-quoted break');
+  } finally { rmDir(dir); }
+});
+
+test('linkcheck: a query string on an internal link is not a broken route (bug fix)', () => {
+  const dir = scenario('main', {
+    'docs/_site/queried.html': '<html><head><title>Q</title></head><body><a href="/ok?utm_source=x">ok query</a><a href="/ok/?s=hi">ok query slash</a><a href="/ok/index.html?x=1">ok file query</a><a href="/gone?q=1">gone query</a></body></html>\n',
+    'docs/_site/ok/index.html': '<html><head><title>Ok</title></head><body>ok</body></html>\n',
+  });
+  try {
+    const out = runInject(dir);
+    // Before the fix the query rode into the resolved path, so '/ok?utm_source=x'
+    // looked for a file literally named 'ok?utm_source=x' and was reported broken.
+    assert.ok(!/-> \/ok\?utm_source=x/.test(out), 'a query on a valid directory link is not flagged');
+    assert.ok(!/-> \/ok\/\?s=hi/.test(out), 'a query on a trailing-slash link is not flagged');
+    assert.ok(!/-> \/ok\/index\.html\?x=1/.test(out), 'a query on a valid file link is not flagged');
+    assert.includes(out, '/gone?q=1', 'a genuinely missing link is still reported with its query');
+    const strict = runInjectFailing(dir, ['--strict']);
+    assert.strictEqual(strict.status, 1, '--strict still fails on the real break only');
   } finally { rmDir(dir); }
 });
 
@@ -1499,6 +1570,31 @@ const purgeConfig = (markerPath, extraKeys = '') => [
   '    - name: canary',
   `      command: node -e "require('fs').writeFileSync(process.argv[1], process.argv.slice(2).join('|'))" ${markerPath} "https://docs.example.com/$SITE_URL_PART" "$BUILD_HASH" "$OUTPUT_DIR"`,
 ].filter(Boolean).join('\n') + '\n';
+
+test('purge hooks: every configured hook is reported when disabled, not just the first (bug fix)', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      'cacheBusting:',
+      '  purge:',
+      '    - name: cloudflare',
+      '      command: echo cf',
+      '    - name: fastly',
+      '      command: echo fastly',
+      '    - name: bunny',
+      '      command: echo bunny',
+    ].join('\n') + '\n');
+    const out = runInject(dir);
+    // The old disabled branch `return`ed inside the loop, so only cloudflare
+    // printed and the other two were silently hidden.
+    assert.includes(out, 'Purge hook cloudflare: running...');
+    assert.includes(out, 'Purge hook fastly: running...');
+    assert.includes(out, 'Purge hook bunny: running...');
+  } finally { rmDir(dir); }
+});
 
 test('purge hooks disabled by default: configured commands NEVER execute without runHooks', () => {
   const dir = scenario('main');

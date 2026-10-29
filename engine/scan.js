@@ -193,7 +193,7 @@ export function computeBuildHash(config, pages) {
     // output; strip them too or a rerun's body text differs from run 1 and the
     // content-derived hash churns every pass.
     .replace(/<!-- freestruct:snippet -->[\s\S]*?<!-- \/freestruct:snippet -->/gi, '')
-    .replace(/\?v=[0-9a-f]{8}/g, '')
+    .replace(/[?&]v=[0-9a-f]{8}/g, '')
     .replace(/ loading="lazy"/g, '');
   for (const page of pages.filter(p => !p.is404).sort((a, b) => (a.rel < b.rel ? -1 : a.rel > b.rel ? 1 : 0))) {
     h.update(page.rel);

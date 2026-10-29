@@ -380,16 +380,46 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
     // Both quote styles (Pass 26.21): the old double-quote-only pattern left
     // a single-quoted href/src (valid HTML, common in hand-authored markup)
     // un-busted, so a stale asset survived a content change on those pages.
+    //
+    // Protected blocks (Pass 26.22): a docs page that SHOWS a link in a code
+    // example (`<pre><code>&lt;link href="/style.css"&gt;</code></pre>`) is
+    // markup-in-prose, not a live asset reference - rewriting it turned the
+    // example into fiction. An inline <script> body can likewise carry
+    // href=/src= string literals. Mask those regions, bust the live
+    // attributes, then restore; a <script src> OPENING tag stays live (only
+    // its body is masked). Same payload-stripping doctrine linkcheck owns.
+    const masks = [];
+    const mask = (s) => { masks.push(s); return '\u0000FS' + (masks.length - 1) + '\u0000'; };
+    html = html
+      .replace(/<script\b[^>]*>([\s\S]*?)<\/script\s*>/gi, (m) => {
+        const openEnd = m.indexOf('>') + 1;
+        const closeLen = m.match(/<\/script\s*>$/i)[0].length;
+        return m.slice(0, openEnd) + mask(m.slice(openEnd, m.length - closeLen)) + m.slice(m.length - closeLen);
+      })
+      .replace(/<(pre|code|textarea|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, (m) => mask(m));
     html = html.replace(/(href|src)=(["'])([^"']+)\2/gi,
       (match, attr, quote, url) => {
-        const cleanUrl = url.replace(/\?v=[^"']*/, '');
-        const dot = cleanUrl.lastIndexOf('.');
-        const ext = dot === -1 ? '' : cleanUrl.slice(dot).toLowerCase();
-        if (assetExts.has(ext)) {
-          return attr + '=' + quote + cleanUrl + '?v=' + buildHash + quote;
-        }
-        return match;
+        // The extension lives on the PATH: split the fragment and query off
+        // first. The old check ran on the raw value, so an asset the SSG
+        // emitted with an existing query ('style.css?foo=bar') or a fragment
+        // ('style.css#iefix') had '.css?foo=bar'/'…css#iefix' as its "ext",
+        // missed the set, and was never busted - a stale asset survived a
+        // content change. The version param joins the existing query with '&'
+        // and a previous freestruct 'v=' is dropped (rerun hygiene).
+        const hashAt = url.indexOf('#');
+        const fragment = hashAt === -1 ? '' : url.slice(hashAt);
+        const noFrag = hashAt === -1 ? url : url.slice(0, hashAt);
+        const qAt = noFrag.indexOf('?');
+        const pathPart = qAt === -1 ? noFrag : noFrag.slice(0, qAt);
+        const query = qAt === -1 ? '' : noFrag.slice(qAt + 1);
+        const dot = pathPart.lastIndexOf('.');
+        const ext = dot === -1 ? '' : pathPart.slice(dot).toLowerCase();
+        if (!assetExts.has(ext)) return match;
+        const keptParams = query.split('&').filter(p => p && !/^v=/.test(p));
+        keptParams.push('v=' + buildHash);
+        return attr + '=' + quote + pathPart + '?' + keptParams.join('&') + fragment + quote;
       });
+    html = html.replace(/\u0000FS(\d+)\u0000/g, (m, i) => masks[Number(i)]);
   }
 
   // SearchAction (config.search.url, SEO-gap pass): the seam expands to ''

@@ -220,7 +220,7 @@ Two shipped surfaces beyond the engine:
 
 ## v1.2.0
 
-Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, then the post-queue engine sweep - with the GitHub issue queue fully closed (#1-#40), the engine corners the queue-era waves never probed got nine real fixes, each with a battery pin (121 -> 130), plus the issue #41 version-truth census leg (130 -> 132), the issue #43 count census (132 -> 133), the post-merge staging pass (133 -> 134), and the repo-wide gap walk (134 -> 140):
+Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, then the post-queue engine sweep - with the GitHub issue queue fully closed (#1-#40), the engine corners the queue-era waves never probed got nine real fixes, each with a battery pin (121 -> 130), plus the issue #41 version-truth census leg (130 -> 132), the issue #43 count census (132 -> 133), the post-merge staging pass (133 -> 134), and the repo-wide gap walk (134 -> 144):
 
 - Rerun hygiene - body-start/footer snippets are marker-wrapped and a rerun drops the previous copy before re-adding it, so a second pass no longer stacks snippets or churns the content-derived build hash
 - Verbatim-block-aware `minifyHtml` - `<pre class="...">`/`<script>`/`<style>`/`<textarea>` content (attribute forms included) survives byte-for-byte, so code fences and inline JS with `//` comments are never collapsed
@@ -247,6 +247,10 @@ Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, the
 - Cache-bust parity - single-quoted `href`/`src` assets get `?v=` too, matching the link checker's both-quote handling
 - Audit containment - a site-local `og:image`/JSON-LD `logo`/`image` that escapes the output tree is named as escaping instead of being probed off-tree and read back as present
 - Audit noindex exemption - a `robots noindex` page (a redirect stub, a thank-you page) is exempt from the content-quality classes (description length, h1 shape, JSON-LD absence) that grade indexable content, while the structural classes still apply
+- Link check query fix - a query string on an internal link (`/guide?utm_source=x`) is stripped before resolving, so a valid link is no longer reported broken (which failed `--strict` on any site whose nav carries query params)
+- Cache-bust query/fragment fix - an asset emitted with an existing query (`style.css?foo=bar`) or a fragment (`legacy.css#iefix`) is now busted too (the version param joins the query, a previous `v=` is dropped), where before it was silently left stale
+- Cache-bust code protection - asset links SHOWN in a code example (`<pre><code>&lt;link href="/style.css"&gt;</code></pre>`) or inside a script body are left untouched; only live `href`/`src` attributes are busted
+- Purge hook reporting - every configured purge hook (and every `hooks.postBuild` entry) is reported when hooks are disabled, not just the first
 
 ## v1.1.0
 

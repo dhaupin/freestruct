@@ -64,8 +64,15 @@ export function checkLinks(files, outputDir, basePath = '') {
       // prefix stripped first (issue #32); one with a different prefix keeps
       // it and resolves (correctly) as broken.
       let target = link;
-      if (link.startsWith('/') && prefix && (link === prefix || link.startsWith(prefix + '/'))) {
-        target = link.slice(prefix.length) || '/';
+      // A query string is not part of the route: '/guide?foo=bar' serves the
+      // same page as '/guide'. Resolving the raw value looked for a file
+      // literally named 'guide?foo=bar' and reported a valid link broken
+      // (failing --strict on any site whose nav carries query params, e.g. a
+      // utm-tagged or search-fed link). Strip it before resolving.
+      const q = target.indexOf('?');
+      if (q !== -1) target = target.slice(0, q);
+      if (target.startsWith('/') && prefix && (target === prefix || target.startsWith(prefix + '/'))) {
+        target = target.slice(prefix.length) || '/';
       }
       const absPath = target.startsWith('/')
         ? path.join(outputDir, target)

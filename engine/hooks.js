@@ -42,13 +42,19 @@ export function runPurgeHooks(config, buildHash, outputDir) {
 
     command = substitutePlaceholders(command, { siteUrl, buildHash, outputDir });
 
+    if (!config.runHooks) {
+      // Report EVERY configured hook (not just the first): the old `return`
+      // sat inside the loop, so a multi-hook config printed one line and
+      // silently hid the rest, leaving the operator unsure what a later
+      // runHooks: true would actually execute.
+      console.log('Purge hook ' + name + ': running...');
+      console.log('  Command: ' + command.substring(0, 100) + '...');
+      console.log('  Purge hooks disabled (set runHooks: true to enable)');
+      continue;
+    }
+
     console.log('Purge hook ' + name + ': running...');
     try {
-      if (!config.runHooks) {
-        console.log('  Command: ' + command.substring(0, 100) + '...');
-        console.log('  Purge hooks disabled (set runHooks: true to enable)');
-        return;
-      }
       execSync(command, { stdio: 'inherit', timeout: 30000, env: hookEnv({ siteUrl, buildHash, outputDir }) });
       console.log('  Command: ' + command.substring(0, 100) + '...');
       console.log('Purge hook ' + name + ': done');
@@ -85,9 +91,11 @@ export function runPostBuildHooks(config, buildHash, outputDir) {
     const command = substitutePlaceholders(entry, { siteUrl, buildHash, outputDir });
 
     if (!config.runHooks) {
+      // Report EVERY configured hook (mirror of the purge loop fix): the old
+      // `return` inside the loop hid every entry after the first.
       console.log('PostBuild hook: Command: ' + command.substring(0, 100) + '...');
       console.log('PostBuild hooks disabled (set runHooks: true to enable)');
-      return [];
+      continue;
     }
 
     console.log('PostBuild hook: running ' + command.substring(0, 76) + '...');
