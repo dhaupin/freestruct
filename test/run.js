@@ -372,6 +372,18 @@ test('staging flow: the reusable docs lane gates its deploy job to main, so no c
   assert.ok(!caller.jobs.docs.if, 'the caller does not re-implement the deploy guard (it lives in the lane)');
 });
 
+test('staging flow: the promotion fast-forward is documented, so the integration branch never drifts (#44)', () => {
+  // A merge-commit promotion leaves main one commit ahead of staging on every
+  // promotion, even when the flow is followed exactly. The sync is a required
+  // step, so the house rules must name it (the command is the one bit of the
+  // flow a battery can check; the git operation itself is a human/CI act).
+  const agents = read('.', 'AGENTS.md');
+  assert.match(agents, /git push origin origin\/main:staging/,
+    'AGENTS.md names the promotion fast-forward (git push origin origin/main:staging)');
+  assert.match(agents, /fast-forward `staging` to `main`/i,
+    'AGENTS.md states the fast-forward rule in prose, not just as a bare command');
+});
+
 // ---------- crashtest pack surface (packs/, the one-surface extension model) ----------
 
 test('packs/ surface: a README ships, every public pack.json is schemaVersion 1, and each entry satisfies the scenario contract (name/description/attacks)', async () => {

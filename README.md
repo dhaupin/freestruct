@@ -220,7 +220,7 @@ Two shipped surfaces beyond the engine:
 
 ## v1.2.0
 
-Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, then the post-queue engine sweep - with the GitHub issue queue fully closed (#1-#40), the engine corners the queue-era waves never probed got nine real fixes, each with a battery pin (121 -> 130), plus the issue #41 version-truth census leg (130 -> 132), the issue #43 count census (132 -> 133), the post-merge staging pass (133 -> 134), and the repo-wide gap walk (134 -> 159):
+Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, then the post-queue engine sweep - with the GitHub issue queue fully closed (#1-#40), the engine corners the queue-era waves never probed got nine real fixes, each with a battery pin (121 -> 130), plus the issue #41 version-truth census leg (130 -> 132), the issue #43 count census (132 -> 133), the post-merge staging pass (133 -> 134), and the repo-wide gap walk (134 -> 160):
 
 - Rerun hygiene - body-start/footer snippets are marker-wrapped and a rerun drops the previous copy before re-adding it, so a second pass no longer stacks snippets or churns the content-derived build hash
 - Verbatim-block-aware `minifyHtml` - `<pre class="...">`/`<script>`/`<style>`/`<textarea>` content (attribute forms included) survives byte-for-byte, so code fences and inline JS with `//` comments are never collapsed
@@ -264,7 +264,7 @@ Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, the
 - Lazy-load guard - the "already has loading" check was `includes('loading=')` (lowercase, no whitespace tolerance), so `<img ... LOADING="eager">` or `loading = "eager"` collected a SECOND `loading` attribute and the author's eager hint was lost; the guard is case- and whitespace-insensitive now
 - 404 noindex on rerun - the 404 pipeline inserted its `noindex` robots meta before `injectPage`, so on the second run the tag sat inside the region the rerun-hygiene strip deletes and was dropped: the build passed on run 1 and its own audit then failed the 404 on run 2. The noindex is now asserted after injection, past the strip, so it survives every rerun
 - Feed/sitemap dates on rerun - feed `pubDate` and sitemap `lastmod` come from each page's pre-injection mtime, but freestruct rewrites every page it decorates, so a second run read its own write back as the page date and the whole feed re-stamped on every redeploy with no content change. The pre-injection mtime is restored after the writes now, so the dates hold across reruns and still advance when the SSG rebuilds the page
-- Staging flow (CI) - `test.yml` and `docs.yml` now verify `staging` as well as `main` (push and pull request), so work is checked where it lands; and the reusable `docs-lane.yml`'s deploy job is gated to `main` by ref, so widening the docs trigger cannot publish staging content to production, and every caller of the lane inherits the guard
+- Staging flow (CI) - `test.yml` and `docs.yml` now verify `staging` as well as `main` (push and pull request), so work is checked where it lands; the reusable `docs-lane.yml`'s deploy job is gated to `main` by ref, so widening the docs trigger cannot publish staging content to production and every caller of the lane inherits the guard; and every promotion fast-forwards `staging` to `main` (`git push origin origin/main:staging`), because a merge-commit promotion drifts the two by one each time
 
 ## v1.1.0
 

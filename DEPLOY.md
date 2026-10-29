@@ -18,6 +18,26 @@ Dependencies are deliberately tiny: the package runtime ships with one dependenc
 
 ---
 
+## Branch flow (staging -> main)
+
+`staging` is the permanent integration branch; `main` is production. Work branches off `staging`, PRs target `staging`, and `staging` -> `main` is the only promotion path (issue #44). CI verifies both branches, and the Pages deploy is gated to `main` (see section 1).
+
+Promotion runbook:
+
+```bash
+# 1. promote: open a PR staging -> main, or fast-forward main when there is no
+#    divergence to reconcile; a merge commit is fine, the next step handles it
+# 2. fast-forward the integration branch to main - REQUIRED, every promotion.
+#    A merge-commit promotion puts a commit on main that staging lacks, so the
+#    two drift by one each time even when the flow is followed exactly:
+git fetch origin
+git push origin origin/main:staging
+```
+
+The fast-forward is mechanical, not a mistake - skipping it is how `staging` falls behind `main` and the next promotion grows a merge-base it should not have.
+
+---
+
 ## 1. GitHub Pages (`docs.yml` -> `docs-lane.yml`)
 
 The docs build is the dogfood proof: the Pages site at https://freestruct.creadev.org is produced by the same pipeline a consumer would run, gated at every step.
@@ -50,7 +70,7 @@ Deployment needs the GitHub Pages environment (`github-pages`) already configure
 
 Every push and pull request runs:
 
-1. `npm test` - the fixture battery (159 pins), including the version-truth pin that enforces the triple agreement (README / package.json / CHANGELOG) and the issue #41 census leg that derives the version from package.json and refuses every living surface (README line, AGENTS/CONTRIBUTING/DEPLOY pins, the pass-log reminder, the `release.yml` tag example, `init/VERSION`) that drifted, plus the issue #43 count census that derives the battery size and engine module count from source; the pinned **1.2.0** (owner call, 2026-10-28).
+1. `npm test` - the fixture battery (160 pins), including the version-truth pin that enforces the triple agreement (README / package.json / CHANGELOG) and the issue #41 census leg that derives the version from package.json and refuses every living surface (README line, AGENTS/CONTRIBUTING/DEPLOY pins, the pass-log reminder, the `release.yml` tag example, `init/VERSION`) that drifted, plus the issue #43 count census that derives the battery size and engine module count from source; the pinned **1.2.0** (owner call, 2026-10-28).
 2. Docs audit (`npm run lint:docs`) - frontmatter, links, nav symmetry, style, truthfulness, English-only language gate, and the engine-header comment format gate.
 3. Tarball e2e (`npm run e2e`) - real `npm pack` -> install into a throwaway project -> run the README quick start through the bin shim -> assert artifacts + injections + exit shapes.
 4. Crashtest pack selftest (`npm run packs:selftest`) - the pack must hold a hardened Freestruct build and trip a deliberately regressed one.
