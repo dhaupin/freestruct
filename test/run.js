@@ -1162,6 +1162,76 @@ test('default run: custom snippets get comments stripped + placeholders substitu
   } finally { rmDir(dir); }
 });
 
+test('pass-hunt: a comments-only snippet template injects nothing (no empty marker regions)', () => {
+  // The shipped inject-body-start.html / inject-footer.html are comments-only
+  // (placeholders + examples for the consumer to edit). Stripping comments left
+  // whitespace, which the old code injected as an empty marker-wrapped region
+  // on every page (the footer's dozen blank lines included). A comments-only
+  // snippet must be treated as absent.
+  const dir = scenario('main', {
+    'docs/_freestruct/inject-body-start.html': '<!-- Custom body start -->\n<!-- Placeholders: {{siteName}} -->\n',
+    'docs/_freestruct/inject-footer.html': '<!-- Custom footer -->\n\n<!-- <script src="{{siteUrl}}/x.js"></script> -->\n',
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/index.html');
+    assert.ok(!html.includes('<!-- freestruct:snippet -->'), 'no empty snippet region is injected');
+    assert.ok(!html.includes('<!-- /freestruct:snippet -->'), 'no empty snippet close marker is injected');
+  } finally { rmDir(dir); }
+});
+
+test('pass-hunt: a page and site with no description ship no empty description tags (the audit would fail them)', () => {
+  // No site.description, no page meta description: the injected head must omit
+  // the description-bearing lines entirely. The old code rendered content=""
+  // for name=description / og:description / twitter:description, and the
+  // engine's own audit then FAILed the page for a "missing meta description"
+  // (an empty one) it had just written.
+  const dir = scenario('main', {
+    'docs/ssr-config.yml': [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+    ].join('\n') + '\n',
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/index.html');
+    assert.ok(!/name="description"/.test(html), 'no empty name=description');
+    assert.ok(!/property="og:description"/.test(html), 'no empty og:description');
+    assert.ok(!/name="twitter:description"/.test(html), 'no empty twitter:description');
+    // the rest of the injected set still lands
+    assert.includes(html, '<meta property="og:title" content="Home | Foo Docs">');
+    assert.includes(html, '<meta name="twitter:card" content="summary">');
+  } finally { rmDir(dir); }
+});
+
+test('pass-hunt: a page with a PARTIAL og/twitter set gets no duplicate tags (per-tag missing-only)', () => {
+  // Group-level missing-only: the og gate is og:title/og:description, so a page
+  // shipping only its own og:url (or only twitter:image) leaves the group gate
+  // FALSE and the whole config set injected - a duplicate og:url the engine's
+  // own audit (which counts only og:title) shipped green. Each candidate tag is
+  // now filtered against the page's own head.
+  const dir = scenario('main', {
+    'docs/_site/partial.html': [
+      '<html><head><title>Partial</title>',
+      '<meta property="og:url" content="https://custom.example.com/keep">',
+      '<meta name="twitter:image" content="https://custom.example.com/tw.png">',
+      '</head><body><h1>p</h1></body></html>',
+    ].join('\n'),
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/partial.html');
+    assert.strictEqual((html.match(/property="og:url"/g) || []).length, 1, 'no duplicate og:url');
+    assert.includes(html, 'content="https://custom.example.com/keep"', 'the page\'s own og:url is kept');
+    assert.strictEqual((html.match(/name="twitter:image"/g) || []).length, 1, 'no duplicate twitter:image');
+    assert.includes(html, 'content="https://custom.example.com/tw.png"', 'the page\'s own twitter:image is kept');
+    // the rest of the set still fills in (missing-only per tag)
+    assert.includes(html, '<meta property="og:title" content="Partial | Foo Docs">');
+    assert.includes(html, '<meta name="twitter:card" content="summary_large_image">');
+  } finally { rmDir(dir); }
+});
+
 test('default run: reading-time, last-modified and lazy-loading metas land on pages', () => {
   const dir = scenario('main');
   try {
@@ -2931,7 +3001,9 @@ test('breadcrumb: true builds BreadcrumbList from the URL tree; root ships none;
     const guide = read(dir, 'docs/_site/guide/index.html');
     assert.ok(/BreadcrumbList/.test(guide), 'the deep page gets the trail');
     assert.includes(guide, '"item":"https://docs.example.com/"', 'the trail starts at the site root');
-    assert.includes(guide, '"item":"https://docs.example.com/guide"', 'the trail names the owning directory');
+    // The leaf item is the page itself: its URL matches the page's canonical
+    // (a directory page keeps its trailing slash), not the segment-join shape.
+    assert.includes(guide, '"item":"https://docs.example.com/guide/"', 'the trail leaf matches the page canonical');
     const own = read(dir, 'docs/_site/own-ld.html');
     assert.ok(!/BreadcrumbList/.test(own), 'a page with its own JSON-LD stays untouched');
   } finally { rmDir(dir); }
