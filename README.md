@@ -220,7 +220,7 @@ Two shipped surfaces beyond the engine:
 
 ## v1.2.0
 
-Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, then the post-queue engine sweep - with the GitHub issue queue fully closed (#1-#40), the engine corners the queue-era waves never probed got nine real fixes, each with a battery pin (121 -> 130), plus the issue #41 version-truth census leg (130 -> 132), the issue #43 count census (132 -> 133), the post-merge staging pass (133 -> 134), and the repo-wide gap walk (134 -> 149):
+Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, then the post-queue engine sweep - with the GitHub issue queue fully closed (#1-#40), the engine corners the queue-era waves never probed got nine real fixes, each with a battery pin (121 -> 130), plus the issue #41 version-truth census leg (130 -> 132), the issue #43 count census (132 -> 133), the post-merge staging pass (133 -> 134), and the repo-wide gap walk (134 -> 151):
 
 - Rerun hygiene - body-start/footer snippets are marker-wrapped and a rerun drops the previous copy before re-adding it, so a second pass no longer stacks snippets or churns the content-derived build hash
 - Verbatim-block-aware `minifyHtml` - `<pre class="...">`/`<script>`/`<style>`/`<textarea>` content (attribute forms included) survives byte-for-byte, so code fences and inline JS with `//` comments are never collapsed
@@ -257,6 +257,7 @@ Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, the
 - Reading-time prose count - the `reading-time` meta counted script, style and comment text as page prose (a 600-word inline bundle inflated a five-word page to "4 min read"); both it and the search index now share one `htmlToText` view that drops script/style/comment bodies before tags
 - IndexNow URL decoding - the `indexnow` subcommand read `<loc>` values straight out of the XML-escaped sitemap and POSTed them verbatim, so a URL with `&` (escaped as `&amp;`) was submitted to the engines in a form that does not resolve; the values decode back to the real URL now
 - llms.txt link labels - a page title carrying markdown brackets (`Foo] bar`, a `[preview]` tag) was emitted raw into `- [title](url)`, so the `]` closed the label early and the URL spilled into the prose as broken text; brackets and backslashes escape in the label now
+- Entity decoding - the shared decoder mapped five named entities only, so a smart-quoted title (`&#8217;`, `&mdash;`) stayed literal and the feed double-escaped it (`&amp;#8217;`); decimal, hex and the common named set decode now, and the audit grades title/description length on the decoded text rather than the raw markup
 
 ## v1.1.0
 

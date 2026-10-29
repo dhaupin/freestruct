@@ -541,3 +541,15 @@ The entity path had one more consumer the earlier passes never traced:
 - **Trail aligned at 149:** README trail + v1.2.0 section (one new bullet), CHANGELOG 1.2.0 entry (one new bullet), the announcement prose, and the derived count surfaces via the count census.
 - Gates: battery 149/149, docs audit (7 gates clean), sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run build` (Jekyll + inject) + `freestruct audit docs/_site` (0 failures, 0 warnings).
 - Next pass: cut the v1.2.0 tag (owner-gated - the user said NOT yet).
+
+### Pass 26.29 - the entity decoder probe (done, same session, post-26.28)
+
+- **The shared entity decoder understood only five named entities (fixed):** `decodeEntities` in `scan.js` mapped `lt`/`gt`/`quot`/`amp`/`apos`(and `#39`) and nothing else. An SSG that emits typographic characters as entities - a smart quote (`&#8217;`), an em dash (`&mdash;`), a copyright sign (`&copy;`) - handed freestruct the literal entity text, and every consumer inherited the miss:
+  - the **feed** re-escaped the `&` into `&amp;#8217;` (which a reader sees verbatim as `&#8217;`, never the character) - a real regression of the "escapes exactly once" contract for any entity beyond the five;
+  - the **audit** graded title/description length on the RAW markup: an 80-character description written as 400 characters of `&amp;` runs, or a 60-character title written as numeric entities, warned "> 65" / "outside 70-165" on text that renders well inside the band.
+  The decoder now resolves decimal (`&#8217;`), hex (`&#x2019;`) and a common named set, single-pass (numeric first, so `&amp;#65;` stays the literal `&#65;`). `audit.js` length graders measure the decoded text (`decodedLength`, plus `decodeEntities` on the description); `stripTags` no longer needs its ad-hoc `&amp;` swap.
+- **Walk coverage (checked, no bug):** `search.json`/`llms.txt` inherit the wider decode for free (they share the helper); `ogimage.js` uses `escXml` (unchanged); the five-entity back-compat path (`&amp;`-only sources) still decodes identically.
+- **Pins:** a new pass-hunt pin (numeric + named entities decode; the feed never carries `&amp;#8217;`/`&amp;mdash;`; search.json carries the decoded characters) and a new audit pin (an entity-heavy title/description is not graded on its markup length). Battery 149 -> 151.
+- **Trail aligned at 151:** README trail + v1.2.0 section, CHANGELOG 1.2.0 entry, the announcement prose, and the derived count surfaces via the count census.
+- Gates: battery 151/151, docs audit (7 gates clean), sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run build` (Jekyll + inject) + `freestruct audit docs/_site` (0 failures, 0 warnings).
+- Next pass: cut the v1.2.0 tag (owner-gated - the user said NOT yet).

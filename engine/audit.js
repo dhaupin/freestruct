@@ -24,6 +24,7 @@
 
 import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
 import path from 'path';
+import { decodeEntities } from './scan.js';
 
 // FAIL class = the tags core to the engine's own contract. The REST of the
 // injected set (og:url/type/site_name/locale, twitter:description) rides as
@@ -86,7 +87,15 @@ function walkHtml(dir) {
 }
 
 function stripTags(s) {
-  return String(s).replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').trim();
+  return String(s).replace(/<[^>]+>/g, '').trim();
+}
+
+// Title/description length is graded against what a SEARCH ENGINE sees: the
+// DECODED text, not the raw markup. An entity-heavy title ('&amp;', '&#39;',
+// '&#65;') inflated the raw length and tripped the > 65 / > 165 warnings on
+// text that renders well inside the band.
+function decodedLength(s) {
+  return decodeEntities(stripTags(s)).length;
 }
 
 /**
@@ -184,7 +193,7 @@ export function auditOutput({ outputDir, config, json = false, capture = false }
     const titleMatch = head.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
     if (!titleMatch || !titleMatch[1].trim()) fail(label, 'missing <title>');
     else {
-      const t = stripTags(titleMatch[1]).length;
+      const t = decodedLength(titleMatch[1]);
       if (t > 65) warn(label, 'title ' + t + ' chars (> 65, may truncate)');
       if (t < 10) warn(label, 'title ' + t + ' chars (suspiciously short)');
     }
@@ -199,8 +208,9 @@ export function auditOutput({ outputDir, config, json = false, capture = false }
 
     const desc = grabMeta(head, 'name', 'description');
     if (!desc) fail(label, 'missing meta description');
-    else if (!noindex && (desc.length < 70 || desc.length > 165)) {
-      warn(label, 'description ' + desc.length + ' chars (outside 70-165, may truncate)');
+    else if (!noindex) {
+      const d = decodeEntities(desc).length;
+      if (d < 70 || d > 165) warn(label, 'description ' + d + ' chars (outside 70-165, may truncate)');
     }
 
     const canonical = grabCanonical(head);

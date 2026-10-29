@@ -2060,6 +2060,30 @@ test('audit: an attribute value carrying the OTHER quote kind is read whole (apo
   } finally { rmDir(dir); }
 });
 
+test('audit: title/description length grades the DECODED text, not the raw markup (bug fix)', () => {
+  const dir = scenario('main');
+  try {
+    runInject(dir);
+    const idx = path.join(dir, 'docs/_site/index.html');
+    // 60 VISIBLE characters, but every letter is a numeric entity: the raw
+    // match is 240 chars, so the old raw-length grader warned "> 65" on a
+    // title that renders well inside the band.
+    const titleVisible = 'Plenty long enough title here for the audit band okay';
+    const titleRaw = titleVisible.replace(/[a-z]/g, (c) => '&#' + c.charCodeAt(0) + ';');
+    // 80 VISIBLE characters as '&amp;' runs: raw 400, decoded 80 (in band).
+    const descVisible = 'A'.repeat(80);
+    const descRaw = descVisible.replace(/A/g, '&amp;');
+    fs.writeFileSync(idx, fs.readFileSync(idx, 'utf8')
+      .replace(/<title[^>]*>[\s\S]*?<\/title>/i, `<title>${titleRaw}</title>`)
+      .replace(/<meta name="description"[^>]*>/i, `<meta name="description" content="${descRaw}">`));
+    const out = spawnSync(process.execPath, [INJECT, 'audit'], { cwd: dir, encoding: 'utf8' });
+    assert.ok(!/WARN index\.html: title \d+ chars/.test(out.stdout),
+      'an entity-heavy title is not graded on its markup length\n' + out.stdout);
+    assert.ok(!/WARN index\.html: description \d+ chars/.test(out.stdout),
+      'an entity-heavy description is not graded on its markup length\n' + out.stdout);
+  } finally { rmDir(dir); }
+});
+
 test('audit: a noindex page is exempt from the content-quality classes but not the structural ones', () => {
   const dir = scenario('main');
   try {
@@ -3409,6 +3433,33 @@ test('pass-hunt: entity-encoded source facts decode ONCE (feed/search/llms never
     assert.strictEqual(entry.description, 'Tips & tricks for "docs"', 'search.json description decodes quotes');
     assert.strictEqual(entry.heading, 'Guides & Tips', 'search.json heading decodes too');
     assert.ok(!/&(amp|quot|lt|gt|#39);/.test(entry.content), 'search.json content carries no raw entities');
+  } finally { rmDir(dir); }
+});
+
+test('pass-hunt: numeric and named entities decode (a typographic title is not double-escaped into the feed)', () => {
+  // The decoder mapped only five named entities, so a smart-quoted title
+  // ('&#8217;', '&mdash;') survived as literal entity text - the feed then
+  // escaped the '&' into '&amp;#8217;', which a reader sees verbatim. The
+  // decoder now handles decimal, hex and the common named set.
+  const dir = scenario('main', {
+    'docs/_site/smart.html': [
+      '<html lang="en"><head><meta charset="UTF-8">',
+      '<title>Rock &#8217;n&#8217; Roll</title>',
+      '<meta name="description" content="It&#8217;s a test &mdash; really &copy; 2026">',
+      '</head><body><h1>Rock &#8217;n&#8217; Roll</h1><p>body</p></body></html>',
+    ].join('\n') + '\n',
+  });
+  try {
+    runInject(dir);
+    const feed = read(dir, 'docs/_site/feed.xml');
+    assert.includes(feed, '<title>Rock \u2019n\u2019 Roll</title>', 'numeric entities decode before the feed re-escapes');
+    assert.ok(!feed.includes('&amp;#8217;'), 'no double-escaped numeric entity in the feed');
+    assert.ok(!feed.includes('&amp;mdash;'), 'no double-escaped named entity in the feed');
+
+    const idx = JSON.parse(read(dir, 'docs/_site/search.json'));
+    const entry = idx.find((e) => e.url === 'https://docs.example.com/smart');
+    assert.strictEqual(entry.title, 'Rock \u2019n\u2019 Roll', 'search.json decodes numeric entities');
+    assert.strictEqual(entry.description, 'It\u2019s a test \u2014 really \u00a9 2026', 'named entities decode too');
   } finally { rmDir(dir); }
 });
 

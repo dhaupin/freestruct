@@ -62,14 +62,39 @@ export function stripRobotsMeta(html) {
  * sees as '&amp;'), and search.json/llms.txt carried raw entities into
  * plain-text/JSON contexts that render them literally.
  */
+// Common named entities (the ones that realistically appear in titles and
+// descriptions) plus numeric forms. A title carrying '&#8217;' or '&mdash;'
+// was left literal by the old five-entry map, so the feed double-escaped it
+// ('&amp;#8217;', which renders as the literal entity text) and the length
+// graders counted the markup instead of the character.
+const NAMED_ENTITIES = {
+  lt: '<', gt: '>', quot: '"', apos: "'", amp: '&',
+  nbsp: '\u00a0', mdash: '\u2014', ndash: '\u2013', hellip: '\u2026',
+  lsquo: '\u2018', rsquo: '\u2019', ldquo: '\u201c', rdquo: '\u201d',
+  copy: '\u00a9', reg: '\u00ae', trade: '\u2122', deg: '\u00b0',
+  times: '\u00d7', laquo: '\u00ab', raquo: '\u00bb', middot: '\u00b7',
+  bull: '\u2022', euro: '\u20ac', pound: '\u00a3', yen: '\u00a5',
+  cent: '\u00a2', sect: '\u00a7', para: '\u00b6', dagger: '\u2020',
+  plusmn: '\u00b1', frac12: '\u00bd', frac14: '\u00bc', frac34: '\u00be',
+};
+
 export function decodeEntities(value) {
   return String(value == null ? '' : value)
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#0*39;/g, "'")
-    .replace(/&apos;/g, "'")
-    .replace(/&amp;/g, '&');
+    // Numeric forms first: decimal '&#8217;' and hex '&#x2019;'. Doing these
+    // before the named pass keeps single-pass semantics ('&amp;#65;' stays
+    // the literal '&#65;' after the amp pass, never '<').
+    .replace(/&#x([0-9a-f]+);/gi, (m, hex) => {
+      const cp = parseInt(hex, 16);
+      return cp >= 0 && cp <= 0x10ffff ? String.fromCodePoint(cp) : m;
+    })
+    .replace(/&#(\d+);/g, (m, dec) => {
+      const cp = parseInt(dec, 10);
+      return cp >= 0 && cp <= 0x10ffff ? String.fromCodePoint(cp) : m;
+    })
+    .replace(/&([a-z][a-z0-9]*);/gi, (m, name) => {
+      const key = name.toLowerCase();
+      return Object.prototype.hasOwnProperty.call(NAMED_ENTITIES, key) ? NAMED_ENTITIES[key] : m;
+    });
 }
 
 // Quoted-attribute reader (same shape audit.js owns): the closing quote must
