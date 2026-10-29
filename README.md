@@ -220,7 +220,7 @@ Two shipped surfaces beyond the engine:
 
 ## v1.2.0
 
-Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, then the post-queue engine sweep - with the GitHub issue queue fully closed (#1-#40), the engine corners the queue-era waves never probed got nine real fixes, each with a battery pin (121 -> 130), plus the issue #41 version-truth census leg (130 -> 132), the issue #43 count census (132 -> 133), the post-merge staging pass (133 -> 134), and the repo-wide gap walk (134 -> 146):
+Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, then the post-queue engine sweep - with the GitHub issue queue fully closed (#1-#40), the engine corners the queue-era waves never probed got nine real fixes, each with a battery pin (121 -> 130), plus the issue #41 version-truth census leg (130 -> 132), the issue #43 count census (132 -> 133), the post-merge staging pass (133 -> 134), and the repo-wide gap walk (134 -> 147):
 
 - Rerun hygiene - body-start/footer snippets are marker-wrapped and a rerun drops the previous copy before re-adding it, so a second pass no longer stacks snippets or churns the content-derived build hash
 - Verbatim-block-aware `minifyHtml` - `<pre class="...">`/`<script>`/`<style>`/`<textarea>` content (attribute forms included) survives byte-for-byte, so code fences and inline JS with `//` comments are never collapsed
@@ -253,6 +253,7 @@ Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, the
 - Purge hook reporting - every configured purge hook (and every `hooks.postBuild` entry) is reported when hooks are disabled, not just the first
 - Table-wrap hash stability - the default-on `tableWrap` pass runs after the build hash is computed, so a rerun saw the wrapper the first run added and churned the content-derived hash (flipping every asset `?v=` and busting CDN caches on an unchanged site); `computeBuildHash` now strips the wrapper before hashing
 - Search index text hygiene - `search.json` `content`/`heading` now carry plain page text: script and style bodies (raw JS/CSS) are dropped and a heading with inline markup (`<h1>Title <em>x</em></h1>`) no longer ships its tags into the index
+- 404 name escaping - the generated `404.html` interpolated the raw `site.name` into `<title>`/text and the raw home URL into `href`/`action`, so a quote- or `<`-bearing name broke the title and injected live markup into the error page; both ride the shared attribute escaper now
 
 ## v1.1.0
 

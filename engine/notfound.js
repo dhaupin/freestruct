@@ -5,7 +5,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { injectPage } from './seo.js';
+import { injectPage, escAttr } from './seo.js';
 import { pageUrlFor } from './urls.js';
 import { stripRobotsMeta } from './scan.js';
 
@@ -14,8 +14,12 @@ export function generate404(config, outputDir, buildHash, template, snippetDir) 
   const file = path.join(outputDir, '404.html');
   // Links follow the pageUrlFor contract (basePath-aware) - raw site.url
   // guesses like '/docs/' point at 404s on sub-path installs (#3 class).
-  const siteName = config.site.name || 'Site';
-  const homeUrl = pageUrlFor(config, '/');
+  // The site name and the home URL land in HTML text/attribute slots, so they
+  // ride escAttr: a quote-bearing or '<'-bearing site name otherwise broke the
+  // <title> and could inject markup into the error page (the Pass 26.21 walk
+  // claimed this was escaped - it was not).
+  const siteName = escAttr(config.site.name || 'Site');
+  const homeUrl = escAttr(pageUrlFor(config, '/'));
   const notFound = `<!DOCTYPE html>
 <html lang="en">
 <head>

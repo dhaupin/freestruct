@@ -1238,6 +1238,28 @@ test('generated 404: full SEO pipeline + advertised noindex now shipped (FIXED #
   } finally { rmDir(dir); }
 });
 
+test('generated 404: a quote- or markup-bearing site name is escaped, not injected (bug fix)', () => {
+  const dir = scenario('main', {
+    'docs/ssr-config.yml': [
+      'site:',
+      '  name: "Evil <script>alert(1)</script> & \\"Co\\""',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+    ].join('\n') + '\n',
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/404.html');
+    // The generated 404 interpolated the raw site name into <title>/text and
+    // the raw home URL into href/action; a name with '<'/'"' broke the title
+    // and injected live markup into the error page.
+    assert.ok(!/<script>alert\(1\)<\/script>/.test(html), 'no live script tag from the site name');
+    assert.includes(html, '&lt;script&gt;alert(1)&lt;/script&gt;', 'the site name is escaped in the title');
+    assert.includes(html, '&quot;Co&quot;', 'the embedded quote is escaped');
+    assert.ok(!/name="Evil/.test(html), 'no broken attribute from the raw name');
+  } finally { rmDir(dir); }
+});
+
 test('custom 404: body preserved + full pipeline + noindex (FIXED #11)', () => {
   const CUSTOM_404 = [
     '<!DOCTYPE html>',

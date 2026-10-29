@@ -181,7 +181,7 @@ function hreflangAlternatesFor(page, config) {
 // '&' is deliberately NOT escaped: the battery pins the raw ampersand in
 // canonical attributes as valid HTML, and escaping it would double-encode
 // legit URLs that already contain &amp; from the SSG.
-function escAttr(value) {
+export function escAttr(value) {
   return String(value == null ? '' : value)
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
