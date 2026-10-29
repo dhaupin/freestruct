@@ -672,3 +672,22 @@ The owner asked how freestruct's cache busting compares to prestruct's, then to 
 - **Docs:** the cache-busting guide gains a "Same-origin only" subsection and a supported-assets note on srcset; the FAQ gains "Does it bust third-party or signed URLs?".
 - Gates: battery 166/166, docs audit (7 gates clean), claims gate clean, sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run gate` exit 0.
 - Next pass: cut the v1.2.0 tag (owner-gated - the user said NOT yet).
+
+---
+
+### Pass 26.40 - the release-walk pre-tag hardening sweep (owner-directed)
+
+The owner asked for a hunt over **every feature** for bugs, gaps, edges, vulns and fiction before cutting v1.2.0. Method: reproduce-first against the REAL CLI on scratch trees (`/tmp/fs-probe*`), one probe per feature surface, each confirmed defect red-checked then pinned. Nine probes came back CLEAN (noindex honored across sitemap/feed/search/llms; escaping of hostile config values through og/twitter/JSON-LD/verification/404; tableWrap; per-page overrides + warnings; `ogImageGeneration` shape warnings; head-anchor skips; rerun idempotency; same-origin cache busting; `lastModified` = wall-clock as documented, not fiction). Five defects confirmed and fixed, battery 166 -> 170:
+
+1. **Comments-only snippet templates injected empty regions.** The shipped `inject-body-start.html` / `inject-footer.html` are comments-only (placeholders + examples). Stripping comments left whitespace, which the engine wrapped in the `<!-- freestruct:snippet -->` markers on EVERY page (the footer's dozen blank lines with it) - visible in the repo's own baked `docs/_site`. A snippet that strips to whitespace is now treated as absent (`readSnippet`).
+2. **Empty description tags on a description-less page.** With no `site.description` and no page description, the injected head carried `content=""` for `name=description` / `og:description` / `twitter:description` - a present-but-empty description is worse to a crawler than none, and the engine's own audit then FAILed the page it had just decorated. Those lines are omitted when no description source exists.
+3. **Breadcrumb leaf URL vs canonical.** The auto `BreadcrumbList` leaf used the segment-join URL (`/guide`) while the page canonical is `/guide/` for a directory page, so the trail's last item 404'd against the canonical. The leaf now uses the page's own slug (matching its canonical); intermediate segments keep the join.
+4. **Duplicate tags from a partial og/twitter set.** The missing-only gate is group-level (`og:title`/`og:description`; `twitter:card`/`twitter:title`), so a page shipping only its own `og:url` left the group gate false and the whole config set injected - a DUPLICATE `og:url` (the audit counts only `og:title`, so it shipped green). Each candidate tag is now filtered per-tag against the page's own head; the `og:image` companions and `article:*` tags follow the same rule.
+5. **Audit/engine contradiction on partial sets.** The audit's FAIL core class failed a partial-set page's missing companions even though the engine backs off the whole group by design (SSG-owned partial sets, which the audit documents as report-grade for the non-core members). The FAIL now fires only when the page carries NO tag of the set at all - the "engine failed to inject on a bare page" case the class exists for - and warns otherwise. `og:description` / `twitter:title` / `twitter:card` joined the duplicate probe so a future engine regression there still fails.
+
+- **`engine/seo.js`:** `readSnippet` treats a comments-only snippet as absent; the injected head drops the description lines when `!pageDescription`; the breadcrumb leaf rides `page.slug`; the og/twitter candidate tags are filtered per-tag via `pageHasMeta`.
+- **`engine/audit.js`:** the og/twitter core class is page-set-aware (`ogAny`/`twAny`); three duplicate-head probes added.
+- **Pins:** four more battery tests (166 -> 170). Living count claims updated 166 -> 170 (`docs/index.md`, `AGENTS.md`, `CONTRIBUTING.md`, `DEPLOY.md`).
+- **Docs:** one CHANGELOG row; the release-line pin chain in README + CHANGELOG extended to 166 -> 170.
+- Gates: battery 170/170, docs audit (7 gates clean), claims gate clean, sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run gate` exit 0.
+- Next pass: continue the walk if the owner wants more surface (the CLI subcommand arg parsing and the `packs/` crashtest surface were not re-walked this pass); cut the v1.2.0 tag (owner-gated - NOT yet).
