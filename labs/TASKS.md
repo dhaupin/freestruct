@@ -513,3 +513,13 @@ The walk then probed the generated 404 template's interpolation:
 - **Trail aligned at 147:** README trail + v1.2.0 section (one new bullet), CHANGELOG 1.2.0 entry (one new bullet), the announcement prose, and the derived count surfaces via the count census.
 - Gates: battery 147/147, docs audit (7 gates clean), sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run build` (Jekyll + inject) + `freestruct audit docs/_site` (0 failures, 0 warnings).
 - Next pass: cut the v1.2.0 tag (owner-gated - the user said NOT yet).
+
+### Pass 26.26 - the prose-count probe (done, same session, post-26.25)
+
+The search-index fix exposed the same root shape one module over:
+
+- **The `reading-time` meta counted script/style/comment text as prose (fixed):** `addReadingTime` stripped tags with `replace(/<[^>]+>/g, ' ')` only, so a page carrying a 600-word inline `<script>` (or a large `<style>` block, or a long HTML comment) reported an inflated estimate - a five-word page read as "4 min read". The docs site's own pages carry inline bundles and styles, so the advertised number was fiction there too. The fix consolidated the text view: `scan.js` now exports `htmlToText` (drop script/style bodies and comments, strip tags, collapse whitespace, decode entities) and BOTH the search index and the reading-time estimator read through it - one definition, one behavior, so the two can never drift apart again. Pinned: a page with a 600-word inline script/style/comment still reads "1 min read".
+- **Walk coverage (checked, no bug):** `addLastModified` (single meta, refreshed), `addLazyLoading` interaction with the reading-time pass ordering, `escJson` (JSON-string + `<` neutralized), and the `searchActionJson` seam (only ships with `{search_term_string}`).
+- **Trail aligned at 148:** README trail + v1.2.0 section (one new bullet), CHANGELOG 1.2.0 entry (one new bullet), the announcement prose, and the derived count surfaces via the count census.
+- Gates: battery 148/148, docs audit (7 gates clean), sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run build` (Jekyll + inject) + `freestruct audit docs/_site` (0 failures, 0 warnings).
+- Next pass: cut the v1.2.0 tag (owner-gated - the user said NOT yet).

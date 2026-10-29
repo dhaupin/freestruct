@@ -137,6 +137,24 @@ export function hasSeoType(html, type) {
 }
 
 /**
+ * Visible text of an HTML fragment: script/style bodies and comments drop
+ * first, then every tag, whitespace collapses, and entities decode. Shared by
+ * the search index and the reading-time estimator - both count page prose, and
+ * both were inflated by raw JS/CSS when each stripped tags alone.
+ */
+export function htmlToText(html) {
+  return decodeEntities(
+    String(html)
+      .replace(/<script[\s\S]*?<\/script\s*>/gi, ' ')
+      .replace(/<style[\s\S]*?<\/style\s*>/gi, ' ')
+      .replace(/<!--[\s\S]*?-->/g, ' ')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim(),
+  );
+}
+
+/**
  * Snapshot every page once, before freestruct writes anything.
  * mtime is captured HERE so sitemap lastmod / RSS pubDate reflect the last
  * real content change (the SSG build), not freestruct's own decoration writes.

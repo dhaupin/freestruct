@@ -8,25 +8,7 @@
 import fs from 'fs';
 import path from 'path';
 import { pageUrlFor } from './urls.js';
-import { extractTitle, extractDescription, decodeEntities } from './scan.js';
-
-// Readable text of an HTML fragment: script/style bodies and comments are
-// dropped before tags, then entities decode. The old body pass stripped tags
-// only, so an inline <script> or <style> shipped its raw body into the index
-// (JS source and CSS rules are not page text), and the h1 pass returned the
-// raw inner HTML, so a heading with markup ('<h1>Title <em>x</em></h1>')
-// landed in the index with its tags intact.
-function readableText(html) {
-  return decodeEntities(
-    String(html)
-      .replace(/<script[\s\S]*?<\/script\s*>/gi, ' ')
-      .replace(/<style[\s\S]*?<\/style\s*>/gi, ' ')
-      .replace(/<!--[\s\S]*?-->/g, ' ')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim(),
-  );
-}
+import { extractTitle, extractDescription, htmlToText } from './scan.js';
 
 export function generateSearchIndex(pages, config, outputDir) {
   const index = [];
@@ -40,16 +22,18 @@ export function generateSearchIndex(pages, config, outputDir) {
 
     // Entity-decoded, tag-free extraction (Pass 26.21 / 26.24): search.json is
     // JSON consumed by JS, where '&amp;' renders literally as '&amp;' and a
-    // stray '<em>' renders as nothing - decode entities and drop every tag
-    // (script/style bodies included) so the index carries plain page text.
+    // stray '<em>' renders as nothing. htmlToText drops script/style bodies
+    // and comments, strips every tag, and decodes entities, so the index
+    // carries plain page text (the old tag-only strip shipped raw JS/CSS, and
+    // the heading pass returned the h1's inner HTML with its tags).
     const h1Match = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
 
     const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
-    const content = bodyMatch ? readableText(bodyMatch[1]).slice(0, 500) : '';
+    const content = bodyMatch ? htmlToText(bodyMatch[1]).slice(0, 500) : '';
 
     const title = extractTitle(html) || path.basename(page.file).replace(/\.html?$/i, '');
     const description = extractDescription(html) || '';
-    const heading = h1Match ? readableText(h1Match[1]) : title;
+    const heading = h1Match ? htmlToText(h1Match[1]) : title;
     const url = pageUrlFor(config, page.slug);
 
     index.push({ title, heading, description, content, url });

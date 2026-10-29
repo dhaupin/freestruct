@@ -7,7 +7,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { hasSeoType, htmlIsNoindex } from './scan.js';
+import { hasSeoType, htmlIsNoindex, htmlToText } from './scan.js';
 import { pageUrlFor, slugMatchesGlob, globSpecificity } from './urls.js';
 
 function minifyHtml(html) {
@@ -708,7 +708,11 @@ export function addReadingTime(filePath) {
   const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
   if (!bodyMatch) return;
 
-  const text = bodyMatch[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  // Script/style bodies and comments are not page prose: counting them
+  // inflated the estimate on any page with an inline bundle or a CSS block
+  // (the docs site's own pages carry both). htmlToText strips them, then tags,
+  // then collapses whitespace - the same view the search index reads.
+  const text = htmlToText(bodyMatch[1]);
   const words = text.split(/\s+/).filter(w => w.length > 0);
   const minutes = Math.max(1, Math.ceil(words.length / 200));
 

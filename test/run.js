@@ -1008,6 +1008,29 @@ test('default run: reading-time, last-modified and lazy-loading metas land on pa
   } finally { rmDir(dir); }
 });
 
+test('reading-time: script/style bodies and comments do not count as prose (bug fix)', () => {
+  const scriptWords = Array.from({ length: 600 }, (_, i) => 'w' + i).join(' ');
+  const dir = scenario('main', {
+    'docs/_site/rt.html': [
+      '<html><head><title>RT</title></head><body>',
+      '<p>one two three four five</p>',
+      '<script>' + scriptWords + '</script>',
+      '<style>.a{color:red} .b{color:blue}</style>',
+      '<!-- ' + scriptWords + ' -->',
+      '</body></html>',
+    ].join('\n') + '\n',
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/rt.html');
+    const minutes = Number(html.match(/<meta name="reading-time" content="(\d+) min read">/)[1]);
+    // The estimator stripped tags only, so a 600-word inline script (and a
+    // comment) counted as page prose and inflated the estimate to 4 minutes
+    // for a five-word page. Only the five real words should count now.
+    assert.strictEqual(minutes, 1, 'inline script/style/comment words do not count');
+  } finally { rmDir(dir); }
+});
+
 test('lazy-loading: a self-closing <img/> stays well-formed (bug fix)', () => {
   const dir = scenario('main', {
     'docs/_site/selfclose.html': [
