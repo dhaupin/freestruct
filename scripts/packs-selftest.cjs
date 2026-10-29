@@ -63,6 +63,11 @@ const FIXTURE = {
     'index.html': '<html><head><title>Fixture Docs - Home</title><meta name="description" content="home"></head><body><h1>Home</h1><p>Fresh fixture for the freestruct pack selftest.</p></body></html>',
     // Per-page hostile payload on the article-receiving page: the author
     'maintainer.html': '<html><head><title>Maintainer area</title><meta name="robots" content="noindex, nofollow"></head><body><h1>Maintainer</h1><p>Private maintainer notes.</p></body></html>',
+    // Second noindex page: the feed/search-ONLY leak canary. The engine
+    // excludes it from the sitemap by design (issue #5), so a leak planted
+    // into feed.xml/search.json ALONE (sitemap clean) proves the oracle
+    // enumerates candidates from every artifact, not the sitemap alone.
+    'private.html': '<html><head><title>Private area</title><meta name="robots" content="noindex, nofollow"></head><body><h1>Private</h1><p>Private notes.</p></body></html>',
     // Per-page hostile payload on the article-receiving page: the author
     // value carries the script-close shape raw; the generated TechArticle
     // block must neutralize it (`\u003c`), and the vuln plant regresses
@@ -144,14 +149,18 @@ async function buildVulnerableTree(hardened) {
   // (1) the generated 404 ships no noindex
   const nf404 = (await readFile(join(site, '404.html'), 'utf8')).replace(/\bnoindex\b/gi, 'dofollow-broken-contract');
   await writeFile(join(site, '404.html'), nf404);
-  // (2)+(3) sitemap re-lists the noindex page, with a raw unescaped &
+  // (3) sitemap carries a raw unescaped & (issue #9 class) - pointing at a
+  // NON-noindex page so this plant does NOT double as a sitemap noindex leak
+  // (the leak below must be feed/search-ONLY to prove the enumeration fix)
   const sitemap = await readFile(join(site, 'sitemap.xml'), 'utf8');
-  await writeFile(site + '/sitemap.xml', sitemap.replace('</urlset>', `  <url><loc>${SITE}/maintainer.html?c=1&z=raw</loc></url>\n</urlset>`));
-  // (2b) feed lists the noindex page too
+  await writeFile(site + '/sitemap.xml', sitemap.replace('</urlset>', `  <url><loc>${SITE}/guides.html?c=1&z=raw</loc></url>\n</urlset>`));
+  // (2) FEED/SEARCH-ONLY noindex leak: feed.xml + search.json list a noindex
+  // page (private.html) the sitemap does NOT carry by design. Sitemap-only
+  // enumeration (the old bug) sees no noindex candidate and REFUSES; the fix
+  // enumerates from every artifact and trips. This is the load-bearing plant.
   const feed = await readFile(join(site, 'feed.xml'), 'utf8');
-  await writeFile(join(site, 'feed.xml'), feed.replace('</channel>', `  <item><title>maintainer</title><link>${SITE}/maintainer.html</link></item>\n</channel>`));
-  // (2c) the tree ships no search.json here (opt-in) - plant a leaking one
-  await writeFile(join(site, 'search.json'), JSON.stringify([{ title: 'maintainer', url: `${SITE}/maintainer.html`, content: 'private notes' }]));
+  await writeFile(join(site, 'feed.xml'), feed.replace('</channel>', `  <item><title>private</title><link>${SITE}/private.html</link></item>\n</channel>`));
+  await writeFile(join(site, 'search.json'), JSON.stringify([{ title: 'private', url: `${SITE}/private.html`, content: 'private notes' }]));
   // (4) escape targets OUTSIDE the tree, where travelsals land
   await writeFile(join(base, 'docs', '.env'), 'FIXTURE_API_KEY=leaky-seed-value\n');
   await writeFile(join(base, 'package.json'), '{"name":"fixture-vault","version":"1.0.0"}\n');
@@ -201,17 +210,25 @@ const check = (name, ok, got) => {
 };
 
 async function main() {
-  const crashBin = CRASHTEST_BINS.find((p) => p && existsSync(p));
-  if (!crashBin) {
-    // An explicitly requested checkout that is missing is still loud (a
-    // misconfig, exit 2). An ABSENT checkout on a local run is a named skip
-    // (exit 0): the pre-publish `check` gate must not depend on a
-    // github-tarball install, and CI always installs crashtest - so the
-    // teeth still run where it matters (issue #37).
-    if (process.env.CRASHTEST_BIN) {
+  // An explicitly-requested checkout that is missing is a misconfig, loud
+  // (exit 2) - checked FIRST so a local node_modules install can never
+  // silently stand in for the bin the caller named (the fallback array would
+  // otherwise rescue it and run the teeth, exit 0).
+  if (process.env.CRASHTEST_BIN) {
+    const requested = existsSync(process.env.CRASHTEST_BIN)
+      ? process.env.CRASHTEST_BIN
+      : join(process.cwd(), process.env.CRASHTEST_BIN);
+    if (!existsSync(requested)) {
       console.error('packs-selftest: CRASHTEST_BIN set but not found: ' + process.env.CRASHTEST_BIN);
       process.exit(2);
     }
+  }
+  const crashBin = CRASHTEST_BINS.find((p) => p && existsSync(p));
+  if (!crashBin) {
+    // An ABSENT checkout on a local run is a named skip (exit 0): the
+    // pre-publish `check` gate must not depend on a github-tarball install,
+    // and CI always installs crashtest - so the teeth still run where it
+    // matters (issue #37).
     console.error('packs-selftest: skipped - no dhaupin/crashtest checkout found (set CRASHTEST_BIN, or npm i --no-save github:dhaupin/crashtest). CI installs it, so the teeth still run there.');
     return;
   }

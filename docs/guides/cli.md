@@ -91,6 +91,10 @@ Subcommand and flags do the same thing: print the command table plus the exit-co
 
 `--strict` is what the docs CI runs on this repo's own Pages build.
 
+## Argument parsing
+
+Every command's flag and positional surface is closed, so a typo fails loudly instead of doing the wrong thing quietly. A dash-word is always a flag, never a directory - `freestruct audit -x` refuses `-x` as an unknown flag (exit `1`) rather than treating it as an output dir. Each command accepts at most one positional (the default run's output dir, or `init`'s target dir); a surplus positional is refused with `too many arguments`. The default run's flags are `--strict` and `--tolerant`; `audit` adds `--json` and `--external`; `indexnow` adds `--dry-run`. An unknown flag prints the command name, the offending flag and the supported set, and exits `1`.
+
 ## Exit Codes
 
 | Code | Meaning |

@@ -33,6 +33,13 @@
 // Vocabulary (ctx / moduleCtx['freestruct-docs-shapes']):
 //   route      route name of the static host handler (default: 'site')
 //   probeName  path stem used by the 404 canary (default: fixed)
+//   pages      optional page inventory (paths) for the noindex oracles: a
+//              static host cannot enumerate pages freestruct deliberately
+//              left OUT of every artifact, so a run root that wants the
+//              generated-extras oracle to cover unlisted noindex pages
+//              declares them here. Absent, the oracles fall back to the
+//              union of every artifact-listed URL (which still catches any
+//              real leak - a leaked page IS listed by definition).
 
 const DEFAULT_ROUTE = 'site';
 const CANARY_PROBE = '/freestruct-crashtest-canary-missing';
@@ -83,9 +90,22 @@ function sitemapLocs(xml) {
   return out;
 }
 
-/** Unescape the XML entities freestruct is allowed to write. */
+/** Decode the XML entities freestruct writes into loc/item text. The old
+ * shape was a no-op (it matched and returned the entity unchanged), so a
+ * slug carrying `&` (`/a&amp;b`) never decoded to `/a&b` and resolved to the
+ * 404 page on the wire - a false noindex "leak" on every ampersand page. */
 function xmlUnescape(s) {
-  return s.replace(/&(amp|lt|gt|quot|apos|#x?[0-9A-Fa-f]+);/g, (ent) => ent);
+  return String(s).replace(/&(amp|lt|gt|quot|apos|#x?[0-9A-Fa-f]+);/g, (ent, body) => {
+    if (body === 'amp') return '&';
+    if (body === 'lt') return '<';
+    if (body === 'gt') return '>';
+    if (body === 'quot') return '"';
+    if (body === 'apos') return "'";
+    const code = body[0] === '#' && (body[1] === 'x' || body[1] === 'X')
+      ? parseInt(body.slice(2), 16)
+      : parseInt(body.slice(1), 10);
+    return Number.isFinite(code) ? String.fromCodePoint(code) : ent;
+  });
 }
 
 /** Path part of a sitemap loc (absolute URLs land as /path here). */
@@ -96,6 +116,47 @@ function locPath(loc) {
   } catch {
     return loc.startsWith('/') ? loc : `/${loc}`;
   }
+}
+
+/**
+ * Every URL each generated artifact LISTS (as paths). The noindex oracles
+ * must enumerate from ALL of them, not just sitemap.xml: a noindex page is
+ * absent from the sitemap BY DESIGN (issue #5), so deriving the candidate
+ * set from the sitemap alone made the feed/search legs dead code and let a
+ * feed-only (or search-only) leak ship undetected.
+ */
+async function artifactPaths(harness, route) {
+  const paths = new Set();
+  const sitemap = await get(harness, route, '/sitemap.xml');
+  if (sitemap.text && sitemap.status === 200) {
+    for (const loc of sitemapLocs(sitemap.text)) paths.add(locPath(loc));
+  }
+  const feed = await get(harness, route, '/feed.xml');
+  if (feed.text && feed.status === 200) {
+    for (const m of feed.text.matchAll(/<link>([^<]+)<\/link>/g)) paths.add(locPath(m[1].trim()));
+  }
+  const search = await get(harness, route, '/search.json');
+  if (search.text && search.status === 200) {
+    try {
+      const index = JSON.parse(search.text);
+      for (const entry of Array.isArray(index) ? index : []) {
+        if (entry && typeof entry.url === 'string') paths.add(locPath(entry.url));
+      }
+    } catch { /* not JSON - other oracles own that */ }
+  }
+  const llms = await get(harness, route, '/llms.txt');
+  if (llms.text && llms.status === 200) {
+    for (const m of llms.text.matchAll(/\]\(([^)\s]+)\)/g)) paths.add(locPath(m[1]));
+  }
+  return [...paths];
+}
+
+/** Declared page inventory (ctx.pages), normalized to leading-slash paths. */
+function declaredPaths(ctx) {
+  const raw = Array.isArray(ctx.pages) ? ctx.pages : [];
+  return raw
+    .filter((p) => typeof p === 'string' && p)
+    .map((p) => (p.startsWith('/') ? p : `/${p}`));
 }
 
 /** RAW unescaped ampersand: any & not opening a legal XML entity. */
@@ -205,39 +266,50 @@ export default {
       async run(harness, ctx = {}) {
         const route = routeOf(ctx);
         const sitemap = await get(harness, route, '/sitemap.xml');
-        if (!sitemap.text || sitemap.status !== 200) {
-          return refused('this target does not generate sitemap.xml at the wire root - artifact-leak oracle skipped honestly', { status: sitemap.status });
-        }
-        // Wire-truth the noindex set: fetch every loc, flag pages whose body
-        // carries the noindex robots meta. Finding one is ALREADY the sitemap
-        // leak (issue #5 rule: noindex pages never ship into artifacts).
-        const noindexed = [];
-        const locs = sitemapLocs(sitemap.text);
-        for (const loc of locs) {
-          const path = locPath(loc);
-          const page = await get(harness, route, path);
-          if (page.threw) continue;
-          if (page.text && pageIsNoindex(page.text)) noindexed.push(path);
-        }
-        if (!noindexed.length) {
-          return refused(`${locs.length} sitemap URL(s) wired; none carries a noindex meta - no artifact can leak`);
-        }
-        const leaks = { 'sitemap.xml': [...noindexed] };
         const feed = await get(harness, route, '/feed.xml');
         const search = await get(harness, route, '/search.json');
-        if (feed.text) {
-          for (const p of noindexed) if (feed.text.includes(p)) (leaks['feed.xml'] ??= []).push(p);
+        const llms = await get(harness, route, '/llms.txt');
+        const artifacts = { 'sitemap.xml': sitemap, 'feed.xml': feed, 'search.json': search, 'llms.txt': llms };
+        if (Object.values(artifacts).every((a) => !a.text || a.status !== 200)) {
+          return refused('this target generates no sitemap/feed/search/llms artifact - artifact-leak oracle skipped honestly');
         }
-        if (search.text) {
+        // Candidate pages: every URL any artifact lists, plus any inventory
+        // the run root declares. Enumerating from the sitemap ALONE was the
+        // bug - a noindex page is absent from the sitemap by design, so the
+        // feed/search legs never saw a candidate and a feed-only leak shipped.
+        const candidates = new Set([...await artifactPaths(harness, route), ...declaredPaths(ctx)]);
+        const noindexed = new Set();
+        for (const path of candidates) {
+          const page = await get(harness, route, path);
+          if (page.threw || !page.text) continue;
+          if (pageIsNoindex(page.text)) noindexed.add(path);
+        }
+        if (!noindexed.size) {
+          return refused(`${candidates.size} artifact-listed URL(s) wired; none carries a noindex meta - no artifact can leak`);
+        }
+        // Cross-artifact oracle: which artifacts list a page the wire says is
+        // noindex? The sitemap listing one IS the leak (issue #5); the feed
+        // and search index listing one are the same rule, one rule three
+        // outputs. Every artifact's OWN URL list is the evidence.
+        const leaks = {};
+        const sitemapPaths = new Set(sitemap.text && sitemap.status === 200 ? sitemapLocs(sitemap.text).map(locPath) : []);
+        const feedPaths = new Set(feed.text && feed.status === 200
+          ? [...feed.text.matchAll(/<link>([^<]+)<\/link>/g)].map((m) => locPath(m[1].trim())) : []);
+        const searchPaths = new Set();
+        if (search.text && search.status === 200) {
           try {
             const index = JSON.parse(search.text);
             for (const entry of Array.isArray(index) ? index : []) {
-              if (!entry || typeof entry.url !== 'string') continue;
-              const path = locPath(entry.url);
-              if (noindexed.includes(path)) (leaks['search.json'] ??= []).push(path);
+              if (entry && typeof entry.url === 'string') searchPaths.add(locPath(entry.url));
             }
-          } catch {
-            // search.json might not parse when searchIndex is off / absent
+          } catch { /* not JSON - shape oracle owns that */ }
+        }
+        for (const path of noindexed) {
+          if (sitemapPaths.has(path)) (leaks['sitemap.xml'] ??= []).push(path);
+          if (feedPaths.has(path)) (leaks['feed.xml'] ??= []).push(path);
+          if (searchPaths.has(path)) (leaks['search.json'] ??= []).push(path);
+          if (llms.text && llms.status === 200 && (llms.text.includes(path) || llms.text.includes(path.replace(/^\//, '')))) {
+            (leaks['llms.txt'] ??= []).push(path);
           }
         }
         if (Object.keys(leaks).length) {
@@ -247,8 +319,8 @@ export default {
           return exhausted(`noindex pages leaked into generated artifacts - ${detail}`, { leaks });
         }
         return refused(
-          `${noindexed.length} noindex page(s) in-tree; the generated artifacts refuse to list them (issue #5 rule held)`,
-          { noindex: noindexed.length },
+          `${noindexed.size} noindex page(s) wire-detected; the generated artifacts refuse to list them (issue #5 rule held)`,
+          { noindex: noindexed.size },
         );
       },
     },
@@ -371,10 +443,11 @@ export default {
       description: 'pages the crawler was told to skip (robots-noindex bodies and the 404 page) never carry the GENERATED extras freestruct adds beyond its core head set: hreflang alternates, feed autodiscovery links, site-verification metas, and the generated typed-article/breadcrumb JSON-LD blocks (their compact engine-serialized @type shape) stay off skipped pages - the core injected set including the template\'s built-in Organization/WebSite blocks stays contractual on the 404 (issue #11 full pipeline)',
       async run(harness, ctx = {}) {
         const route = routeOf(ctx);
-        // Wire-truth the skipped set exactly like the artifact-leak attack:
-        // a page is skipped only when its body carries the robots meta.
-        const sitemap = await get(harness, route, '/sitemap.xml');
-        const paths = sitemap.text && sitemap.status === 200 ? sitemapLocs(sitemap.text).map(locPath) : ['/'];
+        // Wire-truth the skipped set: enumerate every URL any artifact lists
+        // plus the declared inventory, then flag the bodies that carry the
+        // robots meta. (Sitemap-only enumeration missed noindex pages absent
+        // from the sitemap by design - see the artifact-leak attack.)
+        const candidates = new Set([...await artifactPaths(harness, route), ...declaredPaths(ctx)]);
         // Engine-shape fingerprints for the GENERATED extras: the generated
         // article/breadcrumb blocks are JSON.stringify-serialized (`"@type":"..."`
         // compact, no space), while the template's core Organization/WebSite
@@ -383,7 +456,7 @@ export default {
         const leakMarkers = /(\"@type\":\"(Article|TechArticle|NewsArticle|BreadcrumbList)\")|\shreflang=|google-site-verification|msvalidate\.01|yandexVerification|pinterest-site-verification|application\/rss\+xml/i;
         const leaks = [];
         let skipped = 0;
-        for (const path of paths) {
+        for (const path of candidates) {
           const page = await get(harness, route, path);
           if (page.threw || !page.text || page.status !== 200) continue;
           if (!pageIsNoindex(page.text)) continue;
@@ -424,9 +497,8 @@ export default {
         const text = llms.text;
         const finding = [];
         // noindex wire-truth, same oracle as the artifact-leak attack.
-        const sitemap = await get(harness, route, '/sitemap.xml');
-        const paths = sitemap.text && sitemap.status === 200 ? sitemapLocs(sitemap.text).map(locPath) : [];
-        for (const path of paths) {
+        const candidates = new Set([...await artifactPaths(harness, route), ...declaredPaths(ctx)]);
+        for (const path of candidates) {
           const page = await get(harness, route, path);
           if (page.threw || !page.text || page.status !== 200 || !pageIsNoindex(page.text)) continue;
           const pageName = path.replace(/^\//, '');
@@ -446,7 +518,7 @@ export default {
           return exhausted(`llms.txt contract broken: ${finding.slice(0, 4).join(' | ')}`, { findings: finding.length });
         }
         return refused(
-          `llms.txt held: heading present, every entry single-line, none of ${paths.length} wired page(s) is a leak`,
+          `llms.txt held: heading present, every entry single-line, none of ${candidates.size} wired page(s) is a leak`,
           { entries: (text.match(/^\s*-\s*\[/gm) || []).length },
         );
       },

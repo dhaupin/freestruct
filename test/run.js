@@ -21,6 +21,7 @@ import { spawnSync } from 'child_process';
 import { pathToFileURL } from 'url';
 import { createRequire } from 'module';
 import { load as yamlLoad } from 'js-yaml';
+import { makeSiteHandler } from '../labs/static-site-target.js';
 
 const require = createRequire(import.meta.url);
 
@@ -87,6 +88,24 @@ function read(dir, rel) {
 
 const sitemapLocs = sitemapText => [...sitemapText.matchAll(/<loc>([^<]*)<\/loc>/g)].map(m => m[1]);
 const feedPubDates = feedText => [...feedText.matchAll(/<pubDate>([^<]*)<\/pubDate>/g)].map(m => m[1]);
+
+// Minimal harness double for driving a pack attack in-process (no crashtest
+// checkout needed). Mirrors crashtest's harness.run(name, { method, url })
+// contract: an in-process handler, never a socket. Only the surface the
+// noindex oracles touch (GET at a route) is implemented.
+function makeFakeHarness(siteDir) {
+  const handler = makeSiteHandler(siteDir);
+  return {
+    async run(_route, reqInit) {
+      try {
+        const response = await handler({ request: new Request('https://docs.example.com' + reqInit.url, { method: reqInit.method || 'GET' }) });
+        return { threw: false, status: response.status, response };
+      } catch (error) {
+        return { threw: true, error };
+      }
+    },
+  };
+}
 
 // ---------- packaging self-checks ----------
 
@@ -429,6 +448,44 @@ test('packs/ surface: a README ships, every public pack.json is schemaVersion 1,
     }
   }
   assert.ok(fs.existsSync(path.join(ROOT, 'scripts', 'packs-selftest.cjs')), 'the teeth-proof script ships too (hardened holds / regressed trips)');
+});
+
+test('packs: the noindex-artifact-leak oracle enumerates from EVERY artifact, not the sitemap alone (#5 class)', async () => {
+  // The pack's noindex oracle once derived its candidate set from sitemap.xml
+  // locs - but a noindex page is absent from the sitemap BY DESIGN, so the
+  // feed/search legs were dead code and a feed- or search-only leak shipped
+  // undetected (reported "no artifact can leak" while feed.xml listed it).
+  // This pin drives the REAL attack with a fake harness (no crashtest
+  // checkout needed) against a REAL freestruct build carrying a feed-only
+  // leak, and asserts it now trips.
+  const dir = scenario('main');
+  try {
+    runInject(dir);
+    const site = path.join(dir, 'docs', '_site');
+    // The main fixture's noindex.html stays out of the sitemap by design.
+    assert.ok(!read(dir, 'docs/_site/sitemap.xml').includes('noindex'), 'precondition: the noindex page is absent from the sitemap');
+    // Plant a feed-ONLY leak: feed.xml lists the noindex page, sitemap stays clean.
+    const feed = read(dir, 'docs/_site/feed.xml');
+    fs.writeFileSync(path.join(site, 'feed.xml'), feed.replace('</channel>', `  <item><title>hidden</title><link>https://docs.example.com/noindex</link></item>\n</channel>`));
+    assert.ok(!read(dir, 'docs/_site/sitemap.xml').includes('noindex'), 'sitemap still clean after the plant');
+
+    const mod = (await import(pathToFileURL(path.join(ROOT, 'packs', 'public', 'freestruct-docs-shapes', 'index.js')).href)).default;
+    const attack = mod.attacks.find((a) => a.name === 'noindex-artifact-leak');
+    assert.ok(attack, 'the noindex-artifact-leak attack exists');
+    const harness = makeFakeHarness(site);
+    const tripped = await attack.run(harness, {});
+    assert.strictEqual(tripped.verdict, 'EXPLOITED', 'a feed-only noindex leak trips the oracle: ' + JSON.stringify(tripped));
+    assert.includes(tripped.detail, 'feed.xml', 'the finding names the leaking artifact');
+
+    // Control: with the feed clean again, the oracle REFUSES (no leak). This
+    // also pins the xmlUnescape fix: the main fixture ships a `a&b.html` page
+    // whose sitemap loc is `/a&amp;b`, so a no-op entity decode resolved to
+    // the 404 (noindex) page and false-tripped on every ampersand page.
+    const cleanFeed = read(dir, 'docs/_site/feed.xml').replace(/<item><title>hidden<\/title>.*?<\/item>\n/, '');
+    fs.writeFileSync(path.join(site, 'feed.xml'), cleanFeed);
+    const held = await attack.run(makeFakeHarness(site), {});
+    assert.strictEqual(held.verdict, 'REFUSED', 'a clean tree holds (ampersand slug decodes, no false leak): ' + JSON.stringify(held));
+  } finally { rmDir(dir); }
 });
 
 // ---------- main fixture run: defaults ON ----------
@@ -3248,7 +3305,8 @@ test('audit --external: the json digest parses with the warns merged; unknown au
     assert.ok(Array.isArray(digest.warns), 'the warns array merges the audit + external rows');
     const bad = spawnSync(process.execPath, [INJECT, 'audit', '--bad'], { cwd: dir, encoding: 'utf8' });
     assert.ok(bad.status !== 0, 'unknown flags fail');
-    assert.includes(bad.stdout + bad.stderr, 'only --json and --external are supported flags');
+    assert.includes(bad.stdout + bad.stderr, 'audit: unknown flag --bad');
+    assert.includes(bad.stdout + bad.stderr, 'supported: --json --external');
   } finally { rmDir(dir); }
 });
 
@@ -3625,11 +3683,55 @@ test('pass-hunt: a typo\'d flag rides as NO directory (Pass 26.16)', () => {
   try {
     const res = runInjectFailing(dir, ['--definitely-not-a-flag']);
     assert.strictEqual(res.status, 1, 'unknown dash-words fail loudly, never as a positional output dir');
-    assert.includes(res.stderr, 'unknown flag(s)', 'the refusal names the flag');
+    assert.includes(res.stderr, 'unknown flag --definitely-not-a-flag', 'the refusal names the flag');
     assert.includes(res.stderr, 'freestruct --help', 'the refusal spells the usage hint');
     // Control: the known flags still pass clean.
     runInject(dir);
     assert.ok(read(dir, 'docs/_site/index.html').includes('freestruct-build'), 'the known-flag path still runs the full pass');
+  } finally { rmDir(dir); }
+});
+
+test('cli: every command\'s flag/positional surface is closed (Pass 26.44)', () => {
+  const dir = scenario('main');
+  try {
+    // init: an unknown flag is refused (before: it scaffolded into a dir
+    // literally named `--bogus`), and a surplus positional is refused (before:
+    // `b`/`c` were silently dropped).
+    const badFlag = spawnSync(process.execPath, [INJECT, 'init', '--bogus'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(badFlag.status, 1, 'init refuses an unknown flag');
+    assert.includes(badFlag.stdout + badFlag.stderr, 'init: unknown flag --bogus');
+    assert.ok(!fs.existsSync(path.join(dir, '--bogus')), 'init never scaffolds into a dash-named directory');
+    const manyArgs = spawnSync(process.execPath, [INJECT, 'init', 'a', 'b', 'c'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(manyArgs.status, 1, 'init refuses a surplus positional');
+    assert.includes(manyArgs.stdout + manyArgs.stderr, 'too many arguments');
+
+    // validate: an unknown flag is refused (before: it ran as if clean).
+    const badValidate = spawnSync(process.execPath, [INJECT, 'validate', '--bogus'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(badValidate.status, 1, 'validate refuses an unknown flag');
+    assert.includes(badValidate.stdout + badValidate.stderr, 'validate: unknown flag --bogus');
+
+    // audit/indexnow: a dash-word is a FLAG, not an output dir (before:
+    // `audit -x` rode as a dir and died with exit 3 "not found").
+    const badAudit = spawnSync(process.execPath, [INJECT, 'audit', '-x'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(badAudit.status, 1, 'audit refuses an unknown flag as a flag, not an output dir');
+    assert.includes(badAudit.stdout + badAudit.stderr, 'audit: unknown flag -x');
+    assert.ok(!/Output directory not found/.test(badAudit.stdout + badAudit.stderr), 'a dash-word never rides as an output dir');
+    const badIndex = spawnSync(process.execPath, [INJECT, 'indexnow', '--bogus'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(badIndex.status, 1, 'indexnow refuses an unknown flag');
+    assert.includes(badIndex.stdout + badIndex.stderr, 'indexnow: unknown flag --bogus');
+
+    // default run: a surplus positional is refused (before: silently ignored).
+    const manyDefault = spawnSync(process.execPath, [INJECT, 'docs/_site', 'extra'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(manyDefault.status, 1, 'the default run refuses a surplus positional');
+    assert.includes(manyDefault.stdout + manyDefault.stderr, 'too many arguments');
+
+    // Control: the valid shapes still run clean.
+    runInject(dir);
+    const okAudit = spawnSync(process.execPath, [INJECT, 'audit', 'docs/_site'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(okAudit.status, 0, 'a valid audit positional still runs');
+    const okInit = spawnSync(process.execPath, [INJECT, 'init', 'scaffold-here'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(okInit.status, 0, 'a valid init positional still runs');
+    assert.ok(fs.existsSync(path.join(dir, 'scaffold-here', 'docs', 'freestruct.config.yml')), 'the valid init target is scaffolded');
   } finally { rmDir(dir); }
 });
 
