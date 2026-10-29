@@ -1871,6 +1871,35 @@ test('audit: an attribute value carrying the OTHER quote kind is read whole (apo
   } finally { rmDir(dir); }
 });
 
+test('audit: a noindex page is exempt from the content-quality classes but not the structural ones', () => {
+  const dir = scenario('main');
+  try {
+    runInject(dir);
+    const stub = path.join(dir, 'docs/_site/stub.html');
+    // A redirect stub: noindex, a short description, no h1, no JSON-LD. The
+    // content-quality classes grade indexable content, so they must stay quiet
+    // here (the page is deliberately out of the index); the structural classes
+    // (title/canonical presence) still apply.
+    fs.writeFileSync(stub, [
+      '<html lang="en"><head><meta charset="UTF-8">',
+      '<title>Moved</title>',
+      '<meta name="robots" content="noindex, nofollow">',
+      '<meta name="description" content="Short stub.">',
+      '<link rel="canonical" href="https://docs.example.com/real">',
+      '</head><body><p>moved</p></body></html>',
+    ].join('\n'));
+    const out = spawnSync(process.execPath, [INJECT, 'audit'], { cwd: dir, encoding: 'utf8' });
+    assert.ok(!/WARN stub\.html: description \d+ chars/.test(out.stdout), 'no description-length noise on a noindex stub\n' + out.stdout);
+    assert.ok(!/WARN stub\.html: no non-empty <h1>/.test(out.stdout), 'no h1 noise on a noindex stub\n' + out.stdout);
+    assert.ok(!/WARN stub\.html: no JSON-LD/.test(out.stdout), 'no JSON-LD noise on a noindex stub\n' + out.stdout);
+    // Control: the SAME shape without noindex still gets graded.
+    fs.writeFileSync(stub, fs.readFileSync(stub, 'utf8').replace(/<meta name="robots"[^>]*>\n?/, ''));
+    const out2 = spawnSync(process.execPath, [INJECT, 'audit'], { cwd: dir, encoding: 'utf8' });
+    assert.ok(/WARN stub\.html: description \d+ chars/.test(out2.stdout), 'without noindex the description IS graded (control)\n' + out2.stdout);
+    assert.ok(/WARN stub\.html: no non-empty <h1>/.test(out2.stdout), 'without noindex the h1 absence IS graded (control)\n' + out2.stdout);
+  } finally { rmDir(dir); }
+});
+
 test('audit: duplicate head tags ride the FAIL class (never engine-caused - missing-only cannot duplicate)', () => {
   const dir = scenario('main');
   try {
@@ -3131,6 +3160,127 @@ test('ship lane (#38): tokenProblems describes shape, never the value; exports a
   assert.strictEqual(expandHome('/abs/x'), '/abs/x', 'absolute paths pass through');
   assert.strictEqual(TOKEN_ENV, 'NPM_TOKEN', 'the standard npm env name is primary');
   assert.strictEqual(TOKEN_ENV_ALIAS, 'NPM_SHIP_TOKEN', 'the generic fallback rides along');
+});
+
+test('pass-hunt: entity-encoded source facts decode ONCE (feed/search/llms never double-encode or carry raw entities)', () => {
+  // An SSG that entity-encodes its own output (Hugo, Jekyll with smart
+  // escaping) hands freestruct '&amp;' in the <title>/description. The old
+  // extractors read the raw match, so the feed re-escaped it into '&amp;amp;'
+  // (which a reader sees as the literal '&amp;'), and search.json/llms.txt
+  // carried the entity into a plain-text/JSON context that renders it raw.
+  const dir = scenario('main', {
+    'docs/_site/amp.html': [
+      '<html lang="en"><head><meta charset="UTF-8">',
+      '<title>Guides &amp; Tips</title>',
+      '<meta name="description" content="Tips &amp; tricks for &quot;docs&quot;">',
+      '</head><body><h1>Guides &amp; Tips</h1><p>body</p></body></html>',
+    ].join('\n') + '\n',
+  });
+  try {
+    runInject(dir);
+    const feed = read(dir, 'docs/_site/feed.xml');
+    assert.includes(feed, '<title>Guides &amp; Tips</title>', 'feed title is escaped exactly once');
+    assert.ok(!feed.includes('&amp;amp;'), 'no double-encoded entity in the feed');
+    assert.includes(feed, '<description>Tips &amp; tricks for &quot;docs&quot;</description>',
+      'feed description decodes then re-escapes once');
+
+    const idx = JSON.parse(read(dir, 'docs/_site/search.json'));
+    const entry = idx.find((e) => e.url === 'https://docs.example.com/amp');
+    assert.ok(entry, 'the entity page is indexed');
+    assert.strictEqual(entry.title, 'Guides & Tips', 'search.json title carries a plain ampersand');
+    assert.strictEqual(entry.description, 'Tips & tricks for "docs"', 'search.json description decodes quotes');
+    assert.strictEqual(entry.heading, 'Guides & Tips', 'search.json heading decodes too');
+    assert.ok(!/&(amp|quot|lt|gt|#39);/.test(entry.content), 'search.json content carries no raw entities');
+  } finally { rmDir(dir); }
+});
+
+test('pass-hunt: meta extraction is attribute-order and quote tolerant (a reordered/single-quoted meta is read, not silently defaulted)', () => {
+  const dir = scenario('main', {
+    'docs/ssr-config.yml': [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: SITE DEFAULT - must not leak onto a page with its own description',
+    ].join('\n') + '\n',
+    'docs/_site/reordered.html': [
+      '<html lang="en"><head><meta charset="UTF-8">',
+      '<title>Reordered</title>',
+      `<meta content='A single-quoted description' name='description'>`,
+      '</head><body><h1>Reordered</h1></body></html>',
+    ].join('\n') + '\n',
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/reordered.html');
+    assert.includes(html, 'og:description" content="A single-quoted description"',
+      'the reordered single-quoted description is read (no site-default fallback)');
+    // The site default may ride the Organization JSON-LD; the PAGE description
+    // surfaces (og/twitter/description meta) must carry the page's own value.
+    const head = html.match(/<head>[\s\S]*?<\/head>/)[0];
+    assert.ok(!/og:description" content="SITE DEFAULT/.test(head), 'the site default never leaks into og:description');
+    assert.ok(!/<meta name="description" content="SITE DEFAULT/.test(head), 'the site default never leaks into the description meta');
+  } finally { rmDir(dir); }
+});
+
+test('pass-hunt: the minifier never fuses words across a line break (text whitespace survives)', () => {
+  const dir = scenario('main', {
+    'docs/ssr-config.yml': [
+      'site:', '  name: Foo Docs', '  url: https://docs.example.com', 'minify: true',
+    ].join('\n') + '\n',
+    'docs/_site/wrap.html': [
+      '<html><head><title>Wrap</title></head><body>',
+      '<p>Hello',
+      'world this is',
+      'wrapped text</p>',
+      '</body></html>',
+    ].join('\n') + '\n',
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/wrap.html');
+    assert.includes(html, '<p>Hello world this is wrapped text</p>', 'line breaks in text collapse to spaces, not joiners');
+    assert.ok(!html.includes('Helloworld'), 'words are never fused across a line break');
+  } finally { rmDir(dir); }
+});
+
+test('pass-hunt: cache-busting reaches single-quoted href/src too (both quote styles)', () => {
+  const dir = scenario('main', {
+    'docs/_site/quotes.html': [
+      '<html><head><title>Q</title>',
+      `<link rel="stylesheet" href='/css/sq.css'>`,
+      `<script src='/js/sq.js'></script>`,
+      '</head><body>',
+      `<img src='/img/sq.png'>`,
+      '</body></html>',
+    ].join('\n') + '\n',
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/quotes.html');
+    assert.match(html, /href='\/css\/sq\.css\?v=[0-9a-f]{8}'/, 'a single-quoted css href is busted (quote style preserved)');
+    assert.match(html, /src='\/js\/sq\.js\?v=[0-9a-f]{8}'/, 'a single-quoted js src is busted');
+    assert.match(html, /src='\/img\/sq\.png\?v=[0-9a-f]{8}'/, 'a single-quoted img src is busted');
+  } finally { rmDir(dir); }
+});
+
+test('pass-hunt: an og:image that escapes the output tree is not treated as a present on-disk file', () => {
+  const dir = scenario('main', {
+    'docs/_site/trav.html': [
+      '<html><head><title>Trav</title>',
+      '<meta name="description" content="d">',
+      '<link rel="canonical" href="https://docs.example.com/trav">',
+      '<meta property="og:image" content="/../../../../etc/hostname">',
+      '</head><body><h1>Trav</h1></body></html>',
+    ].join('\n') + '\n',
+  });
+  try {
+    const res = spawnSync(process.execPath, [INJECT, 'audit'], { cwd: dir, encoding: 'utf8' });
+    const out = res.stdout + res.stderr;
+    // The escape resolves outside the tree; it must NOT be silently accepted as
+    // an existing file. The audit names the escape (the honest verdict).
+    assert.ok(/og:image points at .*etc\/hostname .*which escapes the output directory/.test(out),
+      'an out-of-tree og:image is reported as escaping, not accepted');
+  } finally { rmDir(dir); }
 });
 
 // done

@@ -8,6 +8,7 @@
 import fs from 'fs';
 import path from 'path';
 import { pageUrlFor } from './urls.js';
+import { extractTitle, extractDescription } from './scan.js';
 
 /** Escape a value for XML text/attribute contexts. */
 export function escXml(value) {
@@ -85,10 +86,12 @@ export function generateFeed(pages, config, outputDir) {
   let items = '';
   for (const page of pages) {
     const html = fs.readFileSync(page.file, 'utf8');
-    const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
-    const descMatch = html.match(/<meta[^>]*name="description"[^>]*content="([^"]+)"/i);
-    const title = titleMatch ? titleMatch[1].split(' | ')[0] : path.basename(page.file).replace(/\.html?$/i, '');
-    const desc = descMatch ? descMatch[1] : '';
+    // Entity-DECODED extraction: the SSG's '&amp;' must reach escXml as a raw
+    // '&' so it escapes ONCE. Reading the raw match and re-escaping double-
+    // encoded the text ('&amp;amp;', which renders literally as '&amp;').
+    const extracted = extractTitle(html);
+    const title = extracted || path.basename(page.file).replace(/\.html?$/i, '');
+    const desc = extractDescription(html) || '';
     const pageUrl = pageUrlFor(config, page.slug);
     const pubDate = page.mtime.toUTCString();
     items += '\n<item>\n'

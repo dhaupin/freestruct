@@ -26,7 +26,7 @@ CI runs the same commands locally, so test like CI:
 
 ```bash
 npm install
-npm test                     # the battery (134 pins)
+npm test                     # the battery (140 pins)
 npm run lint:docs            # docs audit: 7 gates incl. English-only prose
 npm run sync:check           # template copies in lockstep
 npm run e2e                  # tarball e2e (fresh-install quick start)

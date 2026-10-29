@@ -220,7 +220,7 @@ Two shipped surfaces beyond the engine:
 
 ## v1.2.0
 
-Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, then the post-queue engine sweep - with the GitHub issue queue fully closed (#1-#40), the engine corners the queue-era waves never probed got nine real fixes, each with a battery pin (121 -> 130), plus the issue #41 version-truth census leg (130 -> 132), the issue #43 count census (132 -> 133), and the post-merge staging pass (133 -> 134):
+Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, then the post-queue engine sweep - with the GitHub issue queue fully closed (#1-#40), the engine corners the queue-era waves never probed got nine real fixes, each with a battery pin (121 -> 130), plus the issue #41 version-truth census leg (130 -> 132), the issue #43 count census (132 -> 133), the post-merge staging pass (133 -> 134), and the repo-wide gap walk (134 -> 140):
 
 - Rerun hygiene - body-start/footer snippets are marker-wrapped and a rerun drops the previous copy before re-adding it, so a second pass no longer stacks snippets or churns the content-derived build hash
 - Verbatim-block-aware `minifyHtml` - `<pre class="...">`/`<script>`/`<style>`/`<textarea>` content (attribute forms included) survives byte-for-byte, so code fences and inline JS with `//` comments are never collapsed
@@ -242,6 +242,11 @@ Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, the
 - Init kit - the starter config seeds the family JSON-LD identity, so scaffolded ports ship founder + maintainer from birth
 - Docs - the playbooks leg (one recipe per runbook, indexed and in the nav), the rootless local docs-preview recipe, the full rouge token vocabulary, and the retired 72-column hard-wrap (living prose flows, `scripts/unwrap-prose.cjs` keeps it that way)
 - CI - the Pages runbook promoted to a reusable `workflow_call` lane (`docs-lane.yml`) with `docs.yml` a thin caller, every `actions/cache` step pinned to one major, and the phone-publish lane (`scripts/ship-from-download.cjs`)
+- Entity truth - `extractTitle`/`extractDescription` are attribute-order and quote tolerant and decode HTML entities, so a reordered/single-quoted meta is read (no silent site-default fallback) and the feed no longer double-encodes (`&amp;amp;`), while search.json/llms.txt carry plain text instead of raw entities
+- Minify text fix - a line break inside text collapses to a space instead of a joiner, so `Hello\nworld` no longer fuses into `Helloworld`
+- Cache-bust parity - single-quoted `href`/`src` assets get `?v=` too, matching the link checker's both-quote handling
+- Audit containment - a site-local `og:image`/JSON-LD `logo`/`image` that escapes the output tree is named as escaping instead of being probed off-tree and read back as present
+- Audit noindex exemption - a `robots noindex` page (a redirect stub, a thank-you page) is exempt from the content-quality classes (description length, h1 shape, JSON-LD absence) that grade indexable content, while the structural classes still apply
 
 ## v1.1.0
 

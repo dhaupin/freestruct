@@ -89,8 +89,17 @@ function stripTags(s) {
   return String(s).replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').trim();
 }
 
-/** Head-referenced URL -> on-disk path under the output dir, or null. */
-function urlToDisk(urlValue, { outputDir, config }) {
+/**
+ * Head-referenced site-local URL -> { resolved, inside } | null.
+ *
+ * null means "not a site-local path" (external host, protocol-relative,
+ * relative, empty) - nothing on disk to check. `inside` is false when the
+ * path resolves OUTSIDE the output tree: a traversal shape like
+ * '/../../etc/hostname', which must never be probed as if it were an
+ * artifact. (Before Pass 26.21 urlToDisk resolved and existsSync'd such a
+ * path, so a value pointing at any file on the host read back as "exists".)
+ */
+function sitePathInfo(urlValue, { outputDir, config }) {
   if (!urlValue) return null;
   let pathName = urlValue.split(/[?#]/)[0];
   if (/^https?:\/\//i.test(pathName)) {
@@ -104,19 +113,20 @@ function urlToDisk(urlValue, { outputDir, config }) {
   } else if (/^\/\//.test(pathName)) {
     return null;
   }
-  if (pathName.startsWith('/')) {
-    // basePath normalization mirrors urls.js (issue #32 contract): the
-    // configured prefix may lack its leading slash, and a prefix must match a
-    // whole path segment ('/myproject' never strips '/myprojectx/...').
-    const bp = config?.basePath
-      ? ('/' + String(config.basePath).replace(/^\/+/, '')).replace(/\/+$/, '')
-      : '';
-    if (bp && (pathName === bp || pathName.startsWith(bp + '/'))) {
-      pathName = pathName.slice(bp.length);
-    }
-    return path.join(outputDir, pathName.replace(/^\//, ''));
+  if (!pathName.startsWith('/')) return null;
+  // basePath normalization mirrors urls.js (issue #32 contract): the
+  // configured prefix may lack its leading slash, and a prefix must match a
+  // whole path segment ('/myproject' never strips '/myprojectx/...').
+  const bp = config?.basePath
+    ? ('/' + String(config.basePath).replace(/^\/+/, '')).replace(/\/+$/, '')
+    : '';
+  if (bp && (pathName === bp || pathName.startsWith(bp + '/'))) {
+    pathName = pathName.slice(bp.length);
   }
-  return null;
+  const resolved = path.resolve(outputDir, pathName.replace(/^\//, ''));
+  const root = path.resolve(outputDir);
+  const inside = resolved === root || resolved.startsWith(root + path.sep);
+  return { resolved, inside };
 }
 
 // ---------- the audit ----------
@@ -179,9 +189,17 @@ export function auditOutput({ outputDir, config, json = false, capture = false }
       if (t < 10) warn(label, 'title ' + t + ' chars (suspiciously short)');
     }
 
+    // A page that declares `robots noindex` is deliberately out of the index
+    // (a redirect stub, a thank-you page): the content-quality classes below
+    // - description length band, h1 shape, JSON-LD absence - grade indexable
+    // content, so they would only emit cosmetic noise on a page whose whole
+    // point is to not rank. The structural classes (title/canonical presence,
+    // duplicate tags, absolute canonical) still apply.
+    const noindex = /noindex/i.test(grabMeta(head, 'name', 'robots') || '');
+
     const desc = grabMeta(head, 'name', 'description');
     if (!desc) fail(label, 'missing meta description');
-    else if (desc.length < 70 || desc.length > 165) {
+    else if (!noindex && (desc.length < 70 || desc.length > 165)) {
       warn(label, 'description ' + desc.length + ' chars (outside 70-165, may truncate)');
     }
 
@@ -238,16 +256,23 @@ export function auditOutput({ outputDir, config, json = false, capture = false }
     if (ogImage && !grabMeta(head, 'property', 'og:image:width')) {
       warn(label, 'og:image:width/height/alt absent (the og.image object form supplies them)');
     }
-    if (ogImage && urlToDisk(ogImage, { outputDir, config }) && !existsSync(urlToDisk(ogImage, { outputDir, config }))) {
-      // Report-grade on purpose (issue #18 sketch: 'worth having'): an og
-      // image can legitimately be emitted on an SSG-side pass or a same-host
-      // CDN, so a hard FAIL would punish valid setups; the JSON digest
-      // carries it for teams who want to harden it in CI.
-      warn(label, 'og:image points at ' + ogImage + ' which does not exist on disk');
+    if (ogImage) {
+      const info = sitePathInfo(ogImage, { outputDir, config });
+      if (info && !info.inside) {
+        // A site-local og:image that escapes the output tree can never be a
+        // served artifact; report it (same report-grade posture as missing).
+        warn(label, 'og:image points at ' + ogImage + ' which escapes the output directory');
+      } else if (info && !existsSync(info.resolved)) {
+        // Report-grade on purpose (issue #18 sketch: 'worth having'): an og
+        // image can legitimately be emitted on an SSG-side pass or a same-host
+        // CDN, so a hard FAIL would punish valid setups; the JSON digest
+        // carries it for teams who want to harden it in CI.
+        warn(label, 'og:image points at ' + ogImage + ' which does not exist on disk');
+      }
     }
 
     const ldBlocks = [...html.matchAll(/<script type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)];
-    if (!ldBlocks.length) warn(label, 'no JSON-LD structured data');
+    if (!ldBlocks.length && !noindex) warn(label, 'no JSON-LD structured data');
     for (const block of ldBlocks) {
       let parsed;
       try { parsed = JSON.parse(block[1]); } catch (e) {
@@ -266,8 +291,10 @@ export function auditOutput({ outputDir, config, json = false, capture = false }
         // schema-carried logo/image files: same exists-on-disk check as og:image
         for (const key of ['logo', 'image']) {
           const v = node[key];
-          const target = urlToDisk(typeof v === 'string' ? v : null, { outputDir, config });
-          if (target && !existsSync(target)) {
+          const info = sitePathInfo(typeof v === 'string' ? v : null, { outputDir, config });
+          if (info && !info.inside) {
+            warn(label, 'JSON-LD ' + key + ' points at ' + v + ' which escapes the output directory');
+          } else if (info && !existsSync(info.resolved)) {
             warn(label, 'JSON-LD ' + key + ' points at ' + v + ' which does not exist on disk');
           }
         }
@@ -276,7 +303,7 @@ export function auditOutput({ outputDir, config, json = false, capture = false }
 
     const h1s = [...html.matchAll(/<h1[^>]*>([\s\S]*?)<\/h1>/gi)];
     const h1Texts = h1s.map(m => stripTags(m[1])).filter(Boolean);
-    if (!h1Texts.length) warn(label, 'no non-empty <h1>');
+    if (!h1Texts.length && !noindex) warn(label, 'no non-empty <h1>');
     else if (h1Texts.length > 1) warn(label, h1Texts.length + ' <h1> elements (prefer one)');
   }
 

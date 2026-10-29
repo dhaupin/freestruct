@@ -8,6 +8,7 @@
 import fs from 'fs';
 import path from 'path';
 import { pageUrlFor } from './urls.js';
+import { extractTitle, extractDescription, decodeEntities } from './scan.js';
 
 export function generateSearchIndex(pages, config, outputDir) {
   const index = [];
@@ -19,18 +20,19 @@ export function generateSearchIndex(pages, config, outputDir) {
     // would search; raw file content at this point is the injected page).
     const html = fs.readFileSync(page.file, 'utf8');
 
-    const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
-    const descMatch = html.match(/<meta[^>]*name="description"[^>]*content="([^"]+)"/i);
-    const h1Match = html.match(/<h1[^>]*>([^<]+)<\/h1>/i);
+    // Entity-decoded extraction (Pass 26.21): search.json is JSON consumed by
+    // JS, where '&amp;' renders literally as '&amp;' - the SSG's entity must
+    // decode to a plain '&' here (same fix as the feed).
+    const h1Match = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
 
     const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
     const content = bodyMatch
-      ? bodyMatch[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 500)
+      ? decodeEntities(bodyMatch[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()).slice(0, 500)
       : '';
 
-    const title = titleMatch ? titleMatch[1].split(' | ')[0] : path.basename(page.file).replace(/\.html?$/i, '');
-    const description = descMatch ? descMatch[1] : '';
-    const heading = h1Match ? h1Match[1] : title;
+    const title = extractTitle(html) || path.basename(page.file).replace(/\.html?$/i, '');
+    const description = extractDescription(html) || '';
+    const heading = h1Match ? decodeEntities(h1Match[1]) : title;
     const url = pageUrlFor(config, page.slug);
 
     index.push({ title, heading, description, content, url });

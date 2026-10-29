@@ -21,10 +21,14 @@ function minifyHtml(html) {
   const blockRe = /<(pre|script|style|textarea)\b[^>]*>[\s\S]*?<\/\1\s*>/gi;
   const shrink = (s) => s
     .replace(/\r/g, '')
-    .replace(/[ \t]*\n[ \t]*/g, '')
+    // A line break inside TEXT is a word separator, never a joiner: the old
+    // `[ \t]*\n[ \t]* -> ''` fused 'Hello\nworld' into 'Helloworld'. Collapse
+    // the break to a single space instead; the between-tag rule below then
+    // removes the ones that sit between tags (where whitespace is meaningless).
+    .replace(/[ \t]*\n[ \t]*/g, ' ')
     .replace(/>\s+</g, '><')
     .replace(/[ \t]{2,}/g, ' ')
-    .replace(/\n{2,}/g, '\n');
+    .trim();
   const parts = [];
   let last = 0;
   let m;
@@ -373,13 +377,16 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
     // substring of '.css'), '/x.tt' ('.ttf'), '/x.j' ('.js') all got busted
     // while a genuine '/img.PNG' was missed.
     const assetExts = new Set(['.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico', '.woff', '.woff2', '.ttf', '.otf', '.wasm', '.json']);
-    html = html.replace(/(href|src)=\"([^\"]+)\"/gi,
-      (match, attr, url) => {
-        const cleanUrl = url.replace(/\?v=[^"]*/, '');
+    // Both quote styles (Pass 26.21): the old double-quote-only pattern left
+    // a single-quoted href/src (valid HTML, common in hand-authored markup)
+    // un-busted, so a stale asset survived a content change on those pages.
+    html = html.replace(/(href|src)=(["'])([^"']+)\2/gi,
+      (match, attr, quote, url) => {
+        const cleanUrl = url.replace(/\?v=[^"']*/, '');
         const dot = cleanUrl.lastIndexOf('.');
         const ext = dot === -1 ? '' : cleanUrl.slice(dot).toLowerCase();
         if (assetExts.has(ext)) {
-          return attr + '=\"' + cleanUrl + '?v=' + buildHash + '\"';
+          return attr + '=' + quote + cleanUrl + '?v=' + buildHash + quote;
         }
         return match;
       });

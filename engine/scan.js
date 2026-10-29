@@ -54,17 +54,56 @@ export function stripRobotsMeta(html) {
   return html.replace(/<meta[^>]*name=["']robots["'][^>]*>/i, '');
 }
 
-/** Extract SEO candidates from raw page HTML. (kept from 0.3.x semantics) */
+/**
+ * Decode the HTML entities an SSG routinely writes into <title>/meta content
+ * (&amp; &lt; &gt; &quot; &#39;). Without this, an entity-encoded source fact
+ * flowed verbatim into the generated artifacts: the feed re-escaped the
+ * already-escaped '&amp;' into '&amp;amp;' (double-encoded text a reader
+ * sees as '&amp;'), and search.json/llms.txt carried raw entities into
+ * plain-text/JSON contexts that render them literally.
+ */
+export function decodeEntities(value) {
+  return String(value == null ? '' : value)
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#0*39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, '&');
+}
+
+// Quoted-attribute reader (same shape audit.js owns): the closing quote must
+// MATCH the opening one, so a value holding the other quote kind (an
+// apostrophe in a description) is read whole instead of truncated at it.
+function attrValue(tag, attr) {
+  const quoted = tag.match(new RegExp(`\\b${attr}=(["'])([\\s\\S]*?)\\1`, 'i'));
+  if (quoted) return quoted[2];
+  const bare = tag.match(new RegExp(`\\b${attr}=([^\\s>]+)`, 'i'));
+  return bare ? bare[1] : null;
+}
+
+/**
+ * Extract SEO candidates from raw page HTML. Attribute-ORDER tolerant and
+ * quote-agnostic (Pass 26.21): the old fixed `name="title" content="..."`
+ * shape missed a reordered or single-quoted meta, so the page silently fell
+ * back to the site-level value. Values are entity-decoded so downstream
+ * artifacts (feed/search/llms) receive plain text, not raw entities.
+ */
 export function extractTitle(html) {
-  const m = html.match(/<meta name="title" content="([^"]+)"/i);
-  if (m) return m[1];
-  const t = html.match(/<title>([^<]+)<\/title>/i);
-  return t ? t[1].split(' | ')[0] : null;
+  const meta = html.match(/<meta\b[^>]*\bname=["']title["'][^>]*>/i);
+  if (meta) {
+    const v = attrValue(meta[0], 'content');
+    if (v) return decodeEntities(v);
+  }
+  const t = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+  return t ? decodeEntities(t[1]).split(' | ')[0] : null;
 }
 
 export function extractDescription(html) {
-  const m = html.match(/<meta name="description" content="([^"]+)"/i);
-  return m ? m[1] : null;
+  const meta = html.match(/<meta\b[^>]*\bname=["']description["'][^>]*>/i);
+  if (!meta) return null;
+  const v = attrValue(meta[0], 'content');
+  return v ? decodeEntities(v) : null;
 }
 
 /**
