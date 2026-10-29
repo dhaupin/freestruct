@@ -21,6 +21,7 @@ import { spawnSync } from 'child_process';
 import { pathToFileURL } from 'url';
 import { createRequire } from 'module';
 import { load as yamlLoad } from 'js-yaml';
+import { makeSiteHandler } from '../labs/static-site-target.js';
 
 const require = createRequire(import.meta.url);
 
@@ -87,6 +88,24 @@ function read(dir, rel) {
 
 const sitemapLocs = sitemapText => [...sitemapText.matchAll(/<loc>([^<]*)<\/loc>/g)].map(m => m[1]);
 const feedPubDates = feedText => [...feedText.matchAll(/<pubDate>([^<]*)<\/pubDate>/g)].map(m => m[1]);
+
+// Minimal harness double for driving a pack attack in-process (no crashtest
+// checkout needed). Mirrors crashtest's harness.run(name, { method, url })
+// contract: an in-process handler, never a socket. Only the surface the
+// noindex oracles touch (GET at a route) is implemented.
+function makeFakeHarness(siteDir) {
+  const handler = makeSiteHandler(siteDir);
+  return {
+    async run(_route, reqInit) {
+      try {
+        const response = await handler({ request: new Request('https://docs.example.com' + reqInit.url, { method: reqInit.method || 'GET' }) });
+        return { threw: false, status: response.status, response };
+      } catch (error) {
+        return { threw: true, error };
+      }
+    },
+  };
+}
 
 // ---------- packaging self-checks ----------
 
@@ -429,6 +448,44 @@ test('packs/ surface: a README ships, every public pack.json is schemaVersion 1,
     }
   }
   assert.ok(fs.existsSync(path.join(ROOT, 'scripts', 'packs-selftest.cjs')), 'the teeth-proof script ships too (hardened holds / regressed trips)');
+});
+
+test('packs: the noindex-artifact-leak oracle enumerates from EVERY artifact, not the sitemap alone (#5 class)', async () => {
+  // The pack's noindex oracle once derived its candidate set from sitemap.xml
+  // locs - but a noindex page is absent from the sitemap BY DESIGN, so the
+  // feed/search legs were dead code and a feed- or search-only leak shipped
+  // undetected (reported "no artifact can leak" while feed.xml listed it).
+  // This pin drives the REAL attack with a fake harness (no crashtest
+  // checkout needed) against a REAL freestruct build carrying a feed-only
+  // leak, and asserts it now trips.
+  const dir = scenario('main');
+  try {
+    runInject(dir);
+    const site = path.join(dir, 'docs', '_site');
+    // The main fixture's noindex.html stays out of the sitemap by design.
+    assert.ok(!read(dir, 'docs/_site/sitemap.xml').includes('noindex'), 'precondition: the noindex page is absent from the sitemap');
+    // Plant a feed-ONLY leak: feed.xml lists the noindex page, sitemap stays clean.
+    const feed = read(dir, 'docs/_site/feed.xml');
+    fs.writeFileSync(path.join(site, 'feed.xml'), feed.replace('</channel>', `  <item><title>hidden</title><link>https://docs.example.com/noindex</link></item>\n</channel>`));
+    assert.ok(!read(dir, 'docs/_site/sitemap.xml').includes('noindex'), 'sitemap still clean after the plant');
+
+    const mod = (await import(pathToFileURL(path.join(ROOT, 'packs', 'public', 'freestruct-docs-shapes', 'index.js')).href)).default;
+    const attack = mod.attacks.find((a) => a.name === 'noindex-artifact-leak');
+    assert.ok(attack, 'the noindex-artifact-leak attack exists');
+    const harness = makeFakeHarness(site);
+    const tripped = await attack.run(harness, {});
+    assert.strictEqual(tripped.verdict, 'EXPLOITED', 'a feed-only noindex leak trips the oracle: ' + JSON.stringify(tripped));
+    assert.includes(tripped.detail, 'feed.xml', 'the finding names the leaking artifact');
+
+    // Control: with the feed clean again, the oracle REFUSES (no leak). This
+    // also pins the xmlUnescape fix: the main fixture ships a `a&b.html` page
+    // whose sitemap loc is `/a&amp;b`, so a no-op entity decode resolved to
+    // the 404 (noindex) page and false-tripped on every ampersand page.
+    const cleanFeed = read(dir, 'docs/_site/feed.xml').replace(/<item><title>hidden<\/title>.*?<\/item>\n/, '');
+    fs.writeFileSync(path.join(site, 'feed.xml'), cleanFeed);
+    const held = await attack.run(makeFakeHarness(site), {});
+    assert.strictEqual(held.verdict, 'REFUSED', 'a clean tree holds (ampersand slug decodes, no false leak): ' + JSON.stringify(held));
+  } finally { rmDir(dir); }
 });
 
 // ---------- main fixture run: defaults ON ----------
