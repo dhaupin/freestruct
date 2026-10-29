@@ -130,6 +130,15 @@ jobs:
 
   deploy:
     needs: build
+    # Production Pages deploys are gated to main INSIDE the reusable lane
+    # (issue #44), not in the caller: this is the load-bearing guard. Once
+    # a caller adds staging to its trigger list (as this repo's docs.yml
+    # now does), the trigger no longer keeps staging content out of
+    # production - the deploy job itself has to. Gating here means every
+    # caller inherits the guard and cannot publish staging by accident.
+    # On a staging push github.ref is refs/heads/staging (skips); on a
+    # pull_request it is refs/pull/N/merge (skips); only a main push deploys.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

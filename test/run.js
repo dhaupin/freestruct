@@ -334,6 +334,44 @@ test('docs lane is reusable: docs.yml is a thin caller of the workflow_call lane
   assert.ok(!job.steps, 'the caller carries no steps (the runbook lives in the lane)');
 });
 
+// ---------- staging flow (issue #44) ----------
+// staging is the permanent integration branch: work lands there first, and
+// staging -> main is the only promotion path. Two invariants keep that honest,
+// and they pull against each other: CI must VERIFY staging (so the trigger
+// lists include it), but a staging build must NEVER deploy to production. The
+// trigger alone cannot carry the second invariant once it carries the first -
+// the deploy job itself has to gate on the ref. This pins both.
+
+test('staging flow: test.yml and docs.yml verify staging as well as main (#44)', () => {
+  const branchesOf = (wf, event) => {
+    const b = wf?.on?.[event]?.branches;
+    return Array.isArray(b) ? b : (b ? [b] : []);
+  };
+  for (const file of ['test.yml', 'docs.yml']) {
+    const wf = yamlLoad(read('.github/workflows', file));
+    for (const event of ['push', 'pull_request']) {
+      const branches = branchesOf(wf, event);
+      assert.ok(branches.includes('main'), `${file} ${event} triggers on main`);
+      assert.ok(branches.includes('staging'), `${file} ${event} triggers on staging (work is verified where it lands)`);
+    }
+  }
+});
+
+test('staging flow: the reusable docs lane gates its deploy job to main, so no caller can publish staging (#44)', () => {
+  const lane = yamlLoad(read('.github/workflows', 'docs-lane.yml'));
+  const deploy = lane.jobs.deploy;
+  assert.ok(deploy, 'the lane carries a deploy job');
+  // The load-bearing guard: without this, adding staging to any caller's
+  // trigger list publishes staging content to production. It must live in the
+  // reusable lane (not the caller) so every caller inherits it.
+  assert.strictEqual(deploy.if, "github.ref == 'refs/heads/main'",
+    'the deploy job is gated to main by ref (a staging push or a PR merge ref skips it)');
+  // And the caller must NOT re-implement the guard - the whole point of the
+  // lane is that the guard is defined once.
+  const caller = yamlLoad(read('.github/workflows', 'docs.yml'));
+  assert.ok(!caller.jobs.docs.if, 'the caller does not re-implement the deploy guard (it lives in the lane)');
+});
+
 // ---------- crashtest pack surface (packs/, the one-surface extension model) ----------
 
 test('packs/ surface: a README ships, every public pack.json is schemaVersion 1, and each entry satisfies the scenario contract (name/description/attacks)', async () => {

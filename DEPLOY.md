@@ -10,8 +10,8 @@ Everything release- and CI-shaped for this repo, in one place. Every claim is ch
 
 | Target | What it is | Runs on |
 |--------|-----------|---------|
-| GitHub Pages | This repo's own docs site (`docs/` is the dogfood: Jekyll + Freestruct + Pagefind) | `.github/workflows/docs.yml` (thin caller) -> `docs-lane.yml` (reusable lane), every push to `main` |
-| Test battery | Fixture battery + version pins + docs audit + tarball e2e + pack selftest | `.github/workflows/test.yml`, every push/PR |
+| GitHub Pages | This repo's own docs site (`docs/` is the dogfood: Jekyll + Freestruct + Pagefind) | `.github/workflows/docs.yml` (thin caller) -> `docs-lane.yml` (reusable lane), every push to `main` or `staging`; the lane's deploy job is gated to `main`, so a `staging` build verifies the lane without publishing |
+| Test battery | Fixture battery + version pins + docs audit + tarball e2e + pack selftest | `.github/workflows/test.yml`, every push/PR to `main` or `staging` |
 | npm release | Trusted Publisher (OIDC), dormant until the owner's bootstrap | `.github/workflows/publish.yml`, fires on `v*` tags ONLY |
 
 Dependencies are deliberately tiny: the package runtime ships with one dependency (`js-yaml`). CI tooling installs crashtest and pagefind from npm caches keyed by pinned versions (see [Cache discipline](#cache-discipline)).
@@ -30,7 +30,7 @@ Checkout -> Ruby setup -> bundle install -> jekyll build (inline cd: docs/)
          -> node bin/freestruct.mjs --strict   (broken links FAIL the build)
          -> crashtest dogfood (the freestruct-docs-shapes pack attacks the tree)
          -> pagefind index (pinned, cached)
-         -> upload-pages-artifact -> deploy-pages
+         -> upload-pages-artifact -> deploy-pages   (deploy job gated to main)
 ```
 
 The lane is parameterized on the axes the hand-copies drifted on - `docs-path`, `output-dir`, `ruby-version`, `node-version`, `pagefind-version`, `crashtest-ref`, `freestruct-cmd`, `strict` - with defaults matching this repo, so a consumer pins only what it changes (for example `freestruct-cmd: npx freestruct` instead of the dogfood `node bin/freestruct.mjs`). The two receipts the inline lane kept survive the move: pagefind is cached in BOTH scopes (`node_modules/pagefind` and the scoped `@pagefind/<platform>` companion), and every install stays pinned.
@@ -40,6 +40,7 @@ Hard gates baked in:
 - **`--strict`** - broken internal links fail the Pages build (the #4 graduation; its first harvest caught and fixed three production 404s).
 - **crashtest dogfood** - `freestruct-docs-shapes` attacks the tree the build just produced; any EXPLOITED row fails the deploy (hardened output only).
 - **docs audit** - link/frontmatter/nav truth runs in `test.yml`; the Pages build additionally verifies rendering.
+- **deploy gated to `main`** - the lane's `deploy` job carries `if: github.ref == 'refs/heads/main'` (issue #44). Because `docs.yml` now triggers on `staging` too, the trigger alone no longer keeps staging content out of production; the guard does, and it lives in the reusable lane so every caller inherits it (a `staging` push or a PR merge ref skips the deploy).
 
 Deployment needs the GitHub Pages environment (`github-pages`) already configured for the repository; the CNAME is `freestruct.creadev.org` (`docs/CNAME`-free - the domain is set in repo Pages settings, and `docs/_config.yml` pins the canonical scheme to https).
 
@@ -49,7 +50,7 @@ Deployment needs the GitHub Pages environment (`github-pages`) already configure
 
 Every push and pull request runs:
 
-1. `npm test` - the fixture battery (157 pins), including the version-truth pin that enforces the triple agreement (README / package.json / CHANGELOG) and the issue #41 census leg that derives the version from package.json and refuses every living surface (README line, AGENTS/CONTRIBUTING/DEPLOY pins, the pass-log reminder, the `release.yml` tag example, `init/VERSION`) that drifted, plus the issue #43 count census that derives the battery size and engine module count from source; the pinned **1.2.0** (owner call, 2026-10-28).
+1. `npm test` - the fixture battery (159 pins), including the version-truth pin that enforces the triple agreement (README / package.json / CHANGELOG) and the issue #41 census leg that derives the version from package.json and refuses every living surface (README line, AGENTS/CONTRIBUTING/DEPLOY pins, the pass-log reminder, the `release.yml` tag example, `init/VERSION`) that drifted, plus the issue #43 count census that derives the battery size and engine module count from source; the pinned **1.2.0** (owner call, 2026-10-28).
 2. Docs audit (`npm run lint:docs`) - frontmatter, links, nav symmetry, style, truthfulness, English-only language gate, and the engine-header comment format gate.
 3. Tarball e2e (`npm run e2e`) - real `npm pack` -> install into a throwaway project -> run the README quick start through the bin shim -> assert artifacts + injections + exit shapes.
 4. Crashtest pack selftest (`npm run packs:selftest`) - the pack must hold a hardened Freestruct build and trip a deliberately regressed one.

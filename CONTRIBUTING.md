@@ -26,13 +26,15 @@ CI runs the same commands locally, so test like CI:
 
 ```bash
 npm install
-npm test                     # the battery (157 pins)
+npm test                     # the battery (159 pins)
 npm run lint:docs            # docs audit: 7 gates incl. English-only prose
 npm run sync:check           # template copies in lockstep
 npm run e2e                  # tarball e2e (fresh-install quick start)
 ```
 
 `npm run packs:selftest` additionally proves the crashtest pack's teeth (needs a local dhaupin/crashtest checkout).
+
+Branch flow: `staging` is the permanent integration branch. Branch off it, open the PR against `staging`, merge there; `staging` -> `main` is the only promotion path, and CI verifies both branches. The Pages deploy job is gated to `main`, so a `staging` build verifies the lane without publishing (see [AGENTS.md](AGENTS.md), the Git flow section).
 
 Docs prose rules are enforced, not suggested: English-only, hyphens (no em/en dashes), no emoji outside CODE, table rows end with pipes, and every engine source opens with `// engine/<file>.js - <purpose>`.
 

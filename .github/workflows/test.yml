@@ -2,14 +2,18 @@
 # ---------
 # freestruct regression battery on every push and PR (PRD Phase 0.4).
 # npm test = test/run.js: fixture-site battery + version-truth pins.
+#
+# staging is the permanent integration branch (issue #44): work branches off
+# staging, PRs target staging, and staging -> main is the only promotion path.
+# CI verifies where work lands, so both branches are in the trigger lists.
 
 name: test
 
 on:
   push:
-    branches: [main]
+    branches: [main, staging]
   pull_request:
-    branches: [main]
+    branches: [main, staging]
 
 permissions:
   contents: read

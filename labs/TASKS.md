@@ -609,3 +609,17 @@ The entity path had one more consumer the earlier passes never traced:
 - **Trail aligned at 157:** README trail + v1.2.0 section, CHANGELOG 1.2.0 entry, the announcement prose, and the derived count surfaces via the count census.
 - Gates: battery 157/157, docs audit (7 gates clean), sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run build` (Jekyll + inject) + `freestruct audit docs/_site` (0 failures, 0 warnings; the only per-run byte difference is the documented `last-modified` stamp).
 - Next pass: cut the v1.2.0 tag (owner-gated - the user said NOT yet).
+
+### Pass 26.36 - the staging-flow CI fix (issue #44)
+
+- **Issue #44 (dhaupin, enhancement): CI verified `main` only, and the deploy was ungated.** `test.yml` triggered on `push`/`pull_request` for `main` alone, so none of the staging pushes in the recent walk ran CI (the gap flagged at the end of Pass 26.35 - the last four fixes were verified locally only). `docs.yml` was `main`-only too, and `docs-lane.yml`'s `deploy` job (line 131, `actions/deploy-pages@v5`) carried no ref guard.
+- **The trap (#44, and poststruct#32 as the reference):** once `staging` is in a trigger list, the trigger no longer keeps staging content out of production - the deploy job itself has to. Adding `staging` to the docs trigger WITHOUT the guard would publish to production on every staging commit.
+- **The fix, three parts:**
+  1. `test.yml`: `push` + `pull_request` branches are now `[main, staging]`, so the battery verifies staging work where it lands.
+  2. `docs.yml`: same trigger widening, plus a `pull_request` event (it had none), so the docs lane is exercised on staging.
+  3. `docs-lane.yml`: the `deploy` job now carries `if: github.ref == 'refs/heads/main'`. This is the load-bearing guard, and it lives in the REUSABLE lane (not the caller) on purpose: every rig project that calls the lane inherits it and cannot publish staging by accident. `docs.yml` stays a thin caller with no guard of its own.
+- **Pins:** two battery tests under the new `staging flow` section - one asserts both workflows trigger on `main` AND `staging` for push + PR; the other asserts the lane's `deploy.if` is exactly `github.ref == 'refs/heads/main'` and that the caller does not re-implement it. Battery 157 -> 159.
+- **Docs:** AGENTS.md gains a `Git flow (staging is permanent)` section (the branch model + the guard-lives-in-the-lane rule); DEPLOY.md's overview table and Pages section record the staging trigger and the deploy guard; CONTRIBUTING carries the same rules.
+- **Trail aligned at 159:** README trail + v1.2.0 section, CHANGELOG 1.2.0 entry, the announcement prose, and the derived count surfaces via the count census.
+- Gates: battery 159/159, docs audit (7 gates clean), sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run build` (Jekyll + inject) + `freestruct audit docs/_site` (0 failures, 0 warnings). CI is the real verifier for the trigger change - pushing this to `staging` should now start `test` and `docs`, with `docs`'s deploy job SKIPPED.
+- Next pass: confirm on GitHub that the staging push started both workflows and skipped the deploy (the #44 proof); then cut the v1.2.0 tag (owner-gated - the user said NOT yet).

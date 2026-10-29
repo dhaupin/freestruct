@@ -31,7 +31,7 @@ Engineering history and the house rules, written for an AI agent (or human) pick
 | `docs/`     | The docs site, and the worked example itself: Jekyll + Freestruct + Pagefind |
 | `packs/`    | The crashtest extension surface (one pack: `freestruct-docs-shapes`)   |
 | `scripts/`  | CI/tooling: template sync, docs audit, tarball e2e, pack selftest, language gate |
-| `test/`     | `node test/run.js` - the fixture battery (157 pins) + version truth     |
+| `test/`     | `node test/run.js` - the fixture battery (159 pins) + version truth     |
 | `labs/`     | PRD + pass log: where plans and history live                          |
 | `horcrux/`  | The stone (brain snapshot, refresh convention in the PRD)              |
 
@@ -65,6 +65,15 @@ npm run sync:check           # engine -> init -> docs template copies in lockste
 npm run packs:selftest       # pack teeth (needs a dhaupin/crashtest checkout)
 npm run e2e                  # tarball e2e: fresh install quick start through the bin shim
 ```
+
+---
+
+## Git flow (staging is permanent)
+
+- **`staging` is the integration branch and is never deleted.** Work branches off `staging`, PRs target `staging`, and `staging` -> `main` is the only promotion path (issue #44; the reference implementation is poststruct, and this repo mirrors it).
+- **CI verifies both branches.** `test.yml` and `docs.yml` trigger on `push` and `pull_request` for `main` and `staging`, so work is verified where it lands, not at promotion time.
+- **The deploy guard lives in the reusable lane, not the caller.** Once `staging` is in a trigger list, the trigger no longer keeps staging content out of production; the deploy job itself must gate on the ref. `docs-lane.yml`'s `deploy` job carries `if: github.ref == 'refs/heads/main'`, so every caller inherits the guard and cannot publish staging by accident. `docs.yml` is a thin caller and deliberately carries no guard of its own. Two battery pins (`staging flow: ...`) hold both invariants; a broken regex or a dropped guard fails the battery.
+- **Delete a short-lived work branch once its PR merges.** That rule covers work branches only - never `staging`.
 
 ---
 
