@@ -553,3 +553,11 @@ The entity path had one more consumer the earlier passes never traced:
 - **Trail aligned at 151:** README trail + v1.2.0 section, CHANGELOG 1.2.0 entry, the announcement prose, and the derived count surfaces via the count census.
 - Gates: battery 151/151, docs audit (7 gates clean), sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run build` (Jekyll + inject) + `freestruct audit docs/_site` (0 failures, 0 warnings).
 - Next pass: cut the v1.2.0 tag (owner-gated - the user said NOT yet).
+
+### Pass 26.30 - the indexnow keyLocation probe (done, same session, post-26.29)
+
+- **`indexnow` keyLocation ignored `basePath` (fixed):** the payload named `keyLocation` as `site.url` + '/' + `<key>.txt`. The key file is emitted into the output ROOT (`emitIndexNowKeyFile`), which a sub-path install serves under the prefix - so the engines probed the domain root (a 404), could not verify the key, and refused the submission. It now rides the same `pageUrlFor` contract the sitemap/robots pointer use (the #3 bug class). Pinned: a `basePath: /myproject` install names `.../myproject/<key>.txt`.
+- **Walk coverage (checked, no bug):** `emitIndexNowKeyFile` writes to the output root (correct - `pageUrlFor(config, key+'.txt')` resolves to the same served path), `resolveIndexNowKey` shapes, the no-sitemap refusal, and the escaped-`<loc>` decode (pass 26.27).
+- **Trail aligned at 152:** README trail + v1.2.0 section, CHANGELOG 1.2.0 entry, the announcement prose, and the derived count surfaces via the count census.
+- Gates: battery 152/152, docs audit (7 gates clean), sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run build` (Jekyll + inject) + `freestruct audit docs/_site` (0 failures, 0 warnings).
+- Next pass: cut the v1.2.0 tag (owner-gated - the user said NOT yet).

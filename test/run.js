@@ -2331,6 +2331,32 @@ test('indexnow: bad key shapes warn loudly; --dry-run prints the payload and exi
   } finally { rmDir(dir3); }
 });
 
+test('indexnow: keyLocation honors basePath (a sub-path install probes the served key file, not the domain root)', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'basePath: /myproject',
+      'indexNow:',
+      '  key: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaab1',
+    ].join('\n') + '\n');
+    fs.writeFileSync(path.join(dir, 'docs/_site/sitemap.xml'),
+      '<sitemap><url><loc>https://docs.example.com/myproject/</loc><lastmod>2026-10-22</lastmod></url></sitemap>');
+    const res = spawnSync(process.execPath, [INJECT, 'indexnow', '--dry-run'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(res.status, 0, 'dry-run is exit 0');
+    const payload = JSON.parse(res.stdout.slice(res.stdout.indexOf('{')));
+    // The key file ships in the output root, served under basePath; a raw
+    // site.url + '/' + key pointed at the domain root, where the engines'
+    // keyLocation probe 404s and the submission is refused.
+    assert.strictEqual(payload.keyLocation,
+      'https://docs.example.com/myproject/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaab1.txt',
+      'keyLocation carries the basePath prefix');
+  } finally { rmDir(dir); }
+});
+
 // ---------- per-page OG image generation (issue #22) ----------
 // The SVG template renders per page, the optional @resvg/resvg-js
 // rasterizer produces PNGs (devDependency: consumers opt in), and the seo

@@ -12,6 +12,7 @@ import fs from 'fs';
 import crypto from 'crypto';
 import path from 'path';
 import { decodeEntities } from './scan.js';
+import { pageUrlFor } from './urls.js';
 
 export const INDEXNOW_API = 'https://api.indexnow.org/indexnow';
 const KEYFILE_HIDDEN = ['indexnow-key.txt'];
@@ -111,7 +112,11 @@ export async function submitIndexNow({ config, configDir, outputDir, dryRun }) {
     host,
     key: resolved.key,
     urlList: urls,
-    keyLocation: config.site.url.replace(/\/$/, '') + '/' + resolved.key + '.txt',
+    // The key file is emitted into the OUTPUT ROOT, which a sub-path install
+    // serves under basePath (same contract as sitemap.xml/robots.txt). A raw
+    // site.url + '/' + key.txt pointed at the domain root, so the engines
+    // probed a URL that 404s and refused the submission (the #3 bug class).
+    keyLocation: pageUrlFor(config, resolved.key + '.txt'),
   };
 
   console.log('[freestruct] indexnow: submitting ' + urls.length + ' URL(s) to ' + INDEXNOW_API
