@@ -266,7 +266,7 @@ export function auditOutput({ outputDir, config, json = false, capture = false }
       // configured handle the injector ships neither twitter:site nor
       // twitter:creator, so the audit grades those absences only when the
       // handle exists. The 'config-gated' wording in the warning now holds.
-      if ((name === 'twitter:site' || name === 'twitter:creator') && !config.twitter?.username) continue;
+      if ((name === 'twitter:site' || name === 'twitter:creator') && !config?.twitter?.username) continue;
       if (!grabMeta(head, 'name', name)) {
         // twitter:image is config-gated (no og.image -> the engine ships no
         // twitter:image either): collapse it like og:image. The rest of the
@@ -336,9 +336,17 @@ export function auditOutput({ outputDir, config, json = false, capture = false }
 
   // ---------- site-level artifacts ----------
 
+  // Honor the config's own generate switches: with `generateSitemap: false`
+  // (or robots), the run never writes the artifact, so its absence is the
+  // documented behavior, not a failure. The audit previously FAILed the
+  // missing file the config explicitly asked not to produce, so a
+  // legitimately-configured site could never pass its own audit. Configless
+  // audits (config === null) keep the strict check - absence is then a real
+  // gap. A DISABLED artifact that is present is still checked for shape.
+  const sitemapDisabled = config?.generateSitemap === false;
   const sitemapPath = path.join(outputDir, 'sitemap.xml');
   if (!existsSync(sitemapPath)) {
-    fail('sitemap.xml', 'missing');
+    if (!sitemapDisabled) fail('sitemap.xml', 'missing');
   } else {
     const s = readFileSync(sitemapPath, 'utf8');
     sitemapLocs = (s.match(/<loc>/g) || []).length;
@@ -346,9 +354,10 @@ export function auditOutput({ outputDir, config, json = false, capture = false }
     if (!s.includes('<lastmod>')) warn('sitemap.xml', 'no <lastmod> dates (engine runs always add them; hand-stripped?)');
   }
 
+  const robotsDisabled = config?.generateRobots === false;
   const robotsPath = path.join(outputDir, 'robots.txt');
   if (!existsSync(robotsPath)) {
-    fail('robots.txt', 'missing');
+    if (!robotsDisabled) fail('robots.txt', 'missing');
   } else {
     const r = readFileSync(robotsPath, 'utf8');
     if (!/Sitemap:/i.test(r)) fail('robots.txt', 'no Sitemap: pointer');
@@ -361,9 +370,9 @@ export function auditOutput({ outputDir, config, json = false, capture = false }
   // The og:image wording stays truthful when the config DOES supply an image
   // but not for every page (og.scoped, ogImageGeneration): the line then
   // reads "absent on N page(s)" rather than the false "not configured".
-  const ogScopedCfg = config.og?.scoped;
-  const ogImageConfigured = Boolean(config.og?.image)
-    || Boolean(config.ogImageGeneration)
+  const ogScopedCfg = config?.og?.scoped;
+  const ogImageConfigured = Boolean(config?.og?.image)
+    || Boolean(config?.ogImageGeneration)
     || Boolean(ogScopedCfg && typeof ogScopedCfg === 'object' && !Array.isArray(ogScopedCfg)
       && Object.keys(ogScopedCfg).length > 0);
   for (const [key, pages] of [...configGated.entries()].sort()) {
