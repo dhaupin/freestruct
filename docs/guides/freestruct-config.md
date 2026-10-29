@@ -325,6 +325,8 @@ Open Graph meta tags.
 
 `og.image` is optional: with no image configured (and no per-page override), no `og:image` or `twitter:image` tag ships at all - a bare image tag pointing at the site root is a broken social card, not a fallback. Relative image paths are joined onto `site.url`; absolute HTTP(S) values pass through unchanged. Values that reach the head are HTML-attribute-escaped first.
 
+The image slots are missing-only per SLOT, not per set (issue #46): a page that ships its own `og:title`/`og:description` - a host layout's hand-written basics - still receives the config `og:image` when it carries no `og:image` of its own, so config-owned imagery coexists with host-owned basics. The rest of the set stays group-level: a page carrying its own og basics keeps them and the engine injects nothing else into that group.
+
 `og.image` takes two shapes:
 
 ```yaml

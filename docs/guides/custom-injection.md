@@ -18,6 +18,8 @@ Freestruct supports custom injection hooks - template files in `docs/_freestruct
 | `inject-body-start.html` | After `<body>` |
 | `inject-footer.html` | Before `</body>` |
 
+`inject-brand.html` is the head template itself, not a slot hook: a staged `docs/_freestruct/inject-brand.html` REPLACES the packaged default outright rather than merging with it, so a file that carries only the tags your layout lacks silently drops every slot it does not list (canonical, the og/twitter set, identity JSON-LD). Carry the full default set, or delete the file to fall back to the packaged template; the run warns and names the omitted core slots when a staged template is partial.
+
 ## Placeholders
 
 All hooks substitute the same placeholder set the head template uses - the full list is in the [Freestruct.config Reference](/guides/freestruct-config) under Template Placeholders. The three you reach for most:

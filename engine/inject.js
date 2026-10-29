@@ -239,6 +239,22 @@ export function runInject(options = {}) {
   if (!fs.existsSync(templatePath)) {
     fail('Template not found: ' + templatePath + ' (shipped copy also missing at ' + packageTemplateDir + ')', EXIT_TEMPLATE);
   }
+  // Template-shape warning (issue #46): a STAGED inject-brand.html REPLACES
+  // the packaged default outright (it is the whole head template, not a
+  // per-slot merge), so a partial file silently drops every slot it does not
+  // list - the packaged default carries canonical + the full og/twitter set +
+  // identity JSON-LD, and a host that stages "just the layer the layout lacks"
+  // loses the rest on EVERY page. Name the core slots a staged template omits.
+  const stagedTemplatePath = path.join(configDir, '_freestruct', 'inject-brand.html');
+  if (fs.existsSync(stagedTemplatePath)) {
+    const stagedTemplate = fs.readFileSync(stagedTemplatePath, 'utf8');
+    const CORE_SLOTS = ['{{canonicalUrl}}', '{{pageTitle}}'];
+    const missingSlots = CORE_SLOTS.filter(k => !stagedTemplate.includes(k));
+    if (missingSlots.length) {
+      console.log('[freestruct] config warning: staged docs/_freestruct/inject-brand.html REPLACES the packaged head template (it is not merged per slot) and omits '
+        + missingSlots.join(', ') + ' - those head slots ship missing on every page. Carry the full default set, or delete the file to use the packaged template.');
+    }
+  }
   const template = fs.readFileSync(templatePath, 'utf8');
 
   const htmlFiles = getHtmlFiles(outputDir);

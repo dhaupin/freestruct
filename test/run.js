@@ -820,6 +820,79 @@ test('default run: missing-only gate leaves pages that already ship SEO untouche
   } finally { rmDir(dir); }
 });
 
+test('missing-only is SLOT-level for the share image: a page with its own og basics still gets the config og:image (issue #46)', () => {
+  // A host layout that hand-writes its own og:title/description/url/type/
+  // site_name (a documented convention) makes the group-level og gate see the
+  // page as covered, so the config og.image was starved on EVERY page of such
+  // a site - the share preview blanked while the canonical in the same head
+  // was correct. The image slots (og:image / twitter:image) are now slot-level:
+  // injected whenever the page itself lacks them, independent of the group gate.
+  const dir = scenario('main');
+  try {
+    const idx = path.join(dir, 'docs/_site/index.html');
+    let html = fs.readFileSync(idx, 'utf8');
+    html = html.replace('</head>', [
+      '<meta property="og:title" content="Hand written">',
+      '<meta property="og:description" content="Hand written desc">',
+      '<meta property="og:url" content="https://docs.example.com/">',
+      '<meta property="og:type" content="website">',
+      '<meta property="og:site_name" content="Foo Docs">',
+      '</head>',
+    ].join('\n'));
+    fs.writeFileSync(idx, html);
+
+    runInject(dir);
+    const out = read(dir, 'docs/_site/index.html');
+    assert.strictEqual((out.match(/property="og:image"/g) || []).length, 1,
+      'the config og:image reaches an og-owning page exactly once');
+    assert.includes(out, '<meta property="og:image" content="https://docs.example.com/og.png">');
+    assert.strictEqual((out.match(/name="twitter:image"/g) || []).length, 1,
+      'twitter:image is slot-level too');
+    assert.strictEqual((out.match(/property="og:title"/g) || []).length, 1,
+      'the page own og:title is not duplicated');
+
+    // A page that ships its OWN og:image keeps it (slot already filled).
+    const own = path.join(dir, 'docs/_site/own-image.html');
+    fs.writeFileSync(own, '<html><head><title>Own</title>'
+      + '<meta property="og:title" content="Own">'
+      + '<meta property="og:image" content="https://cdn.example.com/mine.png">'
+      + '</head><body><h1>o</h1></body></html>');
+    runInject(dir);
+    const ownOut = read(dir, 'docs/_site/own-image.html');
+    assert.strictEqual((ownOut.match(/property="og:image"/g) || []).length, 1, 'own og:image not duplicated');
+    assert.includes(ownOut, 'https://cdn.example.com/mine.png', 'own og:image preserved');
+    assert.ok(!/<meta property="og:image" content="https:\/\/docs\.example\.com\/og\.png">/.test(ownOut), 'the config image meta does not override a page own image');
+  } finally { rmDir(dir); }
+});
+
+test('a partial staged inject-brand.html warns that it replaces the whole head (issue #46)', () => {
+  // A staged docs/_freestruct/inject-brand.html REPLACES the packaged head
+  // template outright (no per-slot merge), so a host file that carries only
+  // "the layer the layout lacks" silently drops canonical + the rest on every
+  // page. The run names the omitted core slots; a full set stays silent.
+  const dir = scenario('main', {
+    'docs/_freestruct/inject-brand.html': '<meta property="og:title" content="{{pageTitle}}">\n',
+  });
+  try {
+    const out = runInject(dir);
+    assert.includes(out, 'config warning: staged docs/_freestruct/inject-brand.html REPLACES', 'loud template-shape warning');
+    assert.includes(out, '{{canonicalUrl}}', 'names the omitted core slot');
+  } finally { rmDir(dir); }
+
+  const full = scenario('main', {
+    'docs/_freestruct/inject-brand.html': [
+      '<meta name="description" content="{{pageDescription}}">',
+      '<link rel="canonical" href="{{canonicalUrl}}">',
+      '<meta property="og:title" content="{{pageTitle}}">',
+      '',
+    ].join('\n'),
+  });
+  try {
+    const out = runInject(full);
+    assert.ok(!/REPLACES the packaged head template/.test(out), 'a template carrying the core slots stays silent');
+  } finally { rmDir(full); }
+});
+
 test('missing-only: an UPPER-CASE description meta still suppresses injection (case-insensitive gate)', () => {
   const dir = scenario('main');
   try {

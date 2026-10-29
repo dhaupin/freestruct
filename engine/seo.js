@@ -677,39 +677,56 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
     const ogTags = (seo.match(/<meta property="og:[^"]*"[^>]*>/gi) || [])
       .filter((tag) => {
         const key = (tag.match(/property=["'](og:[^"']*)["']/i) || [])[1];
-        return key && !pageHasMeta('property', key);
+        // og:image is handled SLOT-level below (issue #46): a page carrying
+        // its own og basics still needs the config image, so the image is
+        // injected there for every page shape, never inside this group gate.
+        return key && key !== 'og:image' && !pageHasMeta('property', key);
       });
     if (ogTags.length) seoInjection += '\n' + ogTags.join('\n');
-    // issue #20: the structured og.image object form also emits its
-    // companions; only when the shipped image IS the config object - a
-    // per-page override ships its own image and replaces the set wholesale.
-    // Skipped when the page carries its own og:image (the companions would
-    // describe a raster the page is not using).
-    if (ogImageFull && companionsSource && !hasPerpageOgImage && !pageHasMeta('property', 'og:image')) {
-      const companions = [];
-      if (companionsSource.width !== undefined && companionsSource.width !== '') companions.push('<meta property="og:image:width" content="' + escAttr(companionsSource.width) + '">');
-      if (companionsSource.height !== undefined && companionsSource.height !== '') companions.push('<meta property="og:image:height" content="' + escAttr(companionsSource.height) + '">');
-      if (companionsSource.alt !== undefined && companionsSource.alt !== '') companions.push('<meta property="og:image:alt" content="' + escAttr(companionsSource.alt) + '">');
-      if (companions.length) seoInjection += '\n' + companions.join('\n');
-    }
     // article:* companions for per-page article facts
     const articleTags = [];
     if (overrides?.publishedTime && !pageHasMeta('property', 'article:published_time')) articleTags.push('<meta property="article:published_time" content="' + escAttr(overrides.publishedTime) + '">');
     if (overrides?.author && !pageHasMeta('property', 'article:author')) articleTags.push('<meta property="article:author" content="' + escAttr(overrides.author) + '">');
     if (overrides?.section && !pageHasMeta('property', 'article:section')) articleTags.push('<meta property="article:section" content="' + escAttr(overrides.section) + '">');
     if (articleTags.length) seoInjection += '\n' + articleTags.join('\n');
-  } else if (overrides && [overrides.ogType, overrides.ogImage, overrides.publishedTime, overrides.author, overrides.section].some(v => v !== undefined)) {
+  } else if (overrides && [overrides.ogType, overrides.publishedTime, overrides.author, overrides.section].some(v => v !== undefined)) {
     pageWarn(page, 'page ships its own Open Graph tags; og/author per-page overrides were not applied');
   }
   if (!hasTwitter) {
     const twTags = (seo.match(/<meta name="twitter:[^"]*"[^>]*>/gi) || [])
       .filter((tag) => {
         const key = (tag.match(/name=["'](twitter:[^"']*)["']/i) || [])[1];
-        return key && !pageHasMeta('name', key);
+        // twitter:image is SLOT-level, same rule as og:image (issue #46).
+        return key && key !== 'twitter:image' && !pageHasMeta('name', key);
       });
     if (twTags.length) seoInjection += '\n' + twTags.join('\n');
   } else if (overrides && overrides.twitterCard !== undefined) {
     pageWarn(page, 'page ships its own Twitter tags; the twitterCard override was not applied');
+  }
+
+  // Image slots are SLOT-level, not set-level (issue #46): the og/twitter
+  // group gates above mark a page "covered" as soon as it ships its own
+  // og:title (or twitter:card), so a host layout that hand-writes its own og
+  // basics NEVER received the config og.image - the share image was starved on
+  // every page of such a site, while the canonical in the same head was
+  // correct. Inject the image (and its companions) whenever the page itself
+  // lacks og:image / twitter:image, independent of the group gate.
+  if (ogImageFull && !pageHasMeta('property', 'og:image')) {
+    seoInjection += '\n<meta property="og:image" content="' + escAttr(ogImageFull) + '">';
+    // issue #20: the structured og.image object form also emits its
+    // companions; only when the shipped image IS the config object - a
+    // per-page override ships its own image and replaces the set wholesale
+    // (companionsSource is null then).
+    if (companionsSource) {
+      const companions = [];
+      if (companionsSource.width !== undefined && companionsSource.width !== '') companions.push('<meta property="og:image:width" content="' + escAttr(companionsSource.width) + '">');
+      if (companionsSource.height !== undefined && companionsSource.height !== '') companions.push('<meta property="og:image:height" content="' + escAttr(companionsSource.height) + '">');
+      if (companionsSource.alt !== undefined && companionsSource.alt !== '') companions.push('<meta property="og:image:alt" content="' + escAttr(companionsSource.alt) + '">');
+      if (companions.length) seoInjection += '\n' + companions.join('\n');
+    }
+  }
+  if (ogImageFull && !pageHasMeta('name', 'twitter:image')) {
+    seoInjection += '\n<meta name="twitter:image" content="' + escAttr(ogImageFull) + '">';
   }
   if (overrides && overrides.description !== undefined && hasSeoType(html, 'description')) {
     pageWarn(page, 'page has its own description meta; the description override was not applied');
