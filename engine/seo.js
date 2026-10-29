@@ -397,27 +397,100 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
         return m.slice(0, openEnd) + mask(m.slice(openEnd, m.length - closeLen)) + m.slice(m.length - closeLen);
       })
       .replace(/<(pre|code|textarea|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, (m) => mask(m));
+    // Same-origin policy (owner fix): only the site's own assets are ours to
+    // invalidate. An off-site URL (another CDN's host) gains nothing from a
+    // ?v= param, and a SIGNED url (an S3 presigned link carrying
+    // X-Amz-Signature) is actively CORRUPTED by an appended param - the
+    // signature no longer matches and the asset 403s. Absolute (scheme://host)
+    // and protocol-relative (//host) references are busted only when the host
+    // is the configured site; every other scheme (data:, blob:, mailto:, tel:)
+    // is left alone.
+    const siteOrigin = (() => {
+      try { return new URL(config.site?.url || '').origin; } catch { return null; }
+    })();
+    const siteHost = (() => {
+      try { return new URL(config.site?.url || '').host; } catch { return null; }
+    })();
+    // { origin, pathname } for a reference we may bust (origin '' = same-origin
+    // relative), or null to skip outright (fragment-only, or a non-http scheme).
+    const parseAssetRef = (raw) => {
+      if (!raw || raw[0] === '#') return null;
+      if (raw.startsWith('//')) {
+        const host = raw.slice(2).split(/[/?#]/)[0];
+        return { origin: '//' + host, pathname: raw.slice(2 + host.length) };
+      }
+      const m = /^([a-z][a-z0-9+.-]*):\/\//i.exec(raw);
+      if (m) {
+        const rest = raw.slice(m[0].length);
+        const host = rest.split(/[/?#]/)[0];
+        return { origin: m[1].toLowerCase() + '://' + host, pathname: rest.slice(host.length) };
+      }
+      if (/^[a-z][a-z0-9+.-]*:/i.test(raw)) return null; // data:, blob:, mailto:, tel:, ...
+      return { origin: '', pathname: raw }; // same-origin relative
+    };
+    const isSameOrigin = (origin) => origin === ''
+      || (siteOrigin !== null && origin === siteOrigin)
+      || (siteHost !== null && origin === '//' + siteHost);
+    // The extension lives on the PATH: split the fragment and query off first,
+    // so an asset the SSG emitted with an existing query ('style.css?foo=bar')
+    // or fragment ('style.css#iefix') is still recognized. The version param
+    // joins the existing query with '&' and a previous freestruct 'v=' is
+    // dropped (rerun hygiene). Returns the URL unchanged when it is not a
+    // bustable same-origin asset.
+    const bustAssetRef = (raw) => {
+      const ref = parseAssetRef(raw);
+      if (!ref || !isSameOrigin(ref.origin)) return raw;
+      const { origin, pathname } = ref;
+      const hashAt = pathname.indexOf('#');
+      const fragment = hashAt === -1 ? '' : pathname.slice(hashAt);
+      const noFrag = hashAt === -1 ? pathname : pathname.slice(0, hashAt);
+      const qAt = noFrag.indexOf('?');
+      const pathPart = qAt === -1 ? noFrag : noFrag.slice(0, qAt);
+      const query = qAt === -1 ? '' : noFrag.slice(qAt + 1);
+      const dot = pathPart.lastIndexOf('.');
+      const ext = dot === -1 ? '' : pathPart.slice(dot).toLowerCase();
+      if (!assetExts.has(ext)) return raw;
+      const keptParams = query.split('&').filter(p => p && !/^v=/.test(p));
+      keptParams.push('v=' + buildHash);
+      return origin + pathPart + '?' + keptParams.join('&') + fragment;
+    };
     html = html.replace(/(href|src)=(["'])([^"']+)\2/gi,
-      (match, attr, quote, url) => {
-        // The extension lives on the PATH: split the fragment and query off
-        // first. The old check ran on the raw value, so an asset the SSG
-        // emitted with an existing query ('style.css?foo=bar') or a fragment
-        // ('style.css#iefix') had '.css?foo=bar'/'…css#iefix' as its "ext",
-        // missed the set, and was never busted - a stale asset survived a
-        // content change. The version param joins the existing query with '&'
-        // and a previous freestruct 'v=' is dropped (rerun hygiene).
-        const hashAt = url.indexOf('#');
-        const fragment = hashAt === -1 ? '' : url.slice(hashAt);
-        const noFrag = hashAt === -1 ? url : url.slice(0, hashAt);
-        const qAt = noFrag.indexOf('?');
-        const pathPart = qAt === -1 ? noFrag : noFrag.slice(0, qAt);
-        const query = qAt === -1 ? '' : noFrag.slice(qAt + 1);
-        const dot = pathPart.lastIndexOf('.');
-        const ext = dot === -1 ? '' : pathPart.slice(dot).toLowerCase();
-        if (!assetExts.has(ext)) return match;
-        const keptParams = query.split('&').filter(p => p && !/^v=/.test(p));
-        keptParams.push('v=' + buildHash);
-        return attr + '=' + quote + pathPart + '?' + keptParams.join('&') + fragment + quote;
+      (match, attr, quote, url) => attr + '=' + quote + bustAssetRef(url) + quote);
+    // srcset (responsive images): the SAME url list rides <img srcset>,
+    // <picture><source srcset> and <link imagesrcset>, and it was never
+    // busted - so on any responsive image the primary (largest) candidate
+    // stayed stale at the edge while src moved on. A candidate is
+    // "url [descriptor]"; a naive comma split corrupts a data: URI (its
+    // payload carries commas), so this follows the HTML spec's splitting
+    // loop: skip whitespace/commas, take the non-whitespace run as the url
+    // (stripping trailing separators), then the run up to the next comma as
+    // the descriptor. Rejoined with the canonical ", " separator.
+    const isSrcsetWs = (c) => c === ' ' || c === '\t' || c === '\n' || c === '\r' || c === '\f';
+    const parseSrcset = (value) => {
+      const out = [];
+      let i = 0;
+      const n = value.length;
+      while (i < n) {
+        while (i < n && (isSrcsetWs(value[i]) || value[i] === ',')) i++;
+        if (i >= n) break;
+        let start = i;
+        while (i < n && !isSrcsetWs(value[i])) i++;
+        let url = value.slice(start, i);
+        while (url.endsWith(',')) url = url.slice(0, -1);
+        if (url === '') continue;
+        while (i < n && isSrcsetWs(value[i])) i++;
+        start = i;
+        while (i < n && value[i] !== ',') i++;
+        out.push({ url, descriptor: value.slice(start, i).trim() });
+      }
+      return out;
+    };
+    html = html.replace(/srcset=(["'])([^"']*)\1/gi,
+      (match, quote, value) => {
+        const busted = parseSrcset(value)
+          .map(({ url, descriptor }) => bustAssetRef(url) + (descriptor ? ' ' + descriptor : ''))
+          .join(', ');
+        return 'srcset=' + quote + busted + quote;
       });
     html = html.replace(/\u0000FS(\d+)\u0000/g, (m, i) => masks[Number(i)]);
   }

@@ -656,3 +656,19 @@ The owner asked which audit style was better and whether the two repos could sha
 - **Independence (owner rule):** the convergence must not make one repo import the other. The shared runner is a vendored copy (builtins only: `fs`/`path`), and the new pin holds that plus the absence of any prestruct dependency. Audits run with neither sibling installed.
 - Gates: battery 164/164, docs audit (7 gates clean), claims gate clean, sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run gate` exit 0.
 - Next pass: cut the v1.2.0 tag (owner-gated - the user said NOT yet); prestruct adopts the runner once this lands (tracked at prestruct#75).
+
+---
+
+### Pass 26.39 - the cache-bust same-origin + srcset pass (owner-directed, three real defects)
+
+The owner asked how freestruct's cache busting compares to prestruct's, then to fix what the comparison surfaced. Probing the REAL CLI against fixture sites (the reproduce-first discipline) found three defects in the `<script src>`/`<img src>`/`<link href>` asset matcher, none pinned or documented:
+
+1. **Off-site assets were busted.** `https://cdn.other.com/logo.svg` and `https://unpkg.com/lib@1/dist/lib.js` gained `?v={hash}`. freestruct cannot invalidate another origin's cache, and a CDN that keys on the query string can even MISS its cache on the new URL. Fix: same-origin only - absolute/protocol-relative references bust only when the host is the configured `site.url` origin; root-relative always busts.
+2. **Signed URLs were corrupted.** An S3 presigned link `...?X-Amz-Signature=deadbeef` became `...?X-Amz-Signature=deadbeef&v={hash}`, breaking the signature so the asset 403s. Fix: the same same-origin gate skips it (an off-site URL is never touched, so its query is preserved byte-for-byte).
+3. **`srcset` was never busted.** `<img srcset="/i/a.png 1x, /i/a@2x.png 2x">` and `<picture><source srcset=...>` passed through untouched, so on any responsive-image site the primary (largest) candidate stayed stale at the edge while `src` moved on. Fix: a spec-shaped srcset splitter busts every candidate on `<img>`, `<picture><source>` and `<link imagesrcset>`, keeping descriptors and rejoining with the canonical `, `. A naive comma split was tried first and CORRUPTED a `data:` URI (its payload carries commas) - the battery pin caught it, and the parser now follows the HTML spec's whitespace/separator loop.
+
+- **`engine/seo.js`:** the matcher grew `parseAssetRef`/`isSameOrigin`/`bustAssetRef` and a `parseSrcset` splitter; the single `href|src` rewrite and a new `srcset` rewrite both route through `bustAssetRef`, so the same-origin rule is enforced in ONE place for every attribute. `data:`/`blob:`/`mailto:`/`tel:` and fragment-only refs are skipped at parse time.
+- **Pins:** two more battery tests (164 -> 166) - one asserts off-site assets (third-party CDN, protocol-relative, off-site script) are untouched, a signed URL keeps its exact query, `data:`/`blob:` are untouched, and same-origin absolute/protocol-relative/root-relative still bust; the other asserts every `srcset` candidate is busted on `<img>` and `<picture><source>`, a mixed srcset busts only the same-origin candidate, a `data:` candidate is untouched, a descriptor-less candidate busts, and a rerun does not stack `v=`.
+- **Docs:** the cache-busting guide gains a "Same-origin only" subsection and a supported-assets note on srcset; the FAQ gains "Does it bust third-party or signed URLs?".
+- Gates: battery 166/166, docs audit (7 gates clean), claims gate clean, sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run gate` exit 0.
+- Next pass: cut the v1.2.0 tag (owner-gated - the user said NOT yet).

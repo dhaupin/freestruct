@@ -141,6 +141,10 @@ SSGs often hash static assets (JS, CSS, images) with filenames like `app.a1b2c3d
 
 Freestruct complements asset hashing by handling the HTML layer. Use both together for maximum cache control.
 
+## Does it bust third-party or signed URLs?
+
+No - only your own assets are busted. Off-site URLs (a third-party CDN, a font host) are left exactly as-is, and a signed URL (an S3 presigned link with `X-Amz-Signature`) is never touched, because appending `?v=` would corrupt the signature and make the asset 403. The rule is same-origin: absolute URLs on your configured `site.url` host, protocol-relative URLs on that host, and root-relative paths are busted; everything else (another origin, `data:`, `blob:`) is skipped. `srcset` candidates on `<img>`, `<picture><source>`, and `<link imagesrcset>` are busted under the same rule.
+
 ## My site still shows old content. What do I do?
 
 1. **Check the hash** - View page source, look for `freestruct-build`

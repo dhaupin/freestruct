@@ -41,7 +41,11 @@ Assets in your HTML get cache-busted automatically:
 <link rel="font" href="/fonts/myfont.woff2?v=a1b2c3d4">
 ```
 
-Supported assets: CSS, JS, images (png, jpg, gif, svg, webp), icons (ico), fonts (woff, woff2, ttf, otf), wasm, json.
+Supported assets: CSS, JS, images (png, jpg, gif, svg, webp), icons (ico), fonts (woff, woff2, ttf, otf), wasm, json. Both `src`/`href` and every candidate in a `srcset` list (on `<img>`, `<picture><source>`, and `<link imagesrcset>`) are busted.
+
+### Same-origin only
+
+Only your **own** assets are busted. An off-site URL (a third-party CDN, a font host) is left exactly as-is, because freestruct cannot invalidate another origin's cache, and appending `?v=` to a **signed URL** (an S3 presigned link carrying `X-Amz-Signature`) corrupts the signature so the asset 403s. Absolute URLs on your own `site.url` origin, protocol-relative URLs on that host, and root-relative paths are all busted; `data:`, `blob:`, and other non-http schemes are left alone.
 
 ## Configuration
 

@@ -1009,6 +1009,80 @@ test('cache-busting: only real asset extensions are busted, case-insensitively (
   } finally { rmDir(dir); }
 });
 
+test('cache-busting: off-site assets are never busted and signed urls are never corrupted (owner fix)', () => {
+  const dir = scenario('main', {
+    'docs/_site/offsite.html': [
+      '<html><head><title>Offsite</title>',
+      '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/x/app.css">',
+      '<link rel="stylesheet" href="//fonts.example.com/f.css">',
+      '<link rel="stylesheet" href="https://docs.example.com/self-abs.css">',
+      '<link rel="stylesheet" href="//docs.example.com/self-rel.css">',
+      '<link rel="stylesheet" href="/local.css">',
+      '</head><body>',
+      '<img src="https://bucket.s3.amazonaws.com/private/img.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Signature=deadbeef" alt="signed">',
+      '<img src="https://cdn.other.com/logo.svg" alt="ext">',
+      '<script src="https://unpkg.com/lib@1/dist/lib.js"></script>',
+      '<img src="data:image/png;base64,AAAA" alt="data">',
+      '<img src="blob:https://x/y" alt="blob">',
+      '</body></html>',
+    ].join('\n') + '\n',
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/offsite.html');
+    // Off-site hosts: we cannot invalidate another CDN, and appending ?v= to a
+    // signed URL CORRUPTS the signature (the asset 403s). Both stay verbatim.
+    assert.includes(html, 'href="https://cdn.jsdelivr.net/npm/x/app.css"', 'a third-party CDN css is untouched');
+    assert.includes(html, 'href="//fonts.example.com/f.css"', 'a protocol-relative off-site css is untouched');
+    assert.includes(html, 'src="https://cdn.other.com/logo.svg"', 'an off-site img is untouched');
+    assert.includes(html, 'src="https://unpkg.com/lib@1/dist/lib.js"', 'an off-site script is untouched');
+    assert.includes(html, 'src="https://bucket.s3.amazonaws.com/private/img.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Signature=deadbeef"',
+      'a signed URL keeps its exact query - no v= appended, the signature survives');
+    assert.ok(!/X-Amz-Signature=deadbeef&v=/.test(html), 'the signed URL is never corrupted with a v= param');
+    // data:/blob: are not http assets at all.
+    assert.includes(html, 'src="data:image/png;base64,AAAA"', 'a data: URI is untouched');
+    assert.includes(html, 'src="blob:https://x/y"', 'a blob: URI is untouched');
+    // Same-origin (absolute, protocol-relative, or root-relative) still busts.
+    assert.match(html, /href="https:\/\/docs\.example\.com\/self-abs\.css\?v=[0-9a-f]{8}"/, 'a same-origin absolute css still busts');
+    assert.match(html, /href="\/\/docs\.example\.com\/self-rel\.css\?v=[0-9a-f]{8}"/, 'a same-origin protocol-relative css still busts');
+    assert.match(html, /href="\/local\.css\?v=[0-9a-f]{8}"/, 'a root-relative css still busts');
+  } finally { rmDir(dir); }
+});
+
+test('cache-busting: srcset candidates (img/source) are busted, off-site and data: skipped (owner fix)', () => {
+  const dir = scenario('main', {
+    'docs/_site/responsive.html': [
+      '<html><head><title>Responsive</title></head><body>',
+      '<img srcset="/i/a.png 1x, /i/a@2x.png 2x" alt="density">',
+      '<picture><source srcset="/i/hero.webp 1x, /i/hero@2x.webp 2x" type="image/webp"><img src="/i/hero.png" alt="hero"></picture>',
+      '<img srcset="https://cdn.other.com/a.png 1x, /i/local.png 2x" alt="mixed">',
+      '<img srcset="data:image/png;base64,AAAA 1x" alt="data">',
+      '<img srcset="/i/solo.png" alt="no descriptor">',
+      '</body></html>',
+    ].join('\n') + '\n',
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/responsive.html');
+    // Before the fix srcset was never touched, so on a responsive site the
+    // PRIMARY (largest) candidate stayed stale while src moved on.
+    assert.match(html, /srcset="\/i\/a\.png\?v=[0-9a-f]{8} 1x, \/i\/a@2x\.png\?v=[0-9a-f]{8} 2x"/,
+      'an img srcset has every candidate busted, descriptors kept');
+    assert.match(html, /<source srcset="\/i\/hero\.webp\?v=[0-9a-f]{8} 1x, \/i\/hero@2x\.webp\?v=[0-9a-f]{8} 2x" type="image\/webp">/,
+      'a <picture><source srcset> has every candidate busted');
+    // Off-site candidate skipped, same-origin candidate busted, both kept.
+    assert.match(html, /srcset="https:\/\/cdn\.other\.com\/a\.png 1x, \/i\/local\.png\?v=[0-9a-f]{8} 2x"/,
+      'a mixed srcset busts only the same-origin candidate');
+    assert.includes(html, 'srcset="data:image/png;base64,AAAA 1x"', 'a data: srcset candidate is untouched');
+    assert.match(html, /srcset="\/i\/solo\.png\?v=[0-9a-f]{8}"/, 'a single-candidate srcset with no descriptor busts');
+    // Rerun idempotency: no stacked v= params on a second pass.
+    runInject(dir);
+    const again = read(dir, 'docs/_site/responsive.html');
+    assert.ok(!/[?&]v=[0-9a-f]{8}[?&]v=/.test(again), 'srcset params are not stacked on a rerun');
+    assert.match(again, /srcset="\/i\/solo\.png\?v=[0-9a-f]{8}"/, 'the single candidate stays single-busted');
+  } finally { rmDir(dir); }
+});
+
 test('linkcheck: single-quoted hrefs are checked too, so --strict catches them (bug fix)', () => {
   const dir = scenario('main', {
     'docs/_site/quotes.html': "<html><head><title>Q</title></head><body><a href='/gone-sq/'>sq</a><a href=\"/gone-dq/\">dq</a><a href='/ok/'>ok</a></body></html>\n",
