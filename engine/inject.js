@@ -55,14 +55,35 @@ const _flags = _argv.filter(a => FLAG_VALUES.has(a));
 // any other bare word stays the outputDir override it always was.
 const COMMANDS = new Set(['validate', 'init', 'help', 'audit', 'indexnow']);
 const _firstArg = _argv.find(a => !a.startsWith('--'));
-const _positional = _firstArg && !COMMANDS.has(_firstArg) ? _firstArg : undefined;
-// Pass 26.16: dash-shaped args are FLAGS, never output dirs. The audit and
-// indexnow subcommands validate their own flags; the default run must do the
-// same for its set, instead of letting a typo'd flag ride as a positional
-// and inject somewhere the user never meant (the same quiet-mistake class
-// the source-tree guard closes).
-const KNOWN_DEFAULT_DASHES = ['-h', '--help', '--version', '--strict', '--tolerant'];
-const unknownDashArgs = _argv.filter(a => a.startsWith('-') && !KNOWN_DEFAULT_DASHES.includes(a));
+// Args that follow a subcommand word (`_argv` minus the command itself).
+const afterCommand = (name) => _argv.slice(_argv.indexOf(name) + 1);
+
+// Pass 26.16 + 26.44: dash-shaped args are FLAGS, never output dirs, and each
+// command's flag/positional surface is CLOSED. An unknown flag or a surplus
+// positional is a typo, refused with the supported set instead of silently
+// ignored - before this, `init --bogus` scaffolded into a directory literally
+// named `--bogus`, `init a b c` dropped `b`/`c`, `audit -x` rode as an output
+// dir (exit 3, "not found") and `validate --bogus` ran as if clean.
+const GLOBAL_FLAGS = ['-h', '--help', '--version', '--strict', '--tolerant'];
+function parseArgs(args, { command, flags = [], maxPositionals = 0 }) {
+  const allowed = new Set([...GLOBAL_FLAGS, ...flags]);
+  const seen = new Set();
+  const positionals = [];
+  for (const a of args) {
+    if (a.startsWith('-')) {
+      if (!allowed.has(a)) {
+        fail(command + ': unknown flag ' + a + ' - run freestruct --help for the flag list (supported: ' + (flags.length ? flags.join(' ') : 'none') + ')');
+      }
+      seen.add(a);
+    } else {
+      positionals.push(a);
+    }
+  }
+  if (positionals.length > maxPositionals) {
+    fail(command + ': too many arguments (got ' + positionals.length + ', expected at most ' + maxPositionals + ')');
+  }
+  return { positionals, flags: seen };
+}
 
 export const EXIT_OK = 0;
 export const EXIT_CONFIG = 1;
@@ -128,6 +149,7 @@ function printHelp() {
  * exits EXIT_CONFIG, honoring --tolerant like every other fatal.
  */
 function cmdValidate() {
+  parseArgs(afterCommand('validate'), { command: 'validate' });
   let loaded;
   try {
     loaded = loadConfig(process.cwd());
@@ -144,7 +166,9 @@ function cmdValidate() {
  * clobbering an existing file. Mirrors the manual `cp -r node_modules/
  * freestruct/init/docs .` shape the init kit README describes.
  */
-function cmdInit(dirArg) {
+function cmdInit() {
+  const { positionals } = parseArgs(afterCommand('init'), { command: 'init', maxPositionals: 1 });
+  const dirArg = positionals[0];
   const targetRoot = path.resolve(process.cwd(), dirArg || '.');
   const docsDir = path.join(targetRoot, 'docs');
   // engine/inject.js -> package root -> init/docs (files list ships init/)
@@ -178,11 +202,12 @@ export function runInject(options = {}) {
   // them (with --external the only path that lives past the import, this
   // guard is what keeps the engine from re-injecting mid-audit).
   if (_firstArg && COMMANDS.has(_firstArg)) return;
-  // Unknown dash-words are typos, not directories: fail with the usage hint
-  // instead of riding as a positional (Pass 26.16).
-  if (unknownDashArgs.length) {
-    fail('unknown flag(s): ' + unknownDashArgs.join(' ') + ' - run freestruct --help for the flag list', EXIT_CONFIG);
-  }
+  // The default run's own closed surface (Pass 26.44): flags are the three
+  // run-shaping ones, and at most ONE positional (the output-dir override).
+  // An unknown flag or a surplus positional is refused with the usage hint
+  // instead of riding as a directory (Pass 26.16's typo class, closed).
+  const { positionals: defaultPositionals } = parseArgs(_argv, { command: 'freestruct', flags: ['--strict', '--tolerant'], maxPositionals: 1 });
+  const _positional = defaultPositionals[0];
   const cwd = options.cwd || process.cwd();
   console.log('freestruct: Loading config...');
 
@@ -438,14 +463,12 @@ if (_firstArg === 'help' || _argv.includes('--help') || _argv.includes('-h')) { 
 // the run walks up from cwd (it maps basePath for the on-disk asset checks);
 // a configless audit just runs without the disk-mapping extras.
 async function cmdAudit() {
-  const auditArgs = _argv.slice(_argv.indexOf('audit') + 1);
-  const useJson = auditArgs.includes('--json');
-  const useExternal = auditArgs.includes('--external');
-  const explicitDir = auditArgs.find(a => !a.startsWith('--'));
-
-  if (auditArgs.filter(a => a.startsWith('--')).some(a => a !== '--json' && a !== '--external')) {
-    fail('audit: only --json and --external are supported flags (got ' + auditArgs.filter(a => a.startsWith('--')).join(' ') + ')');
-  }
+  const { positionals, flags } = parseArgs(afterCommand('audit'), {
+    command: 'audit', flags: ['--json', '--external'], maxPositionals: 1,
+  });
+  const useJson = flags.has('--json');
+  const useExternal = flags.has('--external');
+  const explicitDir = positionals[0];
 
   let config = null;
   let configDir = process.cwd();
@@ -492,13 +515,11 @@ async function cmdAudit() {
 // verify ownership, so this is documented as the post-deploy step (CI often
 // wants --dry-run at build time). Exit 0 accepted/dry-run | 1 failure.
 async function cmdIndexNow() {
-  const idxArgs = _argv.slice(_argv.indexOf('indexnow') + 1);
-  const dryRun = idxArgs.includes('--dry-run');
-  const explicitDir = idxArgs.find(a => !a.startsWith('--'));
-
-  if (idxArgs.filter(a => a.startsWith('--')).some(a => a !== '--dry-run')) {
-    fail('indexnow: only --dry-run is a supported flag');
-  }
+  const { positionals, flags } = parseArgs(afterCommand('indexnow'), {
+    command: 'indexnow', flags: ['--dry-run'], maxPositionals: 1,
+  });
+  const dryRun = flags.has('--dry-run');
+  const explicitDir = positionals[0];
 
   let config = null;
   let configDir = process.cwd();
@@ -531,7 +552,7 @@ async function cmdIndexNow() {
 }
 
 if (_firstArg === 'validate') cmdValidate();
-if (_firstArg === 'init') cmdInit(_argv[_argv.indexOf('init') + 1]);
+if (_firstArg === 'init') cmdInit();
 if (_firstArg === 'audit') cmdAudit().catch((e) => fail('audit: ' + (e && e.message ? e.message : e)));
 if (_firstArg === 'indexnow') { cmdIndexNow(); }
 

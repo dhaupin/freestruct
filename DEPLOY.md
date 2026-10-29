@@ -70,7 +70,7 @@ Deployment needs the GitHub Pages environment (`github-pages`) already configure
 
 Every push and pull request runs:
 
-1. `npm test` - the fixture battery (178 pins), including the version-truth pin that enforces the triple agreement (README / package.json / CHANGELOG) and the issue #41 census leg that derives the version from package.json and refuses every living surface (README line, AGENTS/CONTRIBUTING/DEPLOY pins, the pass-log reminder, the `release.yml` tag example, `init/VERSION`) that drifted, plus the issue #43 count census that derives the battery size and engine module count from source; the pinned **1.2.0** (owner call, 2026-10-28).
+1. `npm test` - the fixture battery (179 pins), including the version-truth pin that enforces the triple agreement (README / package.json / CHANGELOG) and the issue #41 census leg that derives the version from package.json and refuses every living surface (README line, AGENTS/CONTRIBUTING/DEPLOY pins, the pass-log reminder, the `release.yml` tag example, `init/VERSION`) that drifted, plus the issue #43 count census that derives the battery size and engine module count from source; the pinned **1.2.0** (owner call, 2026-10-28).
 2. Docs audit (`npm run lint:docs`) - frontmatter, links, nav symmetry, style, truthfulness, English-only language gate, and the engine-header comment format gate.
 3. Tarball e2e (`npm run e2e`) - real `npm pack` -> install into a throwaway project -> run the README quick start through the bin shim -> assert artifacts + injections + exit shapes.
 4. Crashtest pack selftest (`npm run packs:selftest`) - the pack must hold a hardened Freestruct build and trip a deliberately regressed one.

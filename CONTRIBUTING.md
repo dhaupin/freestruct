@@ -27,7 +27,7 @@ CI runs the same commands locally, so test like CI:
 ```bash
 npm install
 npm run gate                 # sync:check + check (the composed local gate; prepublishOnly runs it)
-npm test                     # the battery (178 pins)
+npm test                     # the battery (179 pins)
 npm run lint:docs            # docs audit: 8 gates incl. English-only prose
 npm run lint:claims          # claims gate: retired-as-current fiction signatures
 npm run sync:check           # template copies in lockstep
