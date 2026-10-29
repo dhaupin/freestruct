@@ -25,6 +25,10 @@
  *                 the documented-retired allowlist
  *   language      English-only prose (scripts/check-language.cjs owns the
  *                 logic; the gate shells out so one command covers it)
+ *   jekyllfilters build-time Liquid constructs the Jekyll build would only
+ *                 report from its stack trace: the two-arg single-arg filter
+ *                 trap (crashtest#23) and unknown tags ({% seo %} in prose);
+ *                 scripts/check-jekyll-filters.cjs owns the logic, shelled out
  *   codefmt       every engine source opens with its own path in a header
  *
  * Exit 1 on any finding, evidence inline.
@@ -166,6 +170,30 @@ function gateLanguage(ctx) {
   } catch (err) {
     for (const line of String(err.stdout || '').trim().split('\n').filter(Boolean)) ctx.findings.push(line);
     if (!err.stdout) ctx.findings.push(`language: checker failed to run: ${err.message}`);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Gate: jekyllfilters (build-time Liquid constructs; issue #47)
+//
+// The standalone checker owns the logic (scripts/check-jekyll-filters.cjs);
+// the gate shells out to it so the single audit command covers it, exactly as
+// the language gate does. A construct that only fails in Jekyll's stack trace
+// (the two-arg single-arg filter trap, or an unknown tag like `{% seo %}` in
+// prose) then fails lint:docs with a file:line instead.
+// ---------------------------------------------------------------------------
+
+function gateJekyllFilters(ctx) {
+  const { execFileSync } = require('child_process');
+  try {
+    execFileSync(process.execPath, [path.join(ctx.root, 'scripts', 'check-jekyll-filters.cjs')], {
+      cwd: ctx.root, stdio: ['ignore', 'pipe', 'pipe'],
+    });
+  } catch (err) {
+    const out = String(err.stdout || '').trim().split('\n').filter(Boolean);
+    const errOut = String(err.stderr || '').trim().split('\n').filter(Boolean);
+    for (const line of [...out, ...errOut]) ctx.findings.push(line);
+    if (!out.length && !errOut.length) ctx.findings.push(`jekyllfilters: checker failed to run: ${err.message}`);
   }
 }
 
@@ -360,6 +388,7 @@ const gates = {
   style: gateStyle,
   truthfulness: gateTruthfulness,
   language: gateLanguage,
+  jekyllfilters: gateJekyllFilters,
   codefmt: gateCodeFormat,
 };
 
