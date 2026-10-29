@@ -3521,6 +3521,43 @@ test('docs audit: the runner is shared and config-driven, and the caller owns vo
     'an unknown gate throws so the caller decides the exit');
 });
 
+test('independence: the shared runner and every audit work with neither sibling installed (prestruct#75)', () => {
+  // The convergence must NEVER make one repo import the other at runtime: a
+  // consumer may have freestruct without prestruct (or vice versa). The
+  // shared runner is therefore vendored (a copied file), not a cross-repo
+  // import - so it must depend on node builtins only, and freestruct must
+  // carry no prestruct dependency in any form.
+  const lib = fs.readFileSync(path.join(ROOT, 'scripts', 'lib', 'docs-audit.cjs'), 'utf8');
+  const requires = [...lib.matchAll(/require\(['"]([^'"]+)['"]\)/g)].map((m) => m[1]);
+  const builtins = new Set(['fs', 'path', 'crypto', 'url', 'child_process', 'os', 'util', 'assert']);
+  const foreign = requires.filter((r) => !builtins.has(r) && !r.startsWith('.'));
+  assert.deepStrictEqual(foreign, [],
+    `the shared runner must require node builtins only (vendored, not cross-repo): got ${JSON.stringify(requires)}`);
+
+  // No sibling package in any dependency field.
+  const pkg = JSON.parse(read('.', 'package.json'));
+  for (const field of ['dependencies', 'peerDependencies', 'optionalDependencies', 'devDependencies']) {
+    const deps = Object.keys(pkg[field] || {});
+    assert.ok(!deps.some((d) => /^@?prestruct/.test(d)),
+      `${field} must not depend on prestruct (audits run without the sibling installed)`);
+  }
+
+  // No runtime import of the sibling anywhere in the shipped/engine surface.
+  const surface = ['engine', 'bin', 'scripts'];
+  for (const dir of surface) {
+    const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => {
+      const p = path.join(d, e.name);
+      return e.isDirectory() ? walk(p) : [p];
+    });
+    for (const f of walk(path.join(ROOT, dir))) {
+      if (!/\.(js|cjs|mjs)$/.test(f)) continue;
+      const src = fs.readFileSync(f, 'utf8');
+      const hit = src.match(/(?:require\(|from\s+|import\()\s*['"]prestruct(?:[/'"]|$)/m);
+      assert.ok(!hit, `${path.relative(ROOT, f)} must not import the prestruct package at runtime`);
+    }
+  }
+});
+
 // ---------- playbooks leg (#34) ----------
 // The playbooks leg is the family-scaffold shape guides/ does not carry: one
 // page per runbook recipe, each with a permalink under /playbooks/ and a row
