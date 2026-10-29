@@ -704,3 +704,17 @@ The owner asked for the issue queue alongside the walk. Three issues were open: 
 - **Docs:** the `og` section of the config reference documents the per-slot rule; the custom-injection guide documents that `inject-brand.html` replaces the whole head (not a slot hook); one CHANGELOG row (walk row extended to six fixes, 166 -> 172).
 - Gates: battery 172/172, docs audit (7 gates clean), claims gate clean, sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e.
 - Next pass: #47 is a docs-lane item for the sibling repos (not this engine); cut the v1.2.0 tag (owner-gated - NOT yet).
+
+---
+
+### Pass 26.42 - the issue-queue close-out: #47 docs-lane Jekyll-filter gate
+
+The owner asked to close the whole open queue (#45, #46, #47). #45 and #46 closed in Pass 26.41; #47 remained - and reading its full body against the repo showed it is **repo-scoped to freestruct** (filed here, not on a sibling): this repo builds its docs with Jekyll but shipped no `scripts/check-jekyll-filters.cjs`, so a Liquid construct that only fails at BUILD time (an unknown tag, or the two-arg single-arg filter trap) reached CI unchecked - the first signal was Jekyll's stack trace, and `lint:docs` reported PASS.
+
+- **`scripts/check-jekyll-filters.cjs` (new).** Ported from poststruct (commit `e53b1e0`): refuses (1) the two-arg single-arg filter trap - `| remove: 'a', ''` throws "wrong number of arguments" and kills the build (crashtest#23) - and (2) any `{% tag %}` outside the Jekyll 4.x core + Liquid set (a `{% seo %}` in prose killed a docs build because the docs ship no theme gem and no jekyll-seo-tag; backticks are markdown, not Liquid escaping, so the tag still parsed). `{% raw %}...{% endraw %}` regions are exempted while line count is preserved, so `file:line` stays honest. Scan root overridable for testing; defaults to `docs/`.
+- **`scripts/run-docs-audit.cjs` (8th gate).** New `jekyllfilters` gate shells out to the checker exactly as the `language` gate does, so the single `lint:docs` command covers it. The gate-set docblock gains the row.
+- **Pins:** one more battery test (172 -> 173) - asserts the checker FAILs on both constructs with a `file:line`, that a `{% raw %}` region is exempt and not double-counted, that a clean tree passes with the PASS line, and that `lint:docs` shells out to it and registers the gate.
+- **Count census:** CONTRIBUTING's "docs audit: 7 gates" was a stale hand-copy; it is now derived from the runner's `gates` object (`DOCS_GATES`) and pinned, and corrected to 8. Living battery claims bumped 172 -> 173 (`docs/index.md`, `AGENTS.md`, `CONTRIBUTING.md`, `DEPLOY.md`).
+- **Docs:** one CHANGELOG row; the 1.2.0 intro's pin chain extended to 172 -> 173.
+- Gates: battery 173/173, docs audit (8 gates clean), claims gate clean, sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e.
+- Next pass: cut the v1.2.0 tag (owner-gated - NOT yet); prestruct adopts the shared runner (prestruct#75).

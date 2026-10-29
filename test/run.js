@@ -232,6 +232,9 @@ const ENGINE_MODULES = fs.readdirSync(path.join(ROOT, 'engine'))
   .filter((f) => f.endsWith('.js') && f !== 'inject.js').length;
 const BATTERY_TESTS = (fs.readFileSync(path.join(ROOT, 'test', 'run.js'), 'utf8')
   .match(/^test\(/gm) || []).length;
+const DOCS_GATES = (fs.readFileSync(path.join(ROOT, 'scripts', 'run-docs-audit.cjs'), 'utf8')
+  .match(/const gates = \{[\s\S]*?\n\};/) || [''])[0]
+  .split('\n').filter((l) => /^\s+\w+:\s*gate/.test(l)).length;
 
 const COUNT_CLAIMS = [
   { file: 'docs/index.md', re: /a (\d+)-test battery/, derive: () => BATTERY_TESTS, label: 'homepage battery size' },
@@ -239,6 +242,7 @@ const COUNT_CLAIMS = [
   { file: 'AGENTS.md', re: /the fixture battery \((\d+) pins\)/, derive: () => BATTERY_TESTS, label: 'AGENTS battery size' },
   { file: 'CONTRIBUTING.md', re: /one orchestrator \+ (\w+) modules/, words: true, derive: () => ENGINE_MODULES, label: 'CONTRIBUTING engine module count' },
   { file: 'CONTRIBUTING.md', re: /the battery \((\d+) pins\)/, derive: () => BATTERY_TESTS, label: 'CONTRIBUTING battery size' },
+  { file: 'CONTRIBUTING.md', re: /docs audit: (\d+) gates/, derive: () => DOCS_GATES, label: 'CONTRIBUTING docs gate count' },
   { file: 'DEPLOY.md', re: /the fixture battery \((\d+) pins\)/, derive: () => BATTERY_TESTS, label: 'DEPLOY battery size' },
 ];
 
@@ -3730,8 +3734,45 @@ test('claims gate: the fiction-signature gate ships, runs clean, and is wired in
   } finally { try { fs.rmSync(probe, { force: true }); } catch (e) { /* best-effort */ } }
 });
 
-// ---------- shared docs-audit runner (prestruct#75) ----------
+test('jekyll-filters gate (#47): catches the two-arg filter trap and unknown tags, exempts {% raw %}', () => {
+  // The docs ship no theme gem / no jekyll-seo-tag, so a Liquid construct that
+  // only fails at BUILD time (a two-arg single-arg filter, or `{% seo %}` in
+  // prose) reached CI unchecked - the first signal was Jekyll's stack trace.
+  // scripts/check-jekyll-filters.cjs now names it in lint:docs with a file:line.
+  const checker = path.join(ROOT, 'scripts', 'check-jekyll-filters.cjs');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fs-jf-'));
+  try {
+    fs.writeFileSync(path.join(dir, 'bad.md'), [
+      '# Probe',
+      '',
+      'An unknown tag in prose: {% seo %}',
+      '',
+      "A two-arg filter: {{ page.title | remove: 'x', '' }}",
+      '',
+      'A raw region that must be exempt: {% raw %}{% seo %}{% endraw %}',
+      '',
+    ].join('\n'));
+    const res = spawnSync(process.execPath, [checker, dir], { encoding: 'utf8' });
+    assert.strictEqual(res.status, 1, 'build-time constructs fail the gate');
+    assert.match(res.stderr, /unknown Liquid tag "seo"/, 'the unknown tag is named');
+    assert.match(res.stderr, /"remove" takes exactly one argument/, 'the two-arg filter trap is named');
+    assert.match(res.stderr, /bad\.md:3 /, 'file:line is honest');
+    assert.ok(!/seo.*exempt|exempt.*seo/.test(res.stderr.split('A raw region')[1] || ''), 'the {% raw %} region is exempt');
+    assert.strictEqual((res.stderr.match(/unknown Liquid tag "seo"/g) || []).length, 1, 'the raw-wrapped tag is not double-counted');
 
+    // A clean tree passes, and the gate is wired into lint:docs.
+    fs.writeFileSync(path.join(dir, 'bad.md'), '# Fine\n\n{{ page.title | remove: "x" }}\n');
+    const ok = spawnSync(process.execPath, [checker, dir], { encoding: 'utf8' });
+    assert.strictEqual(ok.status, 0, 'a clean tree passes');
+    assert.match(ok.stdout, /JEKYLL FILTERS: PASS/, 'the pass line ships');
+
+    const caller = read('.', 'scripts/run-docs-audit.cjs');
+    assert.includes(caller, 'check-jekyll-filters.cjs', 'lint:docs shells out to the checker');
+    assert.includes(caller, 'jekyllfilters: gateJekyllFilters', 'the gate is registered in the runner');
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+// ---------- shared docs-audit runner (prestruct#75) ----------
 test('docs audit: the runner is shared and config-driven, and the caller owns voice + exit (prestruct#75)', () => {
   // The light first step of the family convergence: the runner (discovery,
   // findings list, per-gate count line, gate selection) lives in a standalone
