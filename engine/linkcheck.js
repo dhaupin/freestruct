@@ -47,7 +47,9 @@ export function checkLinks(files, outputDir, basePath = '') {
     // double-quoted hrefs, so a single-quoted broken link (`href='/gone/'`,
     // valid HTML) sailed through --strict. The backreference keeps the pair
     // consistent; the fragment is stripped from the checked target either way.
-    const linkRegex = /href=(["'])([^"'#]+)(?:#[^"']*)?\1/g;
+    // Case-insensitive (HTML attribute names are): an upper-case `HREF=`
+    // (valid markup) was skipped entirely, so a broken link shipped green.
+    const linkRegex = /href=(["'])([^"'#]+)(?:#[^"']*)?\1/gi;
     let match;
     while ((match = linkRegex.exec(html)) !== null) {
       const link = match[2];

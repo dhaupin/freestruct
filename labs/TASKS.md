@@ -569,3 +569,15 @@ The entity path had one more consumer the earlier passes never traced:
 - **Trail aligned at 152** (assertions added inside the existing basePath pin; no battery count change).
 - Gates: battery 152/152, docs audit (7 gates clean), sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run build` (Jekyll + inject) + `freestruct audit docs/_site` (0 failures, 0 warnings).
 - Next pass: cut the v1.2.0 tag (owner-gated - the user said NOT yet).
+
+### Pass 26.32 - the case-insensitive attribute probe (done, same session, post-26.31)
+
+- **Two case-sensitivity bugs (fixed), both the same shape: an HTML attribute regex that was the one member of its family missing the `/i` flag.** HTML attribute NAMES are case-insensitive, so upper- or mixed-case markup is valid and real.
+  - `hasSeoType(html, 'description')` (`scan.js`) tested `/<meta[^>]*name=["']description["']/` with no `/i` while every sibling branch (`og`, `twitter`, `jsonld`, `canonical`) had it. An SSG/author writing `<META NAME="description" ...>` slipped the missing-only gate, so freestruct injected a SECOND description - and its own audit then FAILed the page for the duplicate the engine caused (engine-caused FAIL, the worst kind). Now `/i`.
+  - The link checker's `href` matcher (`linkcheck.js`) was `/href=(["'])([^"'#]+)(?:#[^"']*)?\1/g`, no `/i` - the one `href` regex in the engine without it. An upper-case `<A HREF="/broken/">` was skipped entirely, so a broken internal link shipped green under `--strict`. Now `/gi`.
+- **Probes:** `/tmp/w35.mjs`, `/tmp/w36.mjs` (caps description -> 2 metas, audit FAIL "duplicate meta description"), `/tmp/w37.mjs` (caps HREF -> broken link unreported, `--strict` passed). Both fixed, both re-probed clean.
+- **Pins:** `missing-only: an UPPER-CASE description meta still suppresses injection` and `linkcheck: an UPPER-CASE HREF is checked too`. Battery 152 -> 154.
+- **Walk coverage (checked, no bug):** the remaining `href`/`src` readers (`seo.js` cache-bust `(href|src)=` is `/gi`; `audit.js` `grabMeta`/`grabCanonical`/`<loc>` are `/i`) already carry the flag; the `<loc>` counter and `Sitemap:` probe are intentionally shape-only.
+- **Trail aligned at 154:** README trail + v1.2.0 section, CHANGELOG 1.2.0 entry, the announcement prose, and the derived count surfaces via the count census.
+- Gates: battery 154/154, docs audit (7 gates clean), sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run build` (Jekyll + inject) + `freestruct audit docs/_site` (0 failures, 0 warnings).
+- Next pass: cut the v1.2.0 tag (owner-gated - the user said NOT yet).

@@ -156,7 +156,11 @@ export function hasSeoType(html, type) {
     return /<link[^>]+rel=["']canonical["']/i.test(html);
   }
   if (type === 'description') {
-    return /<meta[^>]*name=["']description["']/.test(html);
+    // Case-insensitive like every branch above: an SSG/author emitting an
+    // upper- or mixed-case meta (<META NAME="description" ...>, valid HTML)
+    // missed this gate, so freestruct injected a SECOND description and its
+    // own audit then failed the page for the duplicate it caused.
+    return /<meta[^>]*name=["']description["']/i.test(html);
   }
   return false;
 }

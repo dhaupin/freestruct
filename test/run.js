@@ -734,6 +734,23 @@ test('config contract: jsonLd hook appends custom structured data (missing-only,
   } finally { rmDir(hostile); }
 });
 
+test('linkcheck: an UPPER-CASE HREF is checked too, so --strict catches it (case-insensitive attrs)', () => {
+  const dir = scenario('main', {
+    'docs/_site/caps.html': "<html><head><title>C</title></head><body><A HREF='/gone-caps/'>caps</A><a href='/ok2/'>ok</a></body></html>\n",
+    'docs/_site/ok2/index.html': '<html><head><title>Ok</title></head><body>ok</body></html>\n',
+  });
+  try {
+    // HTML attribute names are case-insensitive: an upper-case HREF is a real
+    // link. The matcher was the one href regex without /i, so the broken
+    // target shipped green under --strict.
+    const out = runInject(dir);
+    assert.includes(out, '/gone-caps/', 'an upper-case HREF broken link is reported');
+    assert.ok(!/-> \/ok2\//.test(out), 'a resolvable upper-case link is not flagged');
+    const strict = runInjectFailing(dir, ['--strict']);
+    assert.strictEqual(strict.status, 1, '--strict fails on the upper-case break');
+  } finally { rmDir(dir); }
+});
+
 test('default run: missing-only gate leaves pages that already ship SEO untouched', () => {
   const dir = scenario('main');
   try {
@@ -747,6 +764,29 @@ test('default run: missing-only gate leaves pages that already ship SEO untouche
     assert.strictEqual((html.match(/name="description"/g) || []).length, 1, 'own description kept, nothing injected');
 
     assert.match(html, /<meta name="freestruct-build" content="[0-9a-f]{8}">/);
+  } finally { rmDir(dir); }
+});
+
+test('missing-only: an UPPER-CASE description meta still suppresses injection (case-insensitive gate)', () => {
+  const dir = scenario('main');
+  try {
+    // Valid HTML: an SSG or hand-authored page may write the meta in caps.
+    // The description branch of hasSeoType used to be the one branch without
+    // the /i flag, so the gate missed it and freestruct injected a SECOND
+    // description - which its own audit then FAILed as a duplicate.
+    const idx = path.join(dir, 'docs/_site/index.html');
+    let html = fs.readFileSync(idx, 'utf8');
+    html = html.replace('</head>', '<META NAME="description" CONTENT="Page own desc">\n</head>');
+    fs.writeFileSync(idx, html);
+
+    runInject(dir);
+    const out = read(dir, 'docs/_site/index.html');
+    assert.strictEqual((out.match(/name="description"/gi) || []).length, 1,
+      'the upper-case meta is honored; no second description injected');
+
+    const res = spawnSync(process.execPath, [INJECT, 'audit'], { cwd: dir, encoding: 'utf8' });
+    assert.ok(!/duplicate meta description/.test(res.stdout + res.stderr),
+      'no engine-caused duplicate for the audit to fail');
   } finally { rmDir(dir); }
 });
 
