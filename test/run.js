@@ -2445,6 +2445,37 @@ test('audit: duplicate head tags ride the FAIL class (never engine-caused - miss
   } finally { rmDir(dir); }
 });
 
+test('audit: a page shipping a PARTIAL og/twitter set warns, not fails (matches the group-level injection gate)', () => {
+  // The engine's missing-only gate is group-level: a page carrying only its
+  // own og:title makes the gate back off the whole og group, so og:description
+  // is legitimately absent. The audit's FAIL core class (og:title/description,
+  // twitter:card/title) failed that absence anyway - a false FAIL on output the
+  // engine is contractually right to produce (SSG-owned partial sets). The FAIL
+  // now fires only when the page carries NO tag of the set at all.
+  const dir = scenario('main', {
+    'docs/_site/partial.html': [
+      '<html><head><title>Partial</title>',
+      '<meta name="description" content="A partial page description that is long enough to pass the band">',
+      '<meta property="og:title" content="Partial own title">',
+      '<meta name="twitter:card" content="summary">',
+      '</head><body><h1>Partial</h1></body></html>',
+    ].join('\n'),
+  });
+  try {
+    runInject(dir);
+    const out = spawnSync(process.execPath, [INJECT, 'audit'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(out.status, 0, 'a partial-set page is not a FAIL\n' + out.stdout);
+    assert.includes(out.stdout, 'og:description absent (page ships a partial og set', 'og companion is report-grade');
+    assert.includes(out.stdout, 'twitter:title absent (page ships a partial twitter set', 'twitter companion is report-grade');
+    // A page with NO og tag at all still FAILs (the class the check exists for).
+    const bare = path.join(dir, 'docs/_site/bare.html');
+    fs.writeFileSync(bare, '<html><head><title>Bare</title></head><body><h1>Bare</h1></body></html>');
+    const out2 = spawnSync(process.execPath, [INJECT, 'audit'], { cwd: dir, encoding: 'utf8' });
+    assert.strictEqual(out2.status, 1, 'a bare page still fails the core class');
+    assert.includes(out2.stdout, 'FAIL bare.html: missing og:title');
+  } finally { rmDir(dir); }
+});
+
 test('audit: the 404 noindex contract is checked independently of the og set (issue #18)', () => {
   const dir = scenario('main');
   try {
