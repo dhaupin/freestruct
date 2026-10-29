@@ -354,7 +354,7 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
         ? (scopedIsObject ? String(scopedForPage.src || '') : String(scopedForPage))
         : (ogImageObj ? String(ogImageObj.src || '') : (ogImageCfg || ''))));
   const ogImageFull = rawOgImage && !/^(https?:)?\/\//i.test(rawOgImage)
-    ? siteUrl + rawOgImage
+    ? pageUrlFor(config, rawOgImage)
     : rawOgImage;
 
   // issue #20, the SVG trap: an SVG og:image cannot be rendered by most

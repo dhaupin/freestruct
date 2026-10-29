@@ -259,6 +259,7 @@ Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, the
 - llms.txt link labels - a page title carrying markdown brackets (`Foo] bar`, a `[preview]` tag) was emitted raw into `- [title](url)`, so the `]` closed the label early and the URL spilled into the prose as broken text; brackets and backslashes escape in the label now
 - Entity decoding - the shared decoder mapped five named entities only, so a smart-quoted title (`&#8217;`, `&mdash;`) stayed literal and the feed double-escaped it (`&amp;#8217;`); decimal, hex and the common named set decode now, and the audit grades title/description length on the decoded text rather than the raw markup
 - IndexNow keyLocation - the submission named `keyLocation` as `site.url + '/' + key.txt`, ignoring `basePath`, so on a sub-path install the engines probed the domain root (a 404) and refused the submission; it now follows the same `pageUrlFor` contract as the sitemap and robots pointer
+- og:image basePath - a site-local `og:image` (and `twitter:image`) joined onto `site.url` alone, so on a sub-path install the share card pointed at the domain root and the preview blanked; the join now rides `pageUrlFor`, matching the audit's own on-disk check (which already stripped the prefix), and a src written without a leading slash no longer produces a slashless URL
 
 ## v1.1.0
 

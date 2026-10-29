@@ -561,3 +561,11 @@ The entity path had one more consumer the earlier passes never traced:
 - **Trail aligned at 152:** README trail + v1.2.0 section, CHANGELOG 1.2.0 entry, the announcement prose, and the derived count surfaces via the count census.
 - Gates: battery 152/152, docs audit (7 gates clean), sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run build` (Jekyll + inject) + `freestruct audit docs/_site` (0 failures, 0 warnings).
 - Next pass: cut the v1.2.0 tag (owner-gated - the user said NOT yet).
+
+### Pass 26.31 - the og:image basePath probe (done, same session, post-26.30)
+
+- **`og:image` (and `twitter:image`) ignored `basePath` (fixed):** `ogImageFull` joined a site-local image src as `site.url + src` (`seo.js`). The image is a root asset served under the prefix, so on a sub-path install the share card pointed at the domain root (a 404) and the preview blanked - the same #3 class the sitemap/feed/robots/404 pointers already fixed. It now rides `pageUrlFor(config, src)`, matching the audit's own on-disk check, which already strips `basePath` before resolving (so the audit and the tag disagreed on the same page). Absolute `http(s)`/protocol-relative values still pass through untouched. Pinned: the basePath case now asserts `og:image` carries `/help/`.
+- **Walk coverage (checked, no bug):** per-page `ogImage` overrides join the same way (now consistent), the `ogImageGeneration` per-page PNG src (`/og/<slug>.png`) now joins basePath-aware too, and `escAttr`/companions unchanged.
+- **Trail aligned at 152** (assertions added inside the existing basePath pin; no battery count change).
+- Gates: battery 152/152, docs audit (7 gates clean), sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run build` (Jekyll + inject) + `freestruct audit docs/_site` (0 failures, 0 warnings).
+- Next pass: cut the v1.2.0 tag (owner-gated - the user said NOT yet).

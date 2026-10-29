@@ -1583,6 +1583,8 @@ test('basePath set: canonical/sitemap/feed/search URLs get exactly one prefix', 
       '  description: A test docs site',
       'basePath: /help',
       'searchIndex: true',
+      'og:',
+      '  image: /og.png',
       ''
     ].join('\n')
   });
@@ -1592,6 +1594,11 @@ test('basePath set: canonical/sitemap/feed/search URLs get exactly one prefix', 
     // tree nests _site at root -> canonical = url + basePath + slug
     assert.includes(html, '<link rel="canonical" href="https://docs.example.com/help/">');
     assert.includes(html, '<meta property="og:url" content="https://docs.example.com/help/">');
+    // og:image is a site-local asset (served under basePath like every other
+    // root asset); the old site.url + src join pointed at the domain root,
+    // where the share preview 404s on a sub-path install.
+    assert.includes(html, '<meta property="og:image" content="https://docs.example.com/help/og.png">',
+      'og:image carries the basePath prefix');
 
     const guide = read(dir, 'docs/_site/guide/index.html');
     assert.includes(guide, '<link rel="canonical" href="https://docs.example.com/help/guide/">');
