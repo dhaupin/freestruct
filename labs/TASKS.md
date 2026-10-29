@@ -482,3 +482,13 @@ Owner asked to push the 26.21 walk and "do another pass/walk." Same posture: re-
 - **Trail aligned at 144:** README trail + v1.2.0 section (four new bullets), CHANGELOG 1.2.0 entry (four new bullets), and the derived count surfaces (AGENTS/CONTRIBUTING/DEPLOY/homepage) via the count census.
 - Gates: battery 144/144, docs audit (7 gates clean), sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run build` (Jekyll + inject) + `freestruct audit docs/_site` (0 failures, 0 warnings).
 - Next pass: cut the v1.2.0 tag (owner-gated - the user said NOT yet).
+
+### Pass 26.23 - the third probe: table-wrap hash churn (done, same session, post-26.22)
+
+Continuing the same walk into the late passes, a rerun-idempotency probe over the real bin (not the unit seams) surfaced a fifth bug:
+
+- **The default-on `tableWrap` pass churned the content-derived build hash (fixed):** `addTableWrap` runs in the LATE pass block, after `computeBuildHash` has already hashed the page snapshot. Run 1 therefore hashes the bare `<table>`; run 2 scans the page with the `fs-table-wrap` div run 1 wrote, so the stable view differs and the hash flips - on a completely unchanged site. Because the hash drives every asset `?v=` and the canonical bust param, every rerun busted the CDN cache for a table-bearing site, the exact churn the timestamp-free hash exists to prevent. `computeBuildHash`'s stable view now strips the tool-owned `<div class="fs-table-wrap" ...>...</div>` wrapper before hashing (nested tables verified stable too). Pinned: a table page's hash holds across reruns and the wrapper stays single. (The docs site itself carries tables, but `minify` is off there and the docs rebuild regenerates the tree, so it never showed at the dogfood.)
+- **Walk coverage (checked, no bug):** rerun idempotency under `minify: true` (stable after the first pass, as designed - minify is lossy, off by default), nested-table wrapping, the reading-time/last-modified late passes (their metas are stripped by the stable view), and `generate404` under rerun.
+- **Trail aligned at 145:** README trail + v1.2.0 section (one new bullet), CHANGELOG 1.2.0 entry (one new bullet), the announcement prose, and the derived count surfaces via the count census.
+- Gates: battery 145/145, docs audit (7 gates clean), sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run build` (Jekyll + inject) + `freestruct audit docs/_site` (0 failures, 0 warnings).
+- Next pass: cut the v1.2.0 tag (owner-gated - the user said NOT yet).

@@ -220,7 +220,7 @@ Two shipped surfaces beyond the engine:
 
 ## v1.2.0
 
-Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, then the post-queue engine sweep - with the GitHub issue queue fully closed (#1-#40), the engine corners the queue-era waves never probed got nine real fixes, each with a battery pin (121 -> 130), plus the issue #41 version-truth census leg (130 -> 132), the issue #43 count census (132 -> 133), the post-merge staging pass (133 -> 134), and the repo-wide gap walk (134 -> 144):
+Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, then the post-queue engine sweep - with the GitHub issue queue fully closed (#1-#40), the engine corners the queue-era waves never probed got nine real fixes, each with a battery pin (121 -> 130), plus the issue #41 version-truth census leg (130 -> 132), the issue #43 count census (132 -> 133), the post-merge staging pass (133 -> 134), and the repo-wide gap walk (134 -> 145):
 
 - Rerun hygiene - body-start/footer snippets are marker-wrapped and a rerun drops the previous copy before re-adding it, so a second pass no longer stacks snippets or churns the content-derived build hash
 - Verbatim-block-aware `minifyHtml` - `<pre class="...">`/`<script>`/`<style>`/`<textarea>` content (attribute forms included) survives byte-for-byte, so code fences and inline JS with `//` comments are never collapsed
@@ -251,6 +251,7 @@ Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, the
 - Cache-bust query/fragment fix - an asset emitted with an existing query (`style.css?foo=bar`) or a fragment (`legacy.css#iefix`) is now busted too (the version param joins the query, a previous `v=` is dropped), where before it was silently left stale
 - Cache-bust code protection - asset links SHOWN in a code example (`<pre><code>&lt;link href="/style.css"&gt;</code></pre>`) or inside a script body are left untouched; only live `href`/`src` attributes are busted
 - Purge hook reporting - every configured purge hook (and every `hooks.postBuild` entry) is reported when hooks are disabled, not just the first
+- Table-wrap hash stability - the default-on `tableWrap` pass runs after the build hash is computed, so a rerun saw the wrapper the first run added and churned the content-derived hash (flipping every asset `?v=` and busting CDN caches on an unchanged site); `computeBuildHash` now strips the wrapper before hashing
 
 ## v1.1.0
 

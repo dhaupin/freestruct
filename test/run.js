@@ -787,6 +787,23 @@ test('rerun hygiene: body-start/footer snippets never duplicate and the build ha
   } finally { rmDir(dir); }
 });
 
+test('rerun hygiene: the table wrapper does not churn the content-derived build hash (bug fix)', () => {
+  const dir = scenario('main', {
+    'docs/_site/table.html': '<html><head><title>Table</title></head><body><table><tr><td>1</td></tr></table></body></html>\n',
+  });
+  try {
+    const hashOf = () => read(dir, 'docs/_site/table.html').match(/<meta name="freestruct-build" content="([0-9a-f]{8})"/)[1];
+    runInject(dir);
+    const hashA = hashOf();
+    // The tableWrap pass runs AFTER computeBuildHash, so run 1 hashes the bare
+    // table and run 2 sees the wrapper the first run added - without the strip
+    // in stable() the hash churned on every pass for any site with a table.
+    runInject(dir);
+    assert.strictEqual(hashOf(), hashA, 'the hash does not churn when a table gains its wrapper');
+    assert.strictEqual((read(dir, 'docs/_site/table.html').match(/class="fs-table-wrap"/g) || []).length, 1, 'the wrapper stays single across reruns');
+  } finally { rmDir(dir); }
+});
+
 test('minify: verbatim blocks survive byte-for-byte and attribute-form tags are protected (bug fix)', () => {
   const dir = scenario('main', {
     'docs/ssr-config.yml': [
