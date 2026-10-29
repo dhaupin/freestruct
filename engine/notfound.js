@@ -68,10 +68,22 @@ export function pipeline404(page, context) {
   // drop any pre-existing robots meta so ours is the single source of truth
   // (scan.js's stripper exists for exactly this - one regex, one owner)
   html = stripRobotsMeta(html);
-  html = html.replace(/<\/head>/i, '<meta name="robots" content="noindex, nofollow">\n</head>');
-  fs.writeFileSync(page.file, html);
   page.html = html;
+  fs.writeFileSync(page.file, html);
 
   injectPage(page, context);
+
+  // Assert the noindex AFTER injectPage, not before: injectPage's rerun
+  // hygiene (stripInjectedRegions) deletes everything from the
+  // `<!-- freestruct -->` marker to `</head>`, so a noindex inserted before
+  // the marker on run 1 fell INSIDE that span once the marker existed on
+  // run 2 and was stripped - a second `freestruct` run silently dropped the
+  // 404 noindex and the audit then failed the page. Re-assert it here, past
+  // the strip, and it stays put across reruns.
+  let out = fs.readFileSync(page.file, 'utf8');
+  out = stripRobotsMeta(out);
+  out = out.replace(/<\/head>/i, '<meta name="robots" content="noindex, nofollow">\n</head>');
+  fs.writeFileSync(page.file, out);
+  page.html = out;
   return page;
 }

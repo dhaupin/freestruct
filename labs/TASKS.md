@@ -581,3 +581,22 @@ The entity path had one more consumer the earlier passes never traced:
 - **Trail aligned at 154:** README trail + v1.2.0 section, CHANGELOG 1.2.0 entry, the announcement prose, and the derived count surfaces via the count census.
 - Gates: battery 154/154, docs audit (7 gates clean), sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run build` (Jekyll + inject) + `freestruct audit docs/_site` (0 failures, 0 warnings).
 - Next pass: cut the v1.2.0 tag (owner-gated - the user said NOT yet).
+
+### Pass 26.33 - the lazy-load duplicate-guard probe (done, same session, post-26.32)
+
+- **`addLazyLoading` duplicated an existing `loading` attribute (fixed):** the guard was `match.includes('loading=')` - lowercase, no whitespace tolerance. HTML attribute names are case-insensitive and `loading = "eager"` is valid, so `<img src=... LOADING="eager">` (or `loading = "eager"`) failed the guard and the pass appended a SECOND `loading="lazy"` - invalid duplicate attribute on the element, and the author's eager hint silently lost. Guard is now `/loading\s*=/i`. Probed with `/tmp/w38.mjs` before/after (a `LOADING="eager"` img gained a second attribute; now it does not).
+- **Pins:** `lazy-loading: an existing LOADING attribute (any case) is not duplicated` (both a caps attribute and a whitespace-padded one; asserts exactly one `loading` per img). Battery 154 -> 155.
+- **Walk coverage (checked, no bug):** the rest of the attribute-name readers carry `/i` (`stripRobotsMeta`, `htmlIsNoindex`, `hasSeoType`'s other branches, the cache-bust `(href|src)=` `/gi`, audit's `grabMeta`/`grabCanonical`); the table-wrap class probe (`\bclass`, tableish token test) is `/i`; the minifier block regex is `/gi`.
+- **Trail aligned at 155:** README trail + v1.2.0 section, CHANGELOG 1.2.0 entry, the announcement prose, and the derived count surfaces via the count census.
+- Gates: battery 155/155, docs audit (7 gates clean), sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run build` (Jekyll + inject) + `freestruct audit docs/_site` (0 failures, 0 warnings).
+- Next pass: cut the v1.2.0 tag (owner-gated - the user said NOT yet).
+
+### Pass 26.34 - the 404 noindex rerun probe (done, same session, post-26.33)
+
+- **A second `freestruct` run dropped the 404 `noindex` (fixed):** `pipeline404` inserted `<meta name="robots" content="noindex, nofollow">` BEFORE calling `injectPage`, i.e. just before `</head>`. On run 1 the page had no `<!-- freestruct -->` marker yet, so the meta sat after `</head>`'s predecessor with nothing between it and the close tag. On run 2 `injectPage`'s rerun hygiene (`stripInjectedRegions`) deletes everything from the `<!-- freestruct -->` marker to `</head>` - and the run-1 noindex now lived INSIDE that span (the marker from run 1 precedes it), so it was stripped and never re-added. The audit then failed the 404 it had passed on run 1 ("404 page missing its noindex robots directive"). The dogfood is what caught it: `npm run build` then a second `freestruct` run (the local e2e rhythm) flips clean -> 1 failure.
+- **Fix:** `pipeline404` now runs `injectPage` FIRST, then strips any robots meta and re-asserts the noindex past the strip (one robots meta, single owner, stable across reruns).
+- **Pins:** `404 noindex survives a rerun` (runs twice, asserts exactly one noindex). Battery 155 -> 156.
+- **Walk coverage (checked, no bug):** other pre-injection writes that must survive the strip - the generated 404's own body/head (regenerated each run, not stripped), custom-404 bodies (outside the marker span), and the late passes (reading-time/last-modified/lazy-load) which run AFTER injection and anchor on `</head>`.
+- **Trail aligned at 156:** README trail + v1.2.0 section, CHANGELOG 1.2.0 entry, the announcement prose, and the derived count surfaces via the count census.
+- Gates: battery 156/156, docs audit (7 gates clean), sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run build` (Jekyll + inject) + `freestruct audit docs/_site` (0 failures, 0 warnings, and the audit stays clean across three consecutive `freestruct` reruns).
+- Next pass: cut the v1.2.0 tag (owner-gated - the user said NOT yet).

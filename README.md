@@ -220,7 +220,7 @@ Two shipped surfaces beyond the engine:
 
 ## v1.2.0
 
-Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, then the post-queue engine sweep - with the GitHub issue queue fully closed (#1-#40), the engine corners the queue-era waves never probed got nine real fixes, each with a battery pin (121 -> 130), plus the issue #41 version-truth census leg (130 -> 132), the issue #43 count census (132 -> 133), the post-merge staging pass (133 -> 134), and the repo-wide gap walk (134 -> 154):
+Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, then the post-queue engine sweep - with the GitHub issue queue fully closed (#1-#40), the engine corners the queue-era waves never probed got nine real fixes, each with a battery pin (121 -> 130), plus the issue #41 version-truth census leg (130 -> 132), the issue #43 count census (132 -> 133), the post-merge staging pass (133 -> 134), and the repo-wide gap walk (134 -> 156):
 
 - Rerun hygiene - body-start/footer snippets are marker-wrapped and a rerun drops the previous copy before re-adding it, so a second pass no longer stacks snippets or churns the content-derived build hash
 - Verbatim-block-aware `minifyHtml` - `<pre class="...">`/`<script>`/`<style>`/`<textarea>` content (attribute forms included) survives byte-for-byte, so code fences and inline JS with `//` comments are never collapsed
@@ -261,6 +261,8 @@ Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, the
 - IndexNow keyLocation - the submission named `keyLocation` as `site.url + '/' + key.txt`, ignoring `basePath`, so on a sub-path install the engines probed the domain root (a 404) and refused the submission; it now follows the same `pageUrlFor` contract as the sitemap and robots pointer
 - og:image basePath - a site-local `og:image` (and `twitter:image`) joined onto `site.url` alone, so on a sub-path install the share card pointed at the domain root and the preview blanked; the join now rides `pageUrlFor`, matching the audit's own on-disk check (which already stripped the prefix), and a src written without a leading slash no longer produces a slashless URL
 - Case-insensitive attributes - the description branch of the missing-only gate and the internal-link checker's `href` matcher were the only two HTML-attribute regexes in the engine without the `/i` flag, so an upper-case `<META NAME="description">` drew a second description (which the audit then failed as a duplicate the engine caused) and an upper-case `<A HREF="/broken/">` shipped green under `--strict`; both are case-insensitive now
+- Lazy-load guard - the "already has loading" check was `includes('loading=')` (lowercase, no whitespace tolerance), so `<img ... LOADING="eager">` or `loading = "eager"` collected a SECOND `loading` attribute and the author's eager hint was lost; the guard is case- and whitespace-insensitive now
+- 404 noindex on rerun - the 404 pipeline inserted its `noindex` robots meta before `injectPage`, so on the second run the tag sat inside the region the rerun-hygiene strip deletes and was dropped: the build passed on run 1 and its own audit then failed the 404 on run 2. The noindex is now asserted after injection, past the strip, so it survives every rerun
 
 ## v1.1.0
 

@@ -1092,6 +1092,29 @@ test('lazy-loading: a self-closing <img/> stays well-formed (bug fix)', () => {
   } finally { rmDir(dir); }
 });
 
+test('lazy-loading: an existing LOADING attribute (any case) is not duplicated (bug fix)', () => {
+  const dir = scenario('main', {
+    'docs/_site/caps-loading.html': [
+      '<html><head><title>Caps</title></head><body>',
+      '<img src="/img/a.png" LOADING="eager">',
+      '<img src="/img/b.png" loading = "eager">',
+      '</body></html>',
+    ].join('\n') + '\n',
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/caps-loading.html');
+    // Attribute names are case-insensitive and whitespace around '=' is legal,
+    // so the lowercase-only guard let these collect a SECOND loading attribute.
+    const imgs = html.match(/<img[^>]*>/gi) || [];
+    assert.strictEqual(imgs.length, 2);
+    for (const img of imgs) {
+      assert.strictEqual((img.match(/loading\s*=/gi) || []).length, 1, 'exactly one loading attribute per img: ' + img);
+    }
+    assert.ok(!/loading="lazy"/i.test(html), 'an author-set loading wins; nothing overwritten');
+  } finally { rmDir(dir); }
+});
+
 test('table guard (issue #35): wide tables wrap in a scroll container, nested wrap once, idempotent, opt-out', () => {
   const dir = scenario('main', {
     'docs/ssr-config.yml': [
@@ -1353,6 +1376,20 @@ test('custom 404: body preserved + full pipeline + noindex (FIXED #11)', () => {
     assert.ok(!sitemap.includes('404'), 'custom 404 excluded from sitemap');
     const search = JSON.parse(read(dir, 'docs/_site/search.json'));
     assert.ok(!search.some(e => (e.url || '').includes('404')), 'custom 404 excluded from search.json');
+  } finally { rmDir(dir); }
+});
+
+test('404 noindex survives a rerun (bug fix: the strip swallowed it on run 2)', () => {
+  const dir = scenario('main');
+  try {
+    runInject(dir);
+    // Run 2: the marker from run 1 now precedes </head>, so the pre-injection
+    // noindex landed INSIDE the region stripInjectedRegions deletes and was
+    // dropped - the audit then failed the 404 it had just passed.
+    runInject(dir);
+    const html = read(dir, 'docs/_site/404.html');
+    assert.strictEqual((html.match(/<meta name="robots" content="noindex, nofollow">/g) || []).length, 1,
+      'exactly one noindex after a rerun (not zero, not two)');
   } finally { rmDir(dir); }
 });
 

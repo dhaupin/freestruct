@@ -734,7 +734,10 @@ export function addLastModified(filePath) {
 export function addLazyLoading(filePath) {
   let html = fs.readFileSync(filePath, 'utf8');
   html = html.replace(/(<img[^>]*(?<!loading)=)[^>]*>/gi, (match) => {
-    if (match.includes('loading=')) return match;
+    // Case-insensitive, whitespace-tolerant guard: HTML attribute names are
+    // case-insensitive and `loading = "eager"` is valid, so a lowercase-only
+    // check let `<img ... LOADING="eager">` collect a SECOND loading attribute.
+    if (/loading\s*=/i.test(match)) return match;
     // Insert BEFORE the closing `>` (and before a self-closing `/>`), never
     // between the slash and the bracket - the old `/>`-unaware append left a
     // dangling `/ loading="lazy">` on `<img ... />` (valid-ish to a browser,
