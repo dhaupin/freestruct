@@ -523,3 +523,13 @@ The search-index fix exposed the same root shape one module over:
 - **Trail aligned at 148:** README trail + v1.2.0 section (one new bullet), CHANGELOG 1.2.0 entry (one new bullet), the announcement prose, and the derived count surfaces via the count census.
 - Gates: battery 148/148, docs audit (7 gates clean), sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run build` (Jekyll + inject) + `freestruct audit docs/_site` (0 failures, 0 warnings).
 - Next pass: cut the v1.2.0 tag (owner-gated - the user said NOT yet).
+
+### Pass 26.27 - the indexnow round-trip probe (done, same session, post-26.26)
+
+The entity path had one more consumer the earlier passes never traced:
+
+- **`indexnow` posted XML-escaped URLs (fixed):** `readSitemapUrls` pulled `<loc>` values straight from the baked sitemap, where `xmllike.js` has escaped `&` to `&amp;` (the issue #9 correctness fix). Submission then POSTed the escaped string verbatim, so a URL containing an ampersand (a common case - query-string paths, `&`-bearing slugs) was sent to Bing/Seznam/Yandex as `.../a&amp;b`, a URL that does not resolve - the engines would index nothing or error. The values now decode back to the real URL (`decodeEntities` from `scan.js`, the same helper the feed/search already share) before submission. Pinned: an `&amp;`-bearing `<loc>` decodes to `&` in the dry-run payload and the escaped form never ships.
+- **Walk coverage (checked, no bug):** `ogimage.js` SVG placeholder escaping (`escXml` on title/description/url - no raw `&`/`<` into the SVG), the rasterizer-missing loud skip (once per run), the deterministic-bytes claim (content-derived hash stays stable), `resolveIndexNowKey` shapes (config string, `{key}`, persisted file, generate-once), and the `keyLocation` composition.
+- **Battery note:** this pass EXTENDED the existing indexnow dry-run pin rather than adding one (the pin count stays 148 - the census derives from `test(...)` call count, so an added assertion inside an existing test is free).
+- Gates: battery 148/148, docs audit (7 gates clean), sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run build` (Jekyll + inject) + `freestruct audit docs/_site` (0 failures, 0 warnings).
+- Next pass: cut the v1.2.0 tag (owner-gated - the user said NOT yet).

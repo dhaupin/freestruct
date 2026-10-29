@@ -11,6 +11,7 @@
 import fs from 'fs';
 import crypto from 'crypto';
 import path from 'path';
+import { decodeEntities } from './scan.js';
 
 export const INDEXNOW_API = 'https://api.indexnow.org/indexnow';
 const KEYFILE_HIDDEN = ['indexnow-key.txt'];
@@ -69,8 +70,11 @@ export function readSitemapUrls(outputDir) {
   const sitemapPath = path.join(outputDir, 'sitemap.xml');
   if (!fs.existsSync(sitemapPath)) return null;
   const sitemap = fs.readFileSync(sitemapPath, 'utf8');
+  // The sitemap's <loc> values are XML-escaped by the writer (& -> &amp;), so
+  // they must decode back to the real URL before submission - posting the
+  // escaped form asks the engines to crawl a URL that does not exist.
   const urls = (sitemap.match(/<loc>([\s\S]*?)<\/loc>/g) || [])
-    .map(e => e.replace(/<\/?loc>/g, '').trim())
+    .map(e => decodeEntities(e.replace(/<\/?loc>/g, '').trim()))
     .filter(Boolean);
   return urls.length > 0 ? urls : null;
 }

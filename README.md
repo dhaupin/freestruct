@@ -255,6 +255,7 @@ Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, the
 - Search index text hygiene - `search.json` `content`/`heading` now carry plain page text: script and style bodies (raw JS/CSS) are dropped and a heading with inline markup (`<h1>Title <em>x</em></h1>`) no longer ships its tags into the index
 - 404 name escaping - the generated `404.html` interpolated the raw `site.name` into `<title>`/text and the raw home URL into `href`/`action`, so a quote- or `<`-bearing name broke the title and injected live markup into the error page; both ride the shared attribute escaper now
 - Reading-time prose count - the `reading-time` meta counted script, style and comment text as page prose (a 600-word inline bundle inflated a five-word page to "4 min read"); both it and the search index now share one `htmlToText` view that drops script/style/comment bodies before tags
+- IndexNow URL decoding - the `indexnow` subcommand read `<loc>` values straight out of the XML-escaped sitemap and POSTed them verbatim, so a URL with `&` (escaped as `&amp;`) was submitted to the engines in a form that does not resolve; the values decode back to the real URL now
 
 ## v1.1.0
 

@@ -2287,11 +2287,16 @@ test('indexnow: bad key shapes warn loudly; --dry-run prints the payload and exi
     assert.includes(res1.stdout, 'no sitemap.xml');
 
     fs.writeFileSync(path.join(dir2, 'docs/_site/sitemap.xml'),
-      '<sitemap><url><loc>https://docs.example.com/</loc><lastmod>2026-10-22</lastmod></url></sitemap>');
+      '<sitemap><url><loc>https://docs.example.com/</loc><lastmod>2026-10-22</lastmod></url>'
+      + '<url><loc>https://docs.example.com/a&amp;b</loc><lastmod>2026-10-22</lastmod></url></sitemap>');
     const res2 = spawnSync(process.execPath, [INJECT, 'indexnow', '--dry-run'], { cwd: dir2, encoding: 'utf8' });
     assert.strictEqual(res2.status, 0, 'dry-run is exit 0');
     const body = (res2.stdout + '') || '';
     assert.includes(body, 'https://docs.example.com/', 'urlList carries the sitemap URL');
+    // The sitemap writer XML-escapes '&' to '&amp;'; submission must decode it
+    // back or the engines are asked to crawl a URL that does not exist.
+    assert.includes(body, 'https://docs.example.com/a&b', 'escaped &amp; in <loc> decodes before submission');
+    assert.ok(!body.includes('a&amp;b'), 'the escaped form is not posted');
     assert.includes(body, 'keyLocation', 'the request names the keyLocation');
   } finally { rmDir(dir2); }
 
