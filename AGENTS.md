@@ -31,7 +31,7 @@ Engineering history and the house rules, written for an AI agent (or human) pick
 | `docs/`     | The docs site, and the worked example itself: Jekyll + Freestruct + Pagefind |
 | `packs/`    | The crashtest extension surface (one pack: `freestruct-docs-shapes`)   |
 | `scripts/`  | CI/tooling: template sync, docs audit, tarball e2e, pack selftest, language gate |
-| `test/`     | `node test/run.js` - the fixture battery (160 pins) + version truth     |
+| `test/`     | `node test/run.js` - the fixture battery (162 pins) + version truth     |
 | `labs/`     | PRD + pass log: where plans and history live                          |
 | `horcrux/`  | The stone (brain snapshot, refresh convention in the PRD)              |
 
@@ -59,8 +59,10 @@ npm test            # the battery
 **Gates before every push (CI runs the same set):**
 
 ```bash
+npm run gate                 # sync:check + check (the composed local gate; prepublishOnly runs it)
 npm test                     # battery: fixtures + version truth + pack shape
 npm run lint:docs            # docs audit: frontmatter/links/nav/style/truthfulness/language/codefmt
+npm run lint:claims          # claims gate: retired-as-current fiction signatures
 npm run sync:check           # engine -> init -> docs template copies in lockstep
 npm run packs:selftest       # pack teeth (needs a dhaupin/crashtest checkout)
 npm run e2e                  # tarball e2e: fresh install quick start through the bin shim

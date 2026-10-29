@@ -109,12 +109,15 @@ test('package.json is ESM, node >= 20, and ships the house structure (bin + engi
   assert.strictEqual(pkg.main, 'engine/inject.js', 'main points at the engine');
 });
 
-test('publish gate: check composes the battery + audit + pack selftest, and prepublishOnly runs it (issue #37)', () => {
+test('publish gate: check composes the battery + audit + claims + pack selftest, and prepublishOnly runs gate (issue #37)', () => {
   const pkg = JSON.parse(read('.', 'package.json'));
-  assert.strictEqual(pkg.scripts.check, 'npm test && npm run lint:docs && npm run packs:selftest',
-    'check composes the three fast gates');
-  assert.strictEqual(pkg.scripts.prepublishOnly, 'npm run check',
-    'prepublishOnly gates the publish on check');
+  assert.strictEqual(pkg.scripts.check, 'npm test && npm run lint:docs && npm run lint:claims && npm run packs:selftest',
+    'check composes the fast gates');
+  // gate adds sync:check, which the local publish path would otherwise skip.
+  assert.strictEqual(pkg.scripts.gate, 'npm run sync:check && npm run check',
+    'gate runs sync:check before check');
+  assert.strictEqual(pkg.scripts.prepublishOnly, 'npm run gate',
+    'prepublishOnly gates the publish on gate (sync lockstep + check)');
   // The heavyweight e2e leg stays a CI-side gate (publish.yml), not in check.
   assert.ok(!/e2e/.test(pkg.scripts.check), 'the heavyweight e2e leg stays out of the local gate');
   const publish = read('.', '.github/workflows/publish.yml');
@@ -3429,6 +3432,52 @@ test('prose: unwrap-prose joins hard-wrapped paragraphs but never touches struct
     assert.includes(out, 'the old seventy-two', 'the later rule did not swallow the body');
     assert.ok(out.split('\n')[0] === '---' && out.split('\n')[1] === 'title: t', 'frontmatter block intact');
   } finally { try { fs.rmSync(f, { force: true }); } catch (e) { /* best-effort */ } }
+});
+
+test('prose: unwrap-prose flushes every thematic-break form and probes frontmatter (issue #39, prestruct merge)', () => {
+  // The prestruct/eyestruct hardening: a rule with NO surrounding blank lines
+  // must flush the buffer, not join into it (TASKS.md pass separators and
+  // CHANGELOG rules were collapsing). All three forms, and a top-of-file rule
+  // that is not frontmatter.
+  const { unwrap } = require(path.join(ROOT, 'scripts', 'unwrap-prose.cjs'));
+  assert.strictEqual(unwrap('para one\nline two\n---\npara two\nmore\n'), 'para one line two\n---\npara two more\n',
+    'a --- rule with no blank lines flushes');
+  assert.strictEqual(unwrap('para one\nline two\n***\npara two\nmore\n'), 'para one line two\n***\npara two more\n',
+    'a *** rule flushes');
+  assert.strictEqual(unwrap('para one\nline two\n___\npara two\nmore\n'), 'para one line two\n___\npara two more\n',
+    'a ___ rule flushes');
+  // A top-of-file `---` whose next line is not `key: value` is a rule, not
+  // frontmatter, so the body after it still unwraps.
+  assert.strictEqual(unwrap('---\npara one\nline two\n---\npara three\n'), '---\npara one line two\n---\npara three\n',
+    'a bare top-of-file rule is not frontmatter');
+  // Real frontmatter is still emitted verbatim.
+  assert.strictEqual(unwrap('---\ntitle: t\nnav_order: 3\n---\n\npara one\nline two\n'), '---\ntitle: t\nnav_order: 3\n---\n\npara one line two\n',
+    'real frontmatter stays verbatim');
+});
+
+test('claims gate: the fiction-signature gate ships, runs clean, and is wired into check + CI (prestruct port)', () => {
+  const pkg = JSON.parse(read('.', 'package.json'));
+  assert.strictEqual(pkg.scripts['lint:claims'], 'node scripts/check-fiction-signatures.cjs',
+    'lint:claims runs the fiction-signature gate');
+  assert.includes(pkg.scripts.check, 'npm run lint:claims', 'check runs the claims gate');
+  const test = read('.', '.github/workflows/test.yml');
+  assert.includes(test, 'check-fiction-signatures.cjs', 'CI runs the claims gate');
+  // The gate must pass on the shipped tree.
+  const res = spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'check-fiction-signatures.cjs')], {
+    cwd: ROOT, encoding: 'utf8',
+  });
+  assert.strictEqual(res.status, 0, 'the claims gate is clean on the shipped tree\n' + res.stderr);
+  assert.match(res.stdout, /FICTION SIGNATURES: PASS/, 'the gate reports its pass line');
+  // And it must actually catch a fiction: a retired key presented as live fails.
+  const probe = path.join(ROOT, 'docs', 'guides', '_fiction_probe_battery.md');
+  fs.writeFileSync(probe, 'Set preserveExistingMeta in your config to dedupe tags.\n');
+  try {
+    const bad = spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'check-fiction-signatures.cjs')], {
+      cwd: ROOT, encoding: 'utf8',
+    });
+    assert.strictEqual(bad.status, 1, 'a retired key presented as live trips the gate');
+    assert.match(bad.stderr, /preserveExistingMeta/, 'the hit names the offending line');
+  } finally { try { fs.rmSync(probe, { force: true }); } catch (e) { /* best-effort */ } }
 });
 
 // ---------- playbooks leg (#34) ----------

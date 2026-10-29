@@ -130,7 +130,16 @@
         .highlight .cs, .highlight .ch { color: var(--ink-soft); font-style: italic; }
         blockquote { margin: 0 0 14px; padding: 12px 18px; color: var(--ink-soft);
             border-left: 3px solid var(--accent); background: var(--surface); border-radius: 0 8px 8px 0; }
-        table { border-collapse: collapse; width: 100%; font-size: 13.5px; margin: 14px 0; }
+        /* Mobile table guard (#62): a wide kramdown table (signature columns,
+           long inline code) can pin the WHOLE page to its min-content width on
+           a phone -- the H1 clips and the table bleeds off-viewport. The engine
+           wraps tables in .fs-table-wrap (tableWrap, default-on), but a tree
+           that opts out (tableWrap: false) or hand-writes a layout must still
+           keep the page from moving. display:block + overflow-x:auto makes the
+           table scroll in its own box; the page never moves. */
+        table { border-collapse: collapse; width: 100%; font-size: 13.5px; margin: 14px 0;
+            display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        table td code { white-space: nowrap; }
         th { text-align: left; background: var(--raised); padding: 8px 12px;
             border-bottom: 1px solid var(--line); }
         td { padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }

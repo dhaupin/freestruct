@@ -20,7 +20,7 @@ npm run sync:check
 npm run e2e
 ```
 
-`npm run check` is `npm test && npm run lint:docs && npm run packs:selftest`. `packs:selftest` needs a crashtest checkout: with one present it runs the real teeth, with none present it prints a named skip and exits 0 - CI always installs crashtest, so the teeth run on every push/PR regardless.
+`npm run gate` is `npm run sync:check && npm run check`, and `npm run check` is `npm test && npm run lint:docs && npm run lint:claims && npm run packs:selftest`. `packs:selftest` needs a crashtest checkout: with one present it runs the real teeth, with none present it prints a named skip and exits 0 - CI always installs crashtest, so the teeth run on every push/PR regardless.
 
 Template copies move only via `npm run sync`; CI forbids drift through `npm run sync:check`. Never hand-edit `docs/_freestruct/` or `init/docs/_freestruct/` - edit the canonical `engine/_freestruct/` and sync.
 

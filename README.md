@@ -220,7 +220,7 @@ Two shipped surfaces beyond the engine:
 
 ## v1.2.0
 
-Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, then the post-queue engine sweep - with the GitHub issue queue fully closed (#1-#40), the engine corners the queue-era waves never probed got nine real fixes, each with a battery pin (121 -> 130), plus the issue #41 version-truth census leg (130 -> 132), the issue #43 count census (132 -> 133), the post-merge staging pass (133 -> 134), and the repo-wide gap walk (134 -> 160):
+Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, then the post-queue engine sweep - with the GitHub issue queue fully closed (#1-#40), the engine corners the queue-era waves never probed got nine real fixes, each with a battery pin (121 -> 130), plus the issue #41 version-truth census leg (130 -> 132), the issue #43 count census (132 -> 133), the post-merge staging pass (133 -> 134), the repo-wide gap walk (134 -> 160), and the prestruct port pass (160 -> 162):
 
 - Rerun hygiene - body-start/footer snippets are marker-wrapped and a rerun drops the previous copy before re-adding it, so a second pass no longer stacks snippets or churns the content-derived build hash
 - Verbatim-block-aware `minifyHtml` - `<pre class="...">`/`<script>`/`<style>`/`<textarea>` content (attribute forms included) survives byte-for-byte, so code fences and inline JS with `//` comments are never collapsed
@@ -236,7 +236,7 @@ Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, the
 - Count census - the same trick for the hand-copied counts: the homepage battery size and the engine module counts are derived from source and refused when they drift (issue #43)
 - Doc truthfulness - the cache-busting FAQ/config reference drop the retired `cacheBusting.hash` and the canonical-by-default claim, and new environment + packs reference pages fill the gaps
 - basePath links - root-absolute hrefs carrying the configured `basePath` resolve against the tree, so a baseurl'd site passes `--strict`
-- Release gate - `npm run check` composes the battery + docs audit + pack selftest, and `prepublishOnly` runs it, so a dirty tree cannot publish
+- Release gate - `npm run gate` composes template sync lockstep + the battery + docs audit + claims gate + pack selftest, and `prepublishOnly` runs it, so a drifted or dirty tree cannot publish
 - Audit signal - config-gated absences (`og:image` / `twitter:image` not configured) print once with an affected-page count instead of once per page
 - Table guard - a default-on `tableWrap` pass wraps wide tables in a scroll container so every downstream site is mobile-safe by construction
 - Init kit - the starter config seeds the family JSON-LD identity, so scaffolded ports ship founder + maintainer from birth

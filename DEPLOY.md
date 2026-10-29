@@ -70,7 +70,7 @@ Deployment needs the GitHub Pages environment (`github-pages`) already configure
 
 Every push and pull request runs:
 
-1. `npm test` - the fixture battery (160 pins), including the version-truth pin that enforces the triple agreement (README / package.json / CHANGELOG) and the issue #41 census leg that derives the version from package.json and refuses every living surface (README line, AGENTS/CONTRIBUTING/DEPLOY pins, the pass-log reminder, the `release.yml` tag example, `init/VERSION`) that drifted, plus the issue #43 count census that derives the battery size and engine module count from source; the pinned **1.2.0** (owner call, 2026-10-28).
+1. `npm test` - the fixture battery (162 pins), including the version-truth pin that enforces the triple agreement (README / package.json / CHANGELOG) and the issue #41 census leg that derives the version from package.json and refuses every living surface (README line, AGENTS/CONTRIBUTING/DEPLOY pins, the pass-log reminder, the `release.yml` tag example, `init/VERSION`) that drifted, plus the issue #43 count census that derives the battery size and engine module count from source; the pinned **1.2.0** (owner call, 2026-10-28).
 2. Docs audit (`npm run lint:docs`) - frontmatter, links, nav symmetry, style, truthfulness, English-only language gate, and the engine-header comment format gate.
 3. Tarball e2e (`npm run e2e`) - real `npm pack` -> install into a throwaway project -> run the README quick start through the bin shim -> assert artifacts + injections + exit shapes.
 4. Crashtest pack selftest (`npm run packs:selftest`) - the pack must hold a hardened Freestruct build and trip a deliberately regressed one.
@@ -107,7 +107,7 @@ npm publish
 #    npm version <bump> && git push --tags
 ```
 
-`npm publish` also fires `prepublishOnly` -> `npm run check` (issue #37), so even a manual bootstrap publish is gated on the battery, docs audit and pack selftest. `packs:selftest` needs a crashtest checkout: with one present it runs the real teeth, and with none present it prints a named skip and exits 0 (a local publish should not need a github-tarball install); `test.yml` always installs crashtest, so the teeth run on every push/PR regardless.
+`npm publish` also fires `prepublishOnly` -> `npm run gate` (issue #37), so even a manual bootstrap publish is gated on template sync lockstep, the battery, the docs audit, the claims gate and pack selftest. `packs:selftest` needs a crashtest checkout: with one present it runs the real teeth, and with none present it prints a named skip and exits 0 (a local publish should not need a github-tarball install); `test.yml` always installs crashtest, so the teeth run on every push/PR regardless.
 
 **Phone publish lane (`scripts/ship-from-download.cjs`, issue #38).** A GitHub zip carries no `.git` and no `node_modules`, and `/storage/emulated` is a symlinkless FUSE mount where `npm install` dies EACCES creating `node_modules/.bin` symlinks. The lane stages the zip-extracted tree into the Termux home, installs, then publishes with this repo's `prepublishOnly` gate riding unchanged - the script only reaches the launchpad, the gate still rules:
 

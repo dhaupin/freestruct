@@ -38,6 +38,9 @@ jobs:
       - name: Docs audit (frontmatter/links/nav/style/truthfulness)
         run: node scripts/run-docs-audit.cjs
 
+      - name: Claims gate (retired-as-current fiction signatures)
+        run: node scripts/check-fiction-signatures.cjs
+
       - name: Tarball e2e (fresh-install quick start, PRD §4.1 step 5)
         run: node scripts/e2e-install.cjs
 
