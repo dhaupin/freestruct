@@ -121,6 +121,20 @@ function breadcrumbJsonLd(page, config) {
 }
 
 /**
+ * Does this config's jsonLd take the SCOPED map form (every key a page-slug
+ * glob)? The injection path (below) and the generated-extras skip must agree
+ * on this - they diverged once: the injection accepted the bare `**` key
+ * (documented as "anywhere at all") while the skip required every key to
+ * start with '/', so a `**`-keyed map injected its block AND the generated
+ * article, shipping two article blocks on the page.
+ */
+function isScopedJsonLdMap(jc) {
+  return !Array.isArray(jc) && Boolean(jc) && typeof jc === 'object'
+    && Object.keys(jc).length > 0
+    && Object.keys(jc).every((k) => /(^\/|^\*$|^\*\*$|\*)/.test(k));
+}
+
+/**
  * Does this page RECEIVE a scoped jsonLd block? The scoped map form keys
  * slug globs to block lists (config.js reads legacy forms - a schema object
  * or an array of them - as the global set, with non-glob keys). Pages that
@@ -130,11 +144,8 @@ function breadcrumbJsonLd(page, config) {
  */
 function pageReceivesScopedJsonLd(page, config) {
   const jsonLd = config.jsonLd;
-  if (!jsonLd || typeof jsonLd !== 'object' || Array.isArray(jsonLd)) return false;
-  const keys = Object.keys(jsonLd);
-  if (keys.length === 0) return false;
-  if (!keys.every((k) => typeof k === 'string' && k.startsWith('/'))) return false;
-  return keys.some((k) => slugMatchesGlob(k, page.slug));
+  if (!isScopedJsonLdMap(jsonLd)) return false;
+  return Object.keys(jsonLd).some((k) => slugMatchesGlob(k, page.slug));
 }
 
 /**
@@ -550,9 +561,7 @@ export function injectPage(page, { config, template, buildHash, snippetDir, inje
   let customJsonLd = '';
   if (config.jsonLd !== undefined) {
     const jc = config.jsonLd;
-    const isScopedMap = !Array.isArray(jc) && jc && typeof jc === 'object'
-      && Object.keys(jc).length > 0
-      && Object.keys(jc).every((k) => /(^\/|^\*$|^\*\*$|\*)/.test(k));
+    const isScopedMap = isScopedJsonLdMap(jc);
     if (isScopedMap) {
       const keys = Object.keys(jc).sort((a, b) => globSpecificity(b) - globSpecificity(a));
       for (const key of keys) {

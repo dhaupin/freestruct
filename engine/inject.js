@@ -35,7 +35,7 @@ import path from 'path';
 import { pathToFileURL, fileURLToPath } from 'url';
 
 import { loadConfig } from './config.js';
-import { getHtmlFiles, buildPages, computeBuildHash, htmlIsNoindex, hasSeoType } from './scan.js';
+import { getHtmlFiles, buildPages, computeBuildHash, htmlIsNoindex, hasSeoType, dedupeBySlug } from './scan.js';
 import { injectPage, addReadingTime, addLastModified, addLazyLoading, addTableWrap } from './seo.js';
 import { generateSitemap, generateRobots, generateFeed } from './xmllike.js';
 import { generate404, pipeline404 } from './notfound.js';
@@ -298,14 +298,18 @@ export function runInject(options = {}) {
 
     // 404 pipeline: generated when absent, user-supplied folded into the
     // same full treatment (Phase 1.4). Runs after regular pages so a 404
-    // already present in the tree is not double-processed above.
+    // already present in the tree is not double-processed above. EVERY 404
+    // file gets the treatment: a tree carrying both 404.html and 404.htm (a
+    // valid pair on hosts that serve either) had only the FIRST processed, so
+    // the second shipped with no noindex meta and the audit failed the run's
+    // own output.
     const processed404s = [];
     if (config.generate404 !== false) {
-      let page404 = pages.find(p => p.is404);
-      if (!page404) {
+      const found404s = pages.filter(p => p.is404);
+      if (found404s.length === 0) {
         const file404 = generate404(config, outputDir, buildHash, template, snippetDir);
         const html404 = fs.readFileSync(file404, 'utf8');
-        page404 = {
+        found404s.push({
           file: file404,
           rel: '404.html',
           slug: '/404',
@@ -314,9 +318,9 @@ export function runInject(options = {}) {
           mtime: new Date(),
           title: html404.match(/<title>([^<]+)<\/title>/i)?.[1]?.split(' | ')[0] || null,
           description: html404.match(/<meta name="description" content="([^"]+)"/i)?.[1] || null,
-        };
+        });
       }
-      processed404s.push(pipeline404(page404, injectCtx));
+      for (const page404 of found404s) processed404s.push(pipeline404(page404, injectCtx));
     }
 
     // Late passes over every processed page, 404s included (Phase 1.4)
@@ -343,7 +347,11 @@ export function runInject(options = {}) {
 
     // noindex is honored by default (owner decision, issue #5):
     // noindex pages never ship into sitemap/feed/search
-    const indexablePages = pages.filter(p => !p.is404 && !htmlIsNoindex(p.html));
+    // Dedupe by slug first: a tree with both `a.html` and `a.htm` (or
+    // `index.html`/`index.htm` in one dir) maps two files onto ONE url, and
+    // without this the artifact lists that url twice (duplicate <loc>/<item>).
+    // Both files still get decorated above; only the url listings collapse.
+    const indexablePages = dedupeBySlug(pages.filter(p => !p.is404 && !htmlIsNoindex(p.html)));
 
     if (config.generateSitemap !== false) generateSitemap(indexablePages, config, outputDir);
     if (config.generateRobots !== false) generateRobots(config, outputDir);

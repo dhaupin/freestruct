@@ -718,3 +718,19 @@ The owner asked to close the whole open queue (#45, #46, #47). #45 and #46 close
 - **Docs:** one CHANGELOG row; the 1.2.0 intro's pin chain extended to 172 -> 173.
 - Gates: battery 173/173, docs audit (8 gates clean), claims gate clean, sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e.
 - Next pass: cut the v1.2.0 tag (owner-gated - NOT yet); prestruct adopts the shared runner (prestruct#75).
+
+---
+
+### Pass 26.43 - post-1.2.0 walk sweep: audit/config contradictions + slug collisions
+
+The owner asked for another walk for bugs/gaps/edges/vulns (after the queue close-out). Probed the real CLI across ~20 scratch trees (idempotency, scoped jsonLd/og/locales/article, per-page overrides, hooks, indexnow, init, XML escaping, basePath/site.url joins, ogImageGeneration, search/llms). Five real defects, each red-checked against the CLI and pinned.
+
+- **Audit vs `generate*` contradiction (D1).** `engine/audit.js`: the site-level checks FAILed `sitemap.xml`/`robots.txt` as missing even when the config set `generateSitemap: false` / `generateRobots: false` - the run never wrote them BY DESIGN, so a legitimately-configured site could never pass its own audit. The checks now read `config?.generateSitemap`/`generateRobots`; a configless audit keeps the strict missing-artifact check, and a disabled artifact that IS present is still shape-checked.
+- **Configless-audit crash (D2).** `engine/audit.js`: a configless `audit` dereferenced a null config (`Cannot read properties of null (reading 'twitter')`). `config.twitter`/`config.og`/`config.ogImageGeneration` reads are null-safe now (`config?.`).
+- **Scoped jsonLd `**` key divergence (D3).** `engine/seo.js`: the injection path accepted the bare `**` key (documented "anywhere at all") but `pageReceivesScopedJsonLd` required every key to start with `/`, so a `**`-keyed map injected its block AND the generated `Article` (two article blocks on the page). Both paths now share one `isScopedJsonLdMap(jc)` predicate.
+- **Slug-collision duplicate URL listings (D4).** A tree carrying both `a.html` and `a.htm` (or `index.html`/`index.htm` in one dir) maps two files onto ONE url; sitemap/feed/search/llms listed that url twice. New `dedupeBySlug(pages)` in `engine/scan.js` (deterministic winner: `.html` over `.htm`, then smaller rel path; order preserved), wired in `engine/inject.js` right after the noindex filter. Both files still get decorated; only the url listings collapse.
+- **Dual-404 noindex skip (D5).** `engine/inject.js`: `pages.find(p => p.is404)` processed only the FIRST 404 file, so a tree with `404.html` + `404.htm` shipped the second with no noindex and the run failed its own audit. Now `pages.filter(p => p.is404)` - every 404 file gets the pipeline.
+- **Pins:** five more battery tests (173 -> 178): audit honors `generate*` false (and a configless audit still FAILs a genuinely missing sitemap + does not crash); a `**`-keyed scoped jsonLd is recognized (no duplicate article); slug-collision dedupe lists one url once in sitemap/feed/search/llms while both files stay decorated; every 404 file carries noindex.
+- **Docs:** one CHANGELOG row (walk sweep, 173 -> 178); the audit section of `docs/guides/cli.md` documents that the sitemap/robots checks honor the config's `generate*` switches; the 1.2.0 intro pin chain extended to 173 -> 178.
+- Gates: battery 178/178, docs audit (8 gates clean), claims gate clean, sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e.
+- Next pass: cut the v1.2.0 tag (owner-gated - NOT yet); the CLI subcommand arg-parsing edges (a `--flag` as a positional dir, extra positionals) and the `packs/` crashtest surface remain un-walked.

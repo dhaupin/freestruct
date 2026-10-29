@@ -43,6 +43,37 @@ export function is404File(rel) {
   return /(^|\/)404\.html?$/i.test(p);
 }
 
+/**
+ * Collapse pages that map to the SAME slug (one URL) to a single entry, so a
+ * tree carrying both `a.html` and `a.htm` (or `index.html` and `index.htm` in
+ * one directory) does not list one URL twice in sitemap.xml / feed.xml /
+ * search.json / llms.txt. Deterministic winner: `.html` over `.htm` (the
+ * pretty-URL resolver's own preference), then the lexicographically smaller
+ * rel path. Order is preserved by first appearance.
+ */
+export function dedupeBySlug(pages) {
+  const bySlug = new Map();
+  for (const page of pages) {
+    const current = bySlug.get(page.slug);
+    if (!current) { bySlug.set(page.slug, page); continue; }
+    const better = (a, b) => {
+      const aHtml = /\.html$/i.test(a.rel) ? 0 : 1;
+      const bHtml = /\.html$/i.test(b.rel) ? 0 : 1;
+      if (aHtml !== bHtml) return aHtml < bHtml ? a : b;
+      return a.rel <= b.rel ? a : b;
+    };
+    bySlug.set(page.slug, better(current, page));
+  }
+  const seen = new Set();
+  const out = [];
+  for (const page of pages) {
+    if (seen.has(page.slug)) continue;
+    seen.add(page.slug);
+    out.push(bySlug.get(page.slug));
+  }
+  return out;
+}
+
 /** Robots noindex detection on (possibly injected) HTML. */
 export function htmlIsNoindex(html) {
   const m = html.match(/<meta[^>]*name=["']robots["'][^>]*>/i);

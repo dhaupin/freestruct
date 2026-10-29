@@ -4161,5 +4161,127 @@ test('pass-hunt: an og:image that escapes the output tree is not treated as a pr
   } finally { rmDir(dir); }
 });
 
+// ---------- walk sweep: audit/config contradictions + slug collisions ----------
+// Four defects found on a real-CLI walk (post 1.2.0). Each pin asserts the
+// fixed contract so a regression trips here, not in a consumer's build.
+
+test('walk: audit honors the config\'s own generate* switches (a disabled artifact is absent BY DESIGN, not a failure)', () => {
+  const dir = scenario('main', {
+    'docs/freestruct.config.yml': [
+      'site:',
+      '  name: Walk Docs',
+      '  url: https://walk.example.com',
+      '  description: A walk docs site with a description long enough to pass',
+      'generateSitemap: false',
+      'generateRobots: false',
+      'generateFeed: false',
+      ''
+    ].join('\n')
+  });
+  try {
+    runInject(dir);
+    const site = path.join(dir, 'docs/_site');
+    assert.ok(!fs.existsSync(path.join(site, 'sitemap.xml')), 'sitemap absent when disabled');
+    assert.ok(!fs.existsSync(path.join(site, 'robots.txt')), 'robots absent when disabled');
+    // The audit must not FAIL what the config asked not to produce.
+    const out = spawnSync(process.execPath, [INJECT, 'audit'], { cwd: dir, encoding: 'utf8' });
+    const text = out.stdout + out.stderr;
+    assert.ok(!/FAIL sitemap\.xml: missing/.test(text), 'disabled sitemap is not an audit failure');
+    assert.ok(!/FAIL robots\.txt: missing/.test(text), 'disabled robots is not an audit failure');
+    assert.strictEqual(out.status, 0, 'a config-disabled-artifact run audits clean\n' + text);
+  } finally { rmDir(dir); }
+});
+
+test('walk: a configless audit still FAILs a genuinely missing sitemap (the disabled-by-config carve-out never masks a real gap)', () => {
+  const dir = scenario('main');
+  try {
+    runInject(dir);
+    const site = path.join(dir, 'docs/_site');
+    fs.rmSync(path.join(site, 'sitemap.xml'), { force: true });
+    fs.rmSync(path.join(dir, 'docs/freestruct.config.yml'), { force: true });
+    fs.rmSync(path.join(dir, 'docs/ssr-config.yml'), { force: true });
+    const out = spawnSync(process.execPath, [INJECT, 'audit', 'docs/_site'], { cwd: dir, encoding: 'utf8' });
+    assert.ok(/FAIL sitemap\.xml: missing/.test(out.stdout + out.stderr),
+      'without a config the missing sitemap is a real failure');
+    assert.ok(!/Cannot read properties/.test(out.stdout + out.stderr),
+      'a configless audit runs cleanly instead of crashing on a null config');
+  } finally { rmDir(dir); }
+});
+
+test('walk: scoped jsonLd map with a bare `**` key is recognized as scoped, so the generated article skips (no duplicate article block)', () => {
+  const dir = scenario('main', {
+    'docs/freestruct.config.yml': [
+      'site:',
+      '  name: Walk Docs',
+      '  url: https://walk.example.com',
+      '  description: A walk docs site with a description long enough to pass',
+      'article:',
+      '  scoped:',
+      '    "**": Article',
+      'jsonLd:',
+      '  "**":',
+      '    - "@type": WebPage',
+      '      name: Everywhere',
+      ''
+    ].join('\n')
+  });
+  try {
+    runInject(dir);
+    const html = read(dir, 'docs/_site/index.html');
+    assert.includes(html, 'WebPage', 'the **-keyed scoped block lands');
+    assert.ok(!/"@type"\s*:\s*"Article"/.test(html),
+      'the generated Article skips a **-keyed scoped jsonLd receiver (one article block, not two)');
+  } finally { rmDir(dir); }
+});
+
+test('walk: a page and a sibling page mapping to the SAME slug list one URL, once, in sitemap/feed/search/llms (slug-collision dedupe)', () => {
+  const dir = scenario('main', {
+    'docs/freestruct.config.yml': [
+      'site:',
+      '  name: Walk Docs',
+      '  url: https://walk.example.com',
+      '  description: A walk docs site with a description long enough to pass',
+      'searchIndex: true',
+      'llms: true',
+      ''
+    ].join('\n'),
+    'docs/_site/dupe.html': '<!DOCTYPE html><html><head><title>Dupe html</title></head><body><h1>D</h1></body></html>',
+    'docs/_site/dupe.htm': '<!DOCTYPE html><html><head><title>Dupe htm</title></head><body><h1>D2</h1></body></html>'
+  });
+  try {
+    runInject(dir);
+    const site = path.join(dir, 'docs/_site');
+    const locs = sitemapLocs(read(dir, 'docs/_site/sitemap.xml'));
+    const dupeLocs = locs.filter(l => /\/dupe$/.test(l));
+    assert.strictEqual(dupeLocs.length, 1, 'one url, one <loc> (was listed twice)\n' + locs.join('\n'));
+    const feed = read(dir, 'docs/_site/feed.xml');
+    assert.strictEqual((feed.match(/<link>[^<]*\/dupe<\/link>/g) || []).length, 1, 'feed lists the url once');
+    const search = JSON.parse(read(dir, 'docs/_site/search.json'));
+    assert.strictEqual(search.filter(e => /\/dupe$/.test(e.url || '')).length, 1, 'search.json lists the url once');
+    const llms = read(dir, 'docs/_site/llms.txt');
+    assert.strictEqual((llms.match(/\/dupe\)/g) || []).length, 1, 'llms.txt lists the url once');
+    // Both source files still get decorated (no file is skipped).
+    assert.includes(read(dir, 'docs/_site/dupe.html'), 'rel="canonical"', 'dupe.html decorated');
+    assert.includes(read(dir, 'docs/_site/dupe.htm'), 'rel="canonical"', 'dupe.htm decorated');
+  } finally { rmDir(dir); }
+});
+
+test('walk: EVERY 404 file gets the noindex treatment (a 404.html + 404.htm pair both pass the audit)', () => {
+  const dir = scenario('main', {
+    'docs/_site/404.html': '<!DOCTYPE html><html><head><title>Custom 404</title></head><body><h1>404</h1></body></html>',
+    'docs/_site/404.htm': '<!DOCTYPE html><html><head><title>Custom 404 htm</title></head><body><h1>404b</h1></body></html>'
+  });
+  try {
+    runInject(dir);
+    const a = read(dir, 'docs/_site/404.html');
+    const b = read(dir, 'docs/_site/404.htm');
+    assert.ok(/name="robots"[^>]*noindex/i.test(a), '404.html carries noindex');
+    assert.ok(/name="robots"[^>]*noindex/i.test(b), '404.htm carries noindex too (was skipped)');
+    const out = spawnSync(process.execPath, [INJECT, 'audit'], { cwd: dir, encoding: 'utf8' });
+    assert.ok(!/FAIL 404\.html: 404 page missing its noindex/.test(out.stdout + out.stderr),
+      'the audit passes its own dual-404 output');
+  } finally { rmDir(dir); }
+});
+
 // done
 console.log('[freestruct battery] complete');
