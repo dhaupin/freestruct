@@ -3040,6 +3040,30 @@ test('pass-hunt: a Title with embedded newlines stays one llms.txt list entry (l
   } finally { rmDir(dir); }
 });
 
+test('llms: a title with markdown brackets is escaped so the link stays whole (bug fix)', () => {
+  const dir = scenario('main');
+  try {
+    fs.writeFileSync(path.join(dir, 'docs/ssr-config.yml'), [
+      'site:',
+      '  name: Foo Docs',
+      '  url: https://docs.example.com',
+      '  description: A test docs site',
+      'llms: true',
+    ].join('\n') + '\n');
+    fs.writeFileSync(path.join(dir, 'docs/_site/tricky.html'),
+      '<html><head><title>Foo] bar</title></head><body><h1>Beta [preview] guide</h1></body></html>');
+    runInject(dir);
+    const llms = read(dir, 'docs/_site/llms.txt');
+    const line = llms.split('\n').filter((l) => l.includes('/tricky'))[0];
+    // The label was emitted raw, so a ']' in the title closed the markdown
+    // label early: '- [Foo] bar](https://...)' - the URL spilled into prose
+    // and the link broke. Brackets (and the backslash) escape now.
+    assert.ok(line.includes('- [Foo\\] bar](https://docs.example.com/tricky)'),
+      'the bracketed title escapes and the link stays whole (' + JSON.stringify(line) + ')');
+    assert.ok(!line.includes('[Foo] bar]'), 'the raw label never ships');
+  } finally { rmDir(dir); }
+});
+
 test('pass-hunt: a hostile search.url (quote + tag) lands as an escaped JSON string, never as markup', () => {
   const dir = scenario('main');
   try {

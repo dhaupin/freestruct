@@ -533,3 +533,11 @@ The entity path had one more consumer the earlier passes never traced:
 - **Battery note:** this pass EXTENDED the existing indexnow dry-run pin rather than adding one (the pin count stays 148 - the census derives from `test(...)` call count, so an added assertion inside an existing test is free).
 - Gates: battery 148/148, docs audit (7 gates clean), sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run build` (Jekyll + inject) + `freestruct audit docs/_site` (0 failures, 0 warnings).
 - Next pass: cut the v1.2.0 tag (owner-gated - the user said NOT yet).
+
+### Pass 26.28 - the llms.txt label probe (done, same session, post-26.27)
+
+- **`llms.txt` emitted raw markdown link labels (fixed):** the emitter built `- [` + oneline(title) + `](url)`, so a page title carrying a markdown bracket closed the label early: a title `Foo] bar` produced `- [Foo] bar](https://...)` - the tail of the title and the URL spilled into the prose as literal text, and the link itself broke. A `[preview]`-style tag has the same effect. `llms.js` now escapes `[`, `]` and the backslash in the label (`mdLabel`); the description stays plain prose. Pinned: a `Foo] bar` title emits `- [Foo\] bar](url)` and the raw label never ships.
+- **Walk coverage (checked, no bug):** `oneline` control-byte stripping and newline flattening (already pinned by the earlier newline pass-hunt), the missing-only `llms.txt` skip, and the indexable (non-404, non-noindex) page gate.
+- **Trail aligned at 149:** README trail + v1.2.0 section (one new bullet), CHANGELOG 1.2.0 entry (one new bullet), the announcement prose, and the derived count surfaces via the count census.
+- Gates: battery 149/149, docs audit (7 gates clean), sync lockstep, packs selftest (skip locally, teeth in CI), tarball e2e, `npm run build` (Jekyll + inject) + `freestruct audit docs/_site` (0 failures, 0 warnings).
+- Next pass: cut the v1.2.0 tag (owner-gated - the user said NOT yet).

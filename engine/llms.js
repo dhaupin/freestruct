@@ -24,6 +24,17 @@ function oneline(value) {
 }
 
 /**
+ * A markdown link LABEL: `[` and `]` inside it would close the label early,
+ * so the emitted link renders as broken text (a title like 'Foo] bar' or a
+ * '[preview]' tag produced '- [Foo] bar](url)' - the URL spilled into the
+ * prose and the link broke). Escape the brackets, and the backslash itself,
+ * so the label always renders as the literal title.
+ */
+function mdLabel(value) {
+  return oneline(value).replace(/([\\\[\]])/g, '\\$1');
+}
+
+/**
  * Write llms.txt into the output dir. Pages only: indexable = non-404,
  * non-noindex (the same gate sitemap/feed honor, so noindex stays honored
  * everywhere). Missing-only: an existing llms.txt (hand-rolled or
@@ -41,7 +52,7 @@ export function generateLlms(indexablePages, config, outputDir) {
   lines.push('', '## Docs', '');
   for (const page of indexablePages) {
     const url = pageUrlFor(config, page.slug);
-    const title = oneline(page.title || page.slug);
+    const title = mdLabel(page.title || page.slug);
     const desc = page.description ? ': ' + oneline(page.description) : '';
     lines.push('- [' + title + '](' + url + ')' + desc);
   }
