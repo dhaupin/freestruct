@@ -312,6 +312,19 @@ export function runInject(options = {}) {
     // mobile-safe by construction. Default-on; `tableWrap: false` opts out.
     if (config.tableWrap !== false) for (const page of latePages) addTableWrap(page.file);
 
+    // Restore each page's pre-injection mtime after our writes. freestruct
+    // rewrites every page it decorates, so without this the NEXT run's
+    // buildPages snapshot captures freestruct's own write as the page mtime -
+    // and feed pubDate / sitemap lastmod (both derived from that mtime, the
+    // issue #9 honest-date contract: "the date the page last actually
+    // changed, not the build time") churned on every rerun with no content
+    // change. Restoring makes the dates stable across reruns and still
+    // advances when the SSG rebuilds the page. The generated 404 is excluded
+    // (freestruct owns it; it never reaches the feed/sitemap).
+    for (const page of latePages) {
+      try { fs.utimesSync(page.file, page.mtime, page.mtime); } catch (e) { /* mtime best-effort */ }
+    }
+
     // noindex is honored by default (owner decision, issue #5):
     // noindex pages never ship into sitemap/feed/search
     const indexablePages = pages.filter(p => !p.is404 && !htmlIsNoindex(p.html));

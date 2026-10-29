@@ -220,7 +220,7 @@ Two shipped surfaces beyond the engine:
 
 ## v1.2.0
 
-Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, then the post-queue engine sweep - with the GitHub issue queue fully closed (#1-#40), the engine corners the queue-era waves never probed got nine real fixes, each with a battery pin (121 -> 130), plus the issue #41 version-truth census leg (130 -> 132), the issue #43 count census (132 -> 133), the post-merge staging pass (133 -> 134), and the repo-wide gap walk (134 -> 156):
+Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, then the post-queue engine sweep - with the GitHub issue queue fully closed (#1-#40), the engine corners the queue-era waves never probed got nine real fixes, each with a battery pin (121 -> 130), plus the issue #41 version-truth census leg (130 -> 132), the issue #43 count census (132 -> 133), the post-merge staging pass (133 -> 134), and the repo-wide gap walk (134 -> 157):
 
 - Rerun hygiene - body-start/footer snippets are marker-wrapped and a rerun drops the previous copy before re-adding it, so a second pass no longer stacks snippets or churns the content-derived build hash
 - Verbatim-block-aware `minifyHtml` - `<pre class="...">`/`<script>`/`<style>`/`<textarea>` content (attribute forms included) survives byte-for-byte, so code fences and inline JS with `//` comments are never collapsed
@@ -263,6 +263,7 @@ Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, the
 - Case-insensitive attributes - the description branch of the missing-only gate and the internal-link checker's `href` matcher were the only two HTML-attribute regexes in the engine without the `/i` flag, so an upper-case `<META NAME="description">` drew a second description (which the audit then failed as a duplicate the engine caused) and an upper-case `<A HREF="/broken/">` shipped green under `--strict`; both are case-insensitive now
 - Lazy-load guard - the "already has loading" check was `includes('loading=')` (lowercase, no whitespace tolerance), so `<img ... LOADING="eager">` or `loading = "eager"` collected a SECOND `loading` attribute and the author's eager hint was lost; the guard is case- and whitespace-insensitive now
 - 404 noindex on rerun - the 404 pipeline inserted its `noindex` robots meta before `injectPage`, so on the second run the tag sat inside the region the rerun-hygiene strip deletes and was dropped: the build passed on run 1 and its own audit then failed the 404 on run 2. The noindex is now asserted after injection, past the strip, so it survives every rerun
+- Feed/sitemap dates on rerun - feed `pubDate` and sitemap `lastmod` come from each page's pre-injection mtime, but freestruct rewrites every page it decorates, so a second run read its own write back as the page date and the whole feed re-stamped on every redeploy with no content change. The pre-injection mtime is restored after the writes now, so the dates hold across reruns and still advance when the SSG rebuilds the page
 
 ## v1.1.0
 

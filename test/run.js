@@ -1393,6 +1393,37 @@ test('404 noindex survives a rerun (bug fix: the strip swallowed it on run 2)', 
   } finally { rmDir(dir); }
 });
 
+test('feed.xml: pubDate/lastmod stay put across a rerun (freestruct does not date its own writes)', () => {
+  const dir = scenario('main');
+  try {
+    // freestruct rewrites every decorated page, so without restoring the
+    // pre-injection mtime the NEXT run captured freestruct's own write as the
+    // page date - and pubDate/lastmod churned every rerun with no content
+    // change, contradicting the honest-date contract (issue #9).
+    const guideMtime = new Date('2026-01-02T03:04:05Z');
+    fs.utimesSync(path.join(dir, 'docs/_site/guide/index.html'), guideMtime, guideMtime);
+    const pubOf = (feed) => {
+      const item = (feed.match(/<item>[\s\S]*?<\/item>/g) || [])
+        .find(b => b.includes('<guid>https://docs.example.com/guide/</guid>'));
+      return (item.match(/<pubDate>([^<]*)<\/pubDate>/) || [])[1];
+    };
+    const locOf = (sm) => {
+      const block = (sm.match(/<url>[\s\S]*?<\/url>/g) || [])
+        .find(b => b.includes('<loc>https://docs.example.com/guide/</loc>'));
+      return (block.match(/<lastmod>([^<]*)<\/lastmod>/) || [])[1];
+    };
+    runInject(dir);
+    const pub1 = pubOf(read(dir, 'docs/_site/feed.xml'));
+    const loc1 = locOf(read(dir, 'docs/_site/sitemap.xml'));
+    runInject(dir);
+    const pub2 = pubOf(read(dir, 'docs/_site/feed.xml'));
+    const loc2 = locOf(read(dir, 'docs/_site/sitemap.xml'));
+    assert.strictEqual(pub1, 'Fri, 02 Jan 2026 03:04:05 GMT', 'run 1 carries the pre-run mtime');
+    assert.strictEqual(pub2, pub1, 'pubDate does not drift on a rerun');
+    assert.strictEqual(loc2, loc1, 'sitemap lastmod does not drift on a rerun');
+  } finally { rmDir(dir); }
+});
+
 // ---------- link check: report-only (issue #4 wart) ----------
 
 test('broken internal link: reported in stdout, exit code 0 anyway', () => {
