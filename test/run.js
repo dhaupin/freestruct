@@ -4487,5 +4487,34 @@ test('verify-release helper: the pack ladder passes on THIS tree and refuses a s
   } finally { rmDir(bad); }
 });
 
+test('verify-release helper: the release target check accepts a branch-name target_commitish (the 1.2.0 cut bug)', () => {
+  // GitHub records target_commitish as the default branch NAME when a release
+  // is cut from an already-pushed tag, not the SHA. Only a 40-hex target is a
+  // commit claim; a branch name is not drift.
+  const r = spawnSync(process.execPath, ['-e', `
+    const m = require(${JSON.stringify(path.join(ROOT, 'scripts', 'verify-release.cjs'))});
+    const ok = [m.releaseTargetMatches('main','a'.repeat(40)), m.releaseTargetMatches('','a'.repeat(40)), m.releaseTargetMatches('a'.repeat(40),'a'.repeat(40))];
+    const bad = [m.releaseTargetMatches('b'.repeat(40),'a'.repeat(40))];
+    if (!ok.every(Boolean)) { console.error('a branch-name/absent target was rejected'); process.exit(1); }
+    if (bad.some(Boolean)) { console.error('a disagreeing 40-hex target was accepted'); process.exit(1); }
+    process.stdout.write('ok');
+  `], { cwd: ROOT, encoding: 'utf8' });
+  assert.strictEqual(r.status, 0, `releaseTargetMatches misjudged a target: ${r.stderr}`);
+  assert.includes(r.stdout, 'ok', 'releaseTargetMatches ran');
+});
+
+test('verify-release helper: registry visibility requires latest AND the version entry (the 1.2.0 cut bug)', () => {
+  const r = spawnSync(process.execPath, ['-e', `
+    const m = require(${JSON.stringify(path.join(ROOT, 'scripts', 'verify-release.cjs'))});
+    const v='1.2.0';
+    if (m.registryHasVersion({'dist-tags':{latest:'1.1.0'},versions:{'1.1.0':{}}}, v)) { console.error('lagging judged visible'); process.exit(1); }
+    if (m.registryHasVersion({'dist-tags':{latest:v},versions:{'1.1.0':{}}}, v)) { console.error('version entry absent judged visible'); process.exit(1); }
+    if (!m.registryHasVersion({'dist-tags':{latest:v},versions:{[v]:{}}}, v)) { console.error('settled judged invisible'); process.exit(1); }
+    process.stdout.write('ok');
+  `], { cwd: ROOT, encoding: 'utf8' });
+  assert.strictEqual(r.status, 0, `registryHasVersion misjudged visibility: ${r.stderr}`);
+  assert.includes(r.stdout, 'ok', 'registryHasVersion ran');
+});
+
 // done
 console.log('[freestruct battery] complete');
