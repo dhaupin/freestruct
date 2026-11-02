@@ -4043,6 +4043,7 @@ test('ship lane (#38): the staged .npmrc holds the ${NPM_TOKEN} expansion, never
       assert.strictEqual(r.code, 0);
     } finally { fs.writeFileSync = origWrite; }
     assert.ok(captured && captured.includes(`\${${TOKEN_ENV}}`), 'the .npmrc carries the env placeholder');
+    assert.ok(captured && !captured.includes('always-auth'), 'the deprecated always-auth line is never staged (npm >=9 warns on it)');
     assert.ok(captured && !captured.includes(GOOD_SHIP_TOKEN), 'the raw token never hits the staged file');
   } finally { fs.rmSync(base, { recursive: true, force: true }); }
 });
@@ -4488,6 +4489,42 @@ test('verify-release helper: the pack ladder passes on THIS tree and refuses a s
     assert.includes(rv.stderr, 'FORBIDDEN contents', 'the refusal is named');
     assert.includes(rv.stderr, 'labs/secret.md', 'the smuggled file is named by path');
   } finally { rmDir(bad); }
+});
+
+// Some npm builds (the phone's) answer `npm pack --dry-run --json` with an
+// empty stdout - no JSON at all - and print a config warning besides. The
+// ladder must not read that as a capability failure: it derives the expected
+// set from a REAL `npm pack` (which the served-tarball forbidden scan already
+// proved works on this build) instead of parsing the --json probe.
+test('verify-release helper: the pack ladder survives a phone npm whose --dry-run --json probe is empty', () => {
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), 'freestruct-noisy-'));
+  try {
+    const packed = spawnSync('npm', ['pack', '--pack-destination', work], { cwd: ROOT, encoding: 'utf8', timeout: 120000 });
+    assert.strictEqual(packed.status, 0, `npm pack failed: ${packed.stderr}`);
+    const tgz = path.join(work, 'freestruct-1.2.0.tgz');
+    const bin = path.join(work, 'bin');
+    fs.mkdirSync(bin);
+    const realNpm = spawnSync('which', ['npm'], { encoding: 'utf8' }).stdout.trim();
+    const shim = path.join(bin, 'npm');
+    fs.writeFileSync(shim, [
+      '#!/bin/sh',
+      'case " $* " in',
+      '  *" --dry-run "*)',
+      '    echo "npm warn Unknown project config \\"always-auth\\". This will stop working in the next major version of npm."',
+      '    exit 0 ;;',
+      'esac',
+      `exec ${realNpm} "$@"`,
+      '',
+    ].join('\n'));
+    fs.chmodSync(shim, 0o755);
+    const rv = spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'verify-release.cjs'), '--pack', tgz], {
+      cwd: ROOT, encoding: 'utf8', timeout: 300000,
+      env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
+    });
+    const out = rv.stdout + rv.stderr;
+    assert.includes(out, 'PASS served set == npm pack of this tree', 'the empty --json probe broke the pack ladder');
+    assert.ok(!out.includes('npm pack --dry-run --json failed'), 'an empty --json probe must not be read as a pack failure');
+  } finally { rmDir(work); }
 });
 
 test('verify-release helper: the release target check accepts a branch-name target_commitish (the 1.2.0 cut bug)', () => {
