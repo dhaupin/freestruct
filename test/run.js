@@ -4440,6 +4440,9 @@ test('release lane: every action ref is pinned to a SHA (pins, never floats)', (
 
 test('release-notes helper: extracts the changelog section for a version and refuses a missing one', () => {
   const helper = path.join(ROOT, 'scripts', 'release-notes.cjs');
+  const changelog = fs.readFileSync(path.join(ROOT, 'CHANGELOG.md'), 'utf8');
+  const before = changelog.slice(0, changelog.search(/^## \[Unreleased\]$/m));
+  assert.ok(!/^### /m.test(before), 'a changelog subsection sits above the "## [Unreleased]" heading');
   const ok = spawnSync(process.execPath, [helper, '1.2.0'], { cwd: ROOT, encoding: 'utf8' });
   assert.strictEqual(ok.status, 0, `release-notes 1.2.0 exited ${ok.status}: ${ok.stderr}`);
   assert.includes(ok.stdout, 'Everything landed since the v1.1.0 tag',
