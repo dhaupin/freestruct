@@ -4,6 +4,17 @@ All notable changes to freestruct will be documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- **Changelog + release-notes standardized to the family shape.** `CHANGELOG.md`
+  is now Keep-a-Changelog end to end (a `## [Unreleased]` block over
+  `## [version] - date` sections) and `scripts/release-notes.cjs` is the
+  family's single superset extractor: it reads the KAC heading, still reads the
+  older bare (`## 1.2.0`) and v-prefixed (`## v1.2.0`) forms, closes the
+  version token so `## [1.2.0]` never matches a `## [1.2.0-rc.1]`, and refuses
+  a version with no section by name. One extractor across the family means one
+  release-body shape everywhere.
+
 ### Changed (2026-11-02, the release lane folds into one 3-job ladder)
 
 - `publish.yml` is now the family's single tag lane (publish -> release -> verify), folding in the retired `release.yml`. A second workflow minting the same GitHub release from the same tag let the release body and the changelog drift; one lane makes them one artifact.
