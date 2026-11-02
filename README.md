@@ -232,7 +232,7 @@ Everything since the v1.1.0 tag: the family sweep and the docs/tooling wave, the
 - Audit quote fix - `grabMeta`/`grabCanonical` read a quoted attribute up to its matching quote, so a description holding an apostrophe ("this repo's docs") is measured at full length instead of truncated at the apostrophe
 - Docs h1 gate - the docs audit now fails any living page without exactly one top-level `# ` heading; seven pages that opened on `##` or prose (a rig-adoption regression) gained their missing h1
 - CLI - `-h` now aliases `--help` instead of riding as the positional output dir
-- Version truth - a census leg derives the version from `package.json` and refuses every living surface that hand-copied the current one (README line, AGENTS/CONTRIBUTING/DEPLOY pins, the pass-log reminder, the `release.yml` tag example, `init/VERSION`)
+- Version truth - a census leg derives the version from `package.json` and refuses every living surface that hand-copied the current one (README line, AGENTS/CONTRIBUTING/DEPLOY pins, the pass-log reminder, the `publish.yml` tag example, `init/VERSION`)
 - Count census - the same trick for the hand-copied counts: the homepage battery size and the engine module counts are derived from source and refused when they drift (issue #43)
 - Doc truthfulness - the cache-busting FAQ/config reference drop the retired `cacheBusting.hash` and the canonical-by-default claim, and new environment + packs reference pages fill the gaps
 - basePath links - root-absolute hrefs carrying the configured `basePath` resolve against the tree, so a baseurl'd site passes `--strict`

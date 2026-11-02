@@ -70,7 +70,7 @@ Deployment needs the GitHub Pages environment (`github-pages`) already configure
 
 Every push and pull request runs:
 
-1. `npm test` - the fixture battery (180 pins), including the version-truth pin that enforces the triple agreement (README / package.json / CHANGELOG) and the issue #41 census leg that derives the version from package.json and refuses every living surface (README line, AGENTS/CONTRIBUTING/DEPLOY pins, the pass-log reminder, the `release.yml` tag example, `init/VERSION`) that drifted, plus the issue #43 count census that derives the battery size and engine module count from source; the pinned **1.2.0** (owner call, 2026-10-28).
+1. `npm test` - the fixture battery (186 pins), including the version-truth pin that enforces the triple agreement (README / package.json / CHANGELOG) and the issue #41 census leg that derives the version from package.json and refuses every living surface (README line, AGENTS/CONTRIBUTING/DEPLOY pins, the pass-log reminder, the `publish.yml` tag example, `init/VERSION`) that drifted, plus the issue #43 count census that derives the battery size and engine module count from source; the pinned **1.2.0** (owner call, 2026-10-28).
 2. Docs audit (`npm run lint:docs`) - frontmatter, links, nav symmetry, style, truthfulness, English-only language gate, and the engine-header comment format gate.
 3. Tarball e2e (`npm run e2e`) - real `npm pack` -> install into a throwaway project -> run the README quick start through the bin shim -> assert artifacts + injections + exit shapes.
 4. Crashtest pack selftest (`npm run packs:selftest`) - the pack must hold a hardened Freestruct build and trip a deliberately regressed one.
@@ -80,9 +80,17 @@ The tarball e2e is also a hard gate inside `publish.yml` - no tag publishes unle
 
 ---
 
-## 3. npm release (`publish.yml`)
+## 3. npm release (`publish.yml`, the 3-job ladder)
 
 **Dormant by design.** The workflow fires on `v*` tags only, and no tags exist yet - the first publish is a manual owner step (npm OIDC cannot create a brand-new package). There is no `NPM_TOKEN` secret anywhere; runs get provenance automatically per npm Trusted Publishers.
+
+One tag drives the whole ladder end-to-end, and nothing is earned by a green publish step alone - the family lesson is that publish CAN go green while the registry result is wrong, because nothing asserted the tarball between proof-of-publish and proof-of-work:
+
+1. **publish** - npm trusted publishing (OIDC). The gate refuses a 0.x version (the OIDC lane serves 1.0.0+; 0.x is the manual ship lane) and, on a tag push, refuses a tag that does not equal the packaged version. The battery rides automatically: `npm publish` runs `prepublishOnly` -> `npm run gate`.
+2. **release** - the GH release object is cut from the tag. Its notes are EXTRACTED from the changelog's own `[version]` section (`scripts/release-notes.cjs`) - an empty extraction refuses the cut, so the release body and the changelog can never disagree. Idempotent. The release then ATTACHES the exact tarball the registry serves (`npm pack freestruct@<version>`), so the release asset and the npm artifact are the same bytes.
+3. **verify** - the post-publish truth (`scripts/verify-release.cjs`): `--npm` asserts registry `latest` == the tree's version, the served tarball's sha512 == the registry integrity metadata, provenance attestations present, then the full pack ladder on the SERVED tarball; `--gh` asserts the release object exists, targets the tag's commit, its source tarball diffs clean against `git archive` of that commit, and the attached `--asset` hashes to the registry bytes. A `workflow_dispatch` mode `verify-only` re-runs this leg against what is already served and released (no minting) - the on-demand re-proof of a cut.
+
+The former `release.yml` (a second workflow minting the same GH release from the same tag with a hand-rolled body) is retired and folded into the ladder's `release` job, so the release and the changelog can never drift.
 
 The runbook (when it is time - all owner actions):
 
@@ -119,7 +127,7 @@ NPM_TOKEN=npm_xxx node scripts/ship-from-download.cjs \
 
 The token rides `NPM_TOKEN` (or `NPM_SHIP_TOKEN`, or `--token-file`), expands from env into a staged one-line `.npmrc` that is unlinked in a finally - it never lands in argv (ps-safe), on disk, or in the log. Refusals are named with exit 0/1/2; `--clean` removes only the staged root, on every exit, so a failed run cannot block the retry.
 
-The version truth is enforced in CI: the battery pin refuses any README / package.json / CHANGELOG triplet that disagrees, and the issue #41 census leg derives the version from package.json and refuses every living surface that hand-copied it (README line, AGENTS/CONTRIBUTING/DEPLOY pins, the pass-log reminder, the `release.yml` tag example, `init/VERSION`) - range pins (`^1.0.0`), dated era rows and other packages' versions stay out of scope. Everything currently ships under one number, `1.2.0` (bumped from the 1.1.0 post-stable surface on 2026-10-28, carrying the post-queue engine sweep; the trail: the 0.6.0 freeze was lifted to 0.9.0, promoted to 1.0.0 on 2026-10-22, then to 1.1.0 on 2026-10-25; `labs/TASKS.md` VERSION POLICY has the trail) - a future bump is one edit in those three places plus `init/VERSION`, then the pin keeps them honest.
+The version truth is enforced in CI: the battery pin refuses any README / package.json / CHANGELOG triplet that disagrees, and the issue #41 census leg derives the version from package.json and refuses every living surface that hand-copied it (README line, AGENTS/CONTRIBUTING/DEPLOY pins, the pass-log reminder, the `publish.yml` tag example, `init/VERSION`) - range pins (`^1.0.0`), dated era rows and other packages' versions stay out of scope. Everything currently ships under one number, `1.2.0` (bumped from the 1.1.0 post-stable surface on 2026-10-28, carrying the post-queue engine sweep; the trail: the 0.6.0 freeze was lifted to 0.9.0, promoted to 1.0.0 on 2026-10-22, then to 1.1.0 on 2026-10-25; `labs/TASKS.md` VERSION POLICY has the trail) - a future bump is one edit in those three places plus `init/VERSION`, then the pin keeps them honest.
 
 ---
 

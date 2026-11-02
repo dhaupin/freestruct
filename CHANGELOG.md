@@ -2,6 +2,16 @@
 
 All notable changes to freestruct will be documented here.
 
+## [Unreleased]
+
+### Changed (2026-11-02, the release lane folds into one 3-job ladder)
+
+- `publish.yml` is now the family's single tag lane (publish -> release -> verify), folding in the retired `release.yml`. A second workflow minting the same GitHub release from the same tag let the release body and the changelog drift; one lane makes them one artifact.
+- The `release` job attaches the **served** tarball (`npm pack freestruct@<version>`) to the GitHub release, and the `verify` job asserts its sha512 equals the registry integrity metadata (`scripts/verify-release.cjs --gh --asset`). The GH release and the npm artifact are now the SAME bytes, so a consumer downloads one artifact either way.
+- The `verify` job re-runs the trust ladder against what is already served and released: registry latest == the packaged version, the served tarball's sha512 == the registry integrity, provenance present, the full pack ladder on the served tarball, and the release object's asset hashing to the registry bytes. One disconnect reads red after a green publish, which is the point.
+- `scripts/verify-release.cjs` and `scripts/release-notes.cjs` arrive as the family's generic-core copies (the script reads name/version/bin from the caller's `package.json`, so it drops in with zero edits).
+- Every action ref in `publish.yml` is pinned to a commit SHA (pins, never floats).
+
 ## [1.2.0] - 2026-10-28
 
 Everything landed since the v1.1.0 tag (2026-10-25): the family sweep and the docs/tooling wave that followed the tag, then the post-queue engine sweep - with the GitHub issue queue fully closed (#1-#40), the engine corners the queue-era waves never probed got nine real fixes, each with a red-checked battery pin (battery 121 -> 130), plus the issue #41 version-truth census leg (two more pins, 130 -> 132), the issue #43 count-census leg (one pin, 132 -> 133), the post-merge staging pass (one more pin, 133 -> 134), the repo-wide gap walk (twenty-six more pins, 134 -> 160), and the prestruct port pass (two more pins, 160 -> 162), then the docs-audit runner convergence (one more pin, 162 -> 163), then the independence guard (one more pin, 163 -> 164), then the cache-bust same-origin + srcset pass (two more pins, 164 -> 166), the release-walk pre-tag hardening sweep (six more pins, 166 -> 172), the issue #47 docs-lane Jekyll-filter gate (one more pin, 172 -> 173), and the post-1.2.0 walk sweep (six more pins, 173 -> 179), then the crashtest pack-surface walk (one more pin, 179 -> 180).

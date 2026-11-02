@@ -202,7 +202,7 @@ const VERSION_CLAIMS = [
   { file: 'DEPLOY.md', re: /the pinned \*\*(\d+\.\d+\.\d+)\*\*/, label: 'DEPLOY battery line' },
   { file: 'DEPLOY.md', re: /currently ships under one number, `(\d+\.\d+\.\d+)`/, label: 'DEPLOY version-truth paragraph' },
   { file: 'labs/TASKS.md', re: /the pin wall enforces (\d+\.\d+\.\d+) everywhere/, label: 'labs/TASKS reminder line' },
-  { file: '.github/workflows/release.yml', re: /^#\s+git tag v(\d+\.\d+\.\d+)$/m, label: 'release.yml tag example' },
+  { file: '.github/workflows/publish.yml', re: /^#\s+git tag v(\d+\.\d+\.\d+)$/m, label: 'publish.yml tag example' },
 ];
 
 test('version census: the living version claims are non-empty and derive from package.json (#41)', () => {
@@ -4383,6 +4383,108 @@ test('walk: EVERY 404 file gets the noindex treatment (a 404.html + 404.htm pair
     assert.ok(!/FAIL 404\.html: 404 page missing its noindex/.test(out.stdout + out.stderr),
       'the audit passes its own dual-404 output');
   } finally { rmDir(dir); }
+});
+
+// ---------- release lane: the 3-job ladder + its helpers ----------
+// The tag lane folds in the retired release.yml (a separate workflow with a
+// hand-rolled body, so the release and the changelog could drift). These pins
+// hold the ladder's shape and the two helpers' contracts offline, so a lane
+// edit that drops a leg fails here instead of on release day.
+
+const PUBLISH_WF = '.github/workflows/publish.yml';
+
+test('release lane: publish.yml is the single 3-job ladder (publish -> release -> verify)', () => {
+  // The old release.yml (a second workflow minting the same GH release from
+  // the same tag) is retired: publish.yml is the one tag lane, matching the
+  // family shape (eyestruct/gistory/packstruct). A regression that resurrects
+  // a second release lane fails here.
+  assert.throws(() => read('.', '.github/workflows/release.yml'),
+    'release.yml must stay retired - publish.yml is the single tag lane');
+  const wf = yamlLoad(read('.', PUBLISH_WF));
+  assert.deepStrictEqual(Object.keys(wf.jobs).sort(), ['publish', 'release', 'verify'],
+    'publish.yml carries exactly the family 3-job ladder');
+  assert.ok(wf.jobs.release.needs === 'publish', 'release runs after publish');
+  assert.ok(wf.jobs.verify.needs === 'publish', 'verify hangs off publish (runs in verify-only mode too)');
+});
+
+test('release lane: the publish job refuses 0.x, gates tag==version, and runs the composed gate', () => {
+  const text = read('.', PUBLISH_WF);
+  assert.includes(text, '0.*)', 'the publish gate refuses 0.x by name');
+  assert.includes(text, 'does not equal the packaged version', 'the tag==version gate is present');
+  assert.includes(text, 'npm run check', 'the publish job runs the composed gate fail-fast');
+  assert.includes(text, 'e2e-install.cjs', 'the tarball e2e stays a CI-side publish gate');
+  assert.includes(text, 'npm publish --provenance', 'the publish is the OIDC provenance cut');
+});
+
+test('release lane: the release job attaches the served tarball and verify judges it', () => {
+  const text = read('.', PUBLISH_WF);
+  // The release attaches the EXACT tarball the registry serves, not a re-pack
+  // of the checkout, so the release asset and the npm artifact are one bytes.
+  assert.includes(text, 'npm pack "freestruct@$BLOCK_VERSION"', 'the release attaches the served tarball');
+  assert.includes(text, 'gh release upload', 'the tarball is uploaded to the release');
+  // The verify leg passes --asset so the asset is judged against the registry
+  // integrity - without it the attachment rides unchecked.
+  assert.includes(text, '--gh --tag "v$V" --asset "freestruct-$V.tgz"', 'verify judges the release asset against the registry bytes');
+  // Notes come from the changelog, never a hand-written body.
+  assert.includes(text, 'release-notes.cjs', 'the release notes are extracted from the changelog');
+});
+
+test('release lane: every action ref is pinned to a SHA (pins, never floats)', () => {
+  const text = read('.', PUBLISH_WF);
+  const uses = [...text.matchAll(/uses:\s*([^\s#]+)/g)].map(m => m[1]);
+  assert.ok(uses.length >= 3, `publish.yml carries the ladder's action refs (${uses.length})`);
+  for (const ref of uses) {
+    assert.ok(/@[0-9a-f]{40}$/.test(ref), `action ref ${ref} must be a 40-char SHA, not a floating tag`);
+  }
+});
+
+test('release-notes helper: extracts the changelog section for a version and refuses a missing one', () => {
+  const helper = path.join(ROOT, 'scripts', 'release-notes.cjs');
+  const ok = spawnSync(process.execPath, [helper, '1.2.0'], { cwd: ROOT, encoding: 'utf8' });
+  assert.strictEqual(ok.status, 0, `release-notes 1.2.0 exited ${ok.status}: ${ok.stderr}`);
+  assert.includes(ok.stdout, 'Everything landed since the v1.1.0 tag',
+    'the helper returns the [1.2.0] section body');
+  const missing = spawnSync(process.execPath, [helper, '9.9.9'], { cwd: ROOT, encoding: 'utf8' });
+  assert.notStrictEqual(missing.status, 0, 'a version with no changelog section is refused, not minted empty');
+  assert.includes(missing.stderr, 'no "## [9.9.9]" section',
+    'the refusal names the version it could not find');
+});
+
+test('verify-release helper: the pack ladder passes on THIS tree and refuses a smuggled file by name', () => {
+  // Case 1 (positive): npm pack of this tree -> the pack ladder -> PASS. The
+  // consumer-install half needs the registry; when offline the script prints a
+  // named SKIP - this asserts "no silent skip", not "always network".
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), 'freestruct-pack-'));
+  try {
+    const packed = spawnSync('npm', ['pack', '--pack-destination', dest], { cwd: ROOT, encoding: 'utf8', timeout: 120000 });
+    assert.strictEqual(packed.status, 0, `npm pack failed: ${packed.stderr}`);
+    const tgz = path.join(dest, 'freestruct-1.2.0.tgz');
+    assert.ok(fs.existsSync(tgz), `npm pack produced nothing at ${tgz}`);
+    const rv = spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'verify-release.cjs'), '--pack', tgz], { cwd: ROOT, encoding: 'utf8', timeout: 300000 });
+    const out = rv.stdout + rv.stderr;
+    assert.strictEqual(rv.status, 0, `the pack ladder failed on this tree (${rv.status}):\n${out}`);
+    assert.includes(out, 'PASS identity: freestruct@1.2.0', 'the tarball identity is judged');
+    assert.includes(out, 'PASS installed bin freestruct --version -> 1.2.0', 'the installed bin answers --version');
+    assert.ok(!/SKIP consumer install[\s\S]*VERIFIED/.test(out) || out.includes('SKIP consumer install'),
+      'a network skip is named, never silent');
+  } finally { rmDir(dest); }
+
+  // Case 2 (negative, fully offline): a doctored tarball carrying a file under
+  // a forbidden prefix (labs/) is refused BY NAME before any install, so a
+  // smuggled file can never ship as a mystery.
+  const bad = fs.mkdtempSync(path.join(os.tmpdir(), 'freestruct-badpack-'));
+  try {
+    fs.mkdirSync(path.join(bad, 'package', 'labs'), { recursive: true });
+    fs.writeFileSync(path.join(bad, 'package', 'package.json'), JSON.stringify({ name: 'freestruct', version: '1.2.0' }));
+    fs.writeFileSync(path.join(bad, 'package', 'labs', 'secret.md'), 'should never ship');
+    const badTgz = path.join(bad, 'bad.tgz');
+    const tar = spawnSync('tar', ['-czf', badTgz, '-C', bad, 'package'], { encoding: 'utf8' });
+    assert.strictEqual(tar.status, 0, `tar failed: ${tar.stderr}`);
+    const rv = spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'verify-release.cjs'), '--pack', badTgz], { cwd: ROOT, encoding: 'utf8' });
+    assert.notStrictEqual(rv.status, 0, 'a forbidden file is refused, never verified');
+    assert.includes(rv.stderr, 'FORBIDDEN contents', 'the refusal is named');
+    assert.includes(rv.stderr, 'labs/secret.md', 'the smuggled file is named by path');
+  } finally { rmDir(bad); }
 });
 
 // done

@@ -1,71 +1,183 @@
-# publish.yml
-# -----------
-# npm Trusted Publishing (OIDC) -- releases publish on version tags ONLY.
-# There is no NPM_TOKEN secret stored anywhere. Provenance: TRUSTED-PUBLISHER
-# runs (this workflow) generate attestations automatically per npm docs
-# (docs.npmjs.com/trusted-publishers). The one-time MANUAL bootstrap publish
-# from a dev machine carries no provenance -- no OIDC root exists there -- and
-# does not need one; do not add publishConfig.provenance to package.json, it
-# would break that bootstrap (sigstore cert needs a CI OIDC identity).
+name: publish
+# The repo-cut release ladder (the family shape: eyestruct's proven lane,
+# adopted for freestruct). A tag drives the whole ladder end-to-end, and
+# nothing is earned by a green publish step alone: the gap the family's
+# first cut proved is that publish CAN go green while the registry result is
+# wrong, because nothing asserted the tarball between proof-of-publish and
+# proof-of-work.
 #
-# DORMANT BY DESIGN: this fires on `v*` tags, which do not exist yet. The
-# first publish must be done manually once (bootstrap -- OIDC cannot create
-# a brand-new package, see npm/cli#8544), then a Trusted Publisher entry is
-# configured on npmjs.com (user dhaupin, repo freestruct, workflow publish.yml).
-# Until then, no tag will be created and this workflow never runs.
+#   1. publish  - npm trusted publishing (OIDC): no NPM_TOKEN secret exists
+#                 (the family law). The job's id-token proves the tarball
+#                 came from THIS tree; the npm >= 11.5.1 floor is installed
+#                 in-lane. The battery rides automatically: npm publish runs
+#                 prepublishOnly (npm run gate = sync:check + check) - a red
+#                 battery cannot mint a tarball. Gate: 0.x refused (the
+#                 family release ladder: 0.x is the manual ship lane), and
+#                 on a tag push the tag must equal the packaged version.
+#   2. release  - the GH release object is cut from the pushed tag. Its
+#                 notes are EXTRACTED from the changelog's own [version]
+#                 section (scripts/release-notes.cjs) - a release body that
+#                 disagrees with the changelog is drift, and an empty
+#                 extraction refuses the cut. Idempotent. The release then
+#                 ATTACHES the exact tarball the registry serves, so the
+#                 release and the npm artifact are the same bytes.
+#   3. verify   - the post-publish truth (scripts/verify-release.cjs):
+#                 --npm: registry latest == this tree's version, the served
+#                 tarball's sha512 == the registry integrity metadata,
+#                 provenance present, then the full pack ladder on the
+#                 served tarball; --gh: the release object exists, targets
+#                 the tag's commit, its source tarball diffs clean against
+#                 `git archive` of that commit, and the attached --asset
+#                 hashes equal to the registry bytes.
 #
-# Runbook (when it is time):
-#   1. npm test all green; npm pack --dry-run shows the intended tarball
-#      (bin/ + engine/ + init/ per the files whitelist).
-#   2. npm publish            # one-time manual bootstrap, creates the package
-#   3. npmjs.com -> freestruct -> Settings -> Trusted Publisher
-#   4. npm version minor      # future releases land as v0.x / v1.x
-#      git push origin main --follow-tags
+# This lane folds the former release.yml in: freestruct's GitHub release was
+# minted by a separate workflow with a hand-rolled body, so the release and
+# the changelog could drift. The ladder's release job replaces it.
 #
-# Rules (same as the prestruct runbook this mirrors):
-#   - Only publish from version tags, never from main directly.
-#   - No tag until the battery is green and the tarball is proven by a fresh
-#     install -- the tarball e2e (scripts/e2e-install.cjs) now runs as a hard
-#     gate below; a publish cannot pass without it.
+# DORMANT until the first manual publish: OIDC cannot create a brand-new
+# package (npm/cli#8544), so claim freestruct once from a dev machine
+# (DEPLOY.md), then a Trusted Publisher entry on npmjs.com
+# (user dhaupin, repo freestruct, workflow publish.yml). From then on:
+#   git tag v1.2.0
+#   git push origin v1.2.0
 #
-# GitHub releases are cut alongside npm publishes -- see release.yml.
-
-name: npm-publish
-
+# verify-only dispatch mode: no publish, no release minting - the verify job
+# re-runs the trust ladder against what is ALREADY published and released.
 on:
   push:
-    tags: ["v*"]
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'publish = registry cut | verify-only = re-run the trust ladder against what is already served'
+        required: false
+        default: 'publish'
+        type: choice
+        options: ['publish', 'verify-only']
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
 
 jobs:
   publish:
+    if: github.event_name == 'push' || inputs.mode != 'verify-only'
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.gate.outputs.version }}
+      tag: ${{ steps.gate.outputs.tag }}
     steps:
-      - uses: actions/checkout@v7
-
-      # Trusted publishing needs node >= 22.14 / npm >= 11.5.1
-      - uses: actions/setup-node@v7
-        with:
-          node-version: "24"
-          registry-url: "https://registry.npmjs.org"
-          package-manager-cache: false
-
-      - name: Install
-        run: npm install --no-audit --no-fund
-
-      # The composed local gate (battery + docs audit + pack selftest). The
-      # `npm publish` step below ALSO triggers prepublishOnly -> check, so a
-      # tagged tree is gated twice; this explicit step fails fast and prints
-      # clearly. packs:selftest skips without a crashtest checkout (test.yml
-      # runs the real teeth on this same commit).
-      - name: Check (battery + docs audit + pack selftest)
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with: { node-version: 22 }
+      - name: npm floor for trusted publishing (11.5.1+)
+        run: npm install -g npm@^11
+      - id: gate
+        name: the gate - 0.x refused, tag == packaged version
+        # Every github context value reaches this script through env, never
+        # inline interpolation - an expression-injected tag name is the
+        # classic Actions injection class.
+        env:
+          TAG_REF: ${{ github.ref_name }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -e
+          V="$(node -p "require('./package.json').version")"
+          case "$V" in
+            0.*) echo "publish gate: refusing $V - the OIDC lane serves 1.0.0+ only (the family release ladder: 0.x is the manual ship lane)"; exit 1 ;;
+          esac
+          REF="$TAG_REF"
+          EVENT="$EVENT_NAME"
+          if [ "$EVENT" = "push" ]; then
+            if [ "$REF" != "v$V" ]; then
+              echo "publish gate: refusing - tag $REF does not equal the packaged version v$V (a tag that lies about its version never cuts)"; exit 1
+            fi
+          fi
+          TAG="v$V"
+          echo "publish gate: $TAG passes the 0.x refusal and the tag==version gate"
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+      - run: npm ci --no-fund --no-audit
+      # Fail fast and print clearly: `npm publish` also runs prepublishOnly
+      # (gate = sync:check + check), so a tagged tree is gated twice - this
+      # explicit step just makes a red gate obvious before the publish line.
+      - name: Check (battery + docs audit + claims + pack selftest)
         run: npm run check
-
+      # The heavyweight tarball e2e stays a CI-side publish gate (it needs a
+      # network registry); it is not part of the local `check`.
       - name: Tarball e2e (fresh-install quick start gates the publish)
         run: node scripts/e2e-install.cjs
+      - run: npm publish --provenance
 
-      - name: Publish
-        run: npm publish
+  release:
+    needs: publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with: { node-version: 22 }
+      # BLOCK_VERSION/TAG arrive through env from the publish job's outputs
+      # - the same no-inline-interpolation rule the gate obeys. notes.md
+      # lives in RUNNER_TEMP: never a silent overwrite of a repo file that
+      # happens to carry the name.
+      - name: extract the release notes from the changelog (refuses empty)
+        env:
+          BLOCK_VERSION: ${{ needs.publish.outputs.version }}
+        run: node scripts/release-notes.cjs "$BLOCK_VERSION" > "$RUNNER_TEMP/notes.md"
+      - name: cut the GH release from the tag (idempotent)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BLOCK_VERSION: ${{ needs.publish.outputs.version }}
+          BLOCK_TAG: ${{ needs.publish.outputs.tag }}
+        run: |
+          TAG="$BLOCK_TAG"
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "release $TAG already exists - not re-minting; the verify job judges its truth"
+          else
+            gh release create "$TAG" --title "freestruct $BLOCK_VERSION" --notes-file "$RUNNER_TEMP/notes.md"
+          fi
+      - name: attach the served tarball to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BLOCK_VERSION: ${{ needs.publish.outputs.version }}
+          BLOCK_TAG: ${{ needs.publish.outputs.tag }}
+        run: |
+          set -e
+          # The EXACT tarball the registry serves for this version - the
+          # artifact npm received, not a re-pack of the checkout, so the
+          # release asset and the npm artifact can never drift. The verify
+          # job's --asset leg then asserts their sha512s are equal.
+          npm pack "freestruct@$BLOCK_VERSION" --pack-destination "$RUNNER_TEMP" > /dev/null
+          gh release upload "$BLOCK_TAG" "$RUNNER_TEMP/freestruct-$BLOCK_VERSION.tgz" --clobber
+
+  # No `needs` on release here by design under the if: the verify leg runs
+  # after release on a real cut, but ALSO stands alone in verify-only mode
+  # (publish skipped, release skipped, the ladder judged against what is
+  # already served and released).
+  verify:
+    needs: publish
+    if: >-
+      always() &&
+      (needs.publish.result == 'success' ||
+       (needs.publish.result == 'skipped' && inputs.mode == 'verify-only'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with: { node-version: 22 }
+      - name: the post-publish trust ladder (npm + GH release)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -e
+          V="$(node -p "require('./package.json').version")"
+          EXPECTED_EXPORTS="$(node -p "Object.keys(require('./package.json').exports).join(',')")"
+          FS_PROBE="const m=require('freestruct');if(typeof m.runInject!=='function')process.exit(1);if(m.EXIT_OK!==0)process.exit(1)"
+          node scripts/verify-release.cjs --npm --version "$V" --exports "$EXPECTED_EXPORTS" --probe "$FS_PROBE"
+          node scripts/verify-release.cjs --gh --tag "v$V" --asset "freestruct-$V.tgz"
