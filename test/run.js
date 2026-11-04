@@ -315,9 +315,14 @@ test('cache steps ride one pinned actions/cache major (the #29 straggler class)'
   const versions = new Map();
   for (const f of files) {
     const text = fs.readFileSync(path.join(wfDir, f), 'utf8');
-    for (const m of text.matchAll(/uses:\s*actions\/cache@(v\d+)/g)) {
-      if (!versions.has(m[1])) versions.set(m[1], []);
-      versions.get(m[1]).push(f);
+    // Refs are SHA-pinned now ("pins, never floats"), so the major rides the
+    // trailing "# vN" comment; the floating "@vN" form is still read so this
+    // leg keeps its teeth against a regression back to a floating tag.
+    for (const m of text.matchAll(/uses:\s*actions\/cache@([^\s#]+)(?:\s*#\s*(v\d+))?/g)) {
+      const major = m[2] || (/^v\d+$/.test(m[1]) ? m[1] : null);
+      if (!major) continue;
+      if (!versions.has(major)) versions.set(major, []);
+      versions.get(major).push(f);
     }
   }
   assert.ok(versions.size > 0, 'at least one actions/cache step is present');
