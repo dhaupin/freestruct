@@ -1,25 +1,12 @@
 # PRD: freestruct (the post-build SEO layer)
 
-**Status:** v0.2 - current (2026-10-29) · Owner: dhaupin
-**Role:** product - the post-build SEO engine. It injects complete SEO metadata over any SSG's output tree.
-**Package:** `freestruct` @ 1.2.0 (node >=20). npm latest is 1.1.0; 1.2.0 is committed and pending the tag.
-**Core law:** one command after the build; every generated artifact is escaped or the build fails loudly.
-**Family:** the five arms are **govstruct** (govern), **packstruct** (spec),
-**crashtest** (attack), **eyestruct** (watch), **poststruct** (audit). The forges
-are **monoforge** (the repo stamp) and **coreforge** (the site rig); **railyard**
-is the composer. freestruct is a **product** governed by the suite: it is the
-after-build leg of the SEO trio (prestruct before, freestruct after, poststruct
-checks what shipped). The interop law: no host imports a sibling to check a
-sibling; it invokes the sibling's public CLI.
+**Status:** v0.2 - current (2026-10-29) · Owner: dhaupin **Role:** product - the post-build SEO engine. It injects complete SEO metadata over any SSG's output tree. **Package:** `freestruct` @ 1.2.0 (node >=20). npm latest is 1.1.0; 1.2.0 is committed and pending the tag. **Core law:** one command after the build; every generated artifact is escaped or the build fails loudly. **Family:** the five arms are **govstruct** (govern), **packstruct** (spec), **crashtest** (attack), **eyestruct** (watch), **poststruct** (audit). The forges are **monoforge** (the repo stamp) and **coreforge** (the site rig); **railyard** is the composer. freestruct is a **product** governed by the suite: it is the after-build leg of the SEO trio (prestruct before, freestruct after, poststruct checks what shipped). The interop law: no host imports a sibling to check a sibling; it invokes the sibling's public CLI.
 
 ---
 
 ## 1. One-line pitch
 
-Freestruct is a post-build SEO layer for static doc sites: build with any SSG,
-run one command, get complete SEO/OG/JSON-LD metadata, sitemap, robots, RSS,
-404, search index, and cache-busting across the output tree. One dependency
-(`js-yaml`), no SSG plugin, no template edits.
+Freestruct is a post-build SEO layer for static doc sites: build with any SSG, run one command, get complete SEO/OG/JSON-LD metadata, sitemap, robots, RSS, 404, search index, and cache-busting across the output tree. One dependency (`js-yaml`), no SSG plugin, no template edits.
 
 ## 2. The family trio
 
@@ -31,15 +18,11 @@ freestruct is one leg of the family's SEO contract:
 | **freestruct** | after any SSG | injects complete SEO metadata over the built tree |
 | **poststruct** | after everything | audits what actually shipped; FAIL findings exit non-zero |
 
-freestruct is the SSG-agnostic leg: it runs over Jekyll, Hugo, Docusaurus,
-MkDocs, VitePress, Astro, or Eleventy output. It owns metadata being
-Pagefind-friendly (canonical, noindex) and does not ship a competing search
-index unless a user opts in.
+freestruct is the SSG-agnostic leg: it runs over Jekyll, Hugo, Docusaurus, MkDocs, VitePress, Astro, or Eleventy output. It owns metadata being Pagefind-friendly (canonical, noindex) and does not ship a competing search index unless a user opts in.
 
 ## 3. What shipped (the rehaul, verified against the tree at HEAD)
 
-The rehaul is complete. The old `docs/lib/inject.js` CommonJS monolith is gone;
-the engine is decomposed into testable modules:
+The rehaul is complete. The old `docs/lib/inject.js` CommonJS monolith is gone; the engine is decomposed into testable modules:
 
 | module | concern |
 |---|---|
@@ -57,9 +40,7 @@ the engine is decomposed into testable modules:
 | `engine/urls.js` | basePath-aware canonical/sitemap/feed URL construction |
 | `engine/audit.js` | the independent `freestruct audit` verifier |
 
-The engine composes into one export surface: `inject(options)` built of named
-steps. Paths resolve from explicit roots (CLI arg, then config, then a cwd
-walk-up), never raw `process.cwd()`.
+The engine composes into one export surface: `inject(options)` built of named steps. Paths resolve from explicit roots (CLI arg, then config, then a cwd walk-up), never raw `process.cwd()`.
 
 ## 4. The CLI surface
 
@@ -72,59 +53,37 @@ freestruct path       # print the resolved config + output roots
 freestruct indexnow   # POST the baked URL list to api.indexnow.org (--dry-run prints the body)
 ```
 
-Flags: `--strict` (broken links and noindex leaks become fatal), `--tolerant`,
-`--version`.
+Flags: `--strict` (broken links and noindex leaks become fatal), `--tolerant`, `--version`.
 
 ## 5. The shipped feature set
 
-- Injects missing title, description, canonical, Open Graph, Twitter cards, and
-  JSON-LD (missing-only: existing tags are left alone).
+- Injects missing title, description, canonical, Open Graph, Twitter cards, and JSON-LD (missing-only: existing tags are left alone).
 - Feed autodiscovery: every injected head carries the RSS alternate link.
-- Attribute-safe everywhere: og/twitter values HTML-escaped, JSON-LD literals
-  JSON-escaped, og/twitter images ship only when configured.
-- Opt-in discovery blocks: `search`, `breadcrumb`, `article`, `verification`,
-  `locales` - all missing-only and loudly diagnostic.
-- `llms: true` emits the AI-consumable `llms.txt` summary over the same
-  indexable page set sitemap and feed honor (noindex stays honored).
-- `og.image` string or structured `{ src, width, height, alt }` object form,
-  which emits the companion tags; SVG sources warn loudly, `--strict` fails
-  until answered.
-- Page-level tuning survives the build: a `<!-- freestruct: {...} -->` comment
-  overrides title/description/ogType/ogImage/twitterCard and adds article meta.
-- Honest canonical URLs including sub-path (`basePath`) installs, held for the
-  sitemap locs, robots sitemap pointer, RSS links, and the 404 home link.
-- `sitemap.xml`: encoded URLs, real per-file `lastmod` (page mtime, not build
-  time), noindex pages excluded.
-- `robots.txt`: `User-agent: *` plus `Allow: /` plus a basePath-aware sitemap
-  pointer.
-- `feed.xml` (RSS): escaped titles/descriptions, per-page `pubDate` from each
-  page's own mtime, basePath-aware channel/self links.
-- `404.html`: generated when missing, gets the full SEO pipeline plus explicit
-  noindex; a user-supplied 404 gets the same treatment.
+- Attribute-safe everywhere: og/twitter values HTML-escaped, JSON-LD literals JSON-escaped, og/twitter images ship only when configured.
+- Opt-in discovery blocks: `search`, `breadcrumb`, `article`, `verification`, `locales` - all missing-only and loudly diagnostic.
+- `llms: true` emits the AI-consumable `llms.txt` summary over the same indexable page set sitemap and feed honor (noindex stays honored).
+- `og.image` string or structured `{ src, width, height, alt }` object form, which emits the companion tags; SVG sources warn loudly, `--strict` fails until answered.
+- Page-level tuning survives the build: a `<!-- freestruct: {...} -->` comment overrides title/description/ogType/ogImage/twitterCard and adds article meta.
+- Honest canonical URLs including sub-path (`basePath`) installs, held for the sitemap locs, robots sitemap pointer, RSS links, and the 404 home link.
+- `sitemap.xml`: encoded URLs, real per-file `lastmod` (page mtime, not build time), noindex pages excluded.
+- `robots.txt`: `User-agent: *` plus `Allow: /` plus a basePath-aware sitemap pointer.
+- `feed.xml` (RSS): escaped titles/descriptions, per-page `pubDate` from each page's own mtime, basePath-aware channel/self links.
+- `404.html`: generated when missing, gets the full SEO pipeline plus explicit noindex; a user-supplied 404 gets the same treatment.
 - Cache-busting (asset query params), lazy loading, reading time.
-- Config schema with loud diagnostics; unknown and retired keys never die
-  silently.
-- Link validation (report-only by default, `--strict` fatal; the docs CI runs
-  `--strict`).
+- Config schema with loud diagnostics; unknown and retired keys never die silently.
+- Link validation (report-only by default, `--strict` fatal; the docs CI runs `--strict`).
 - `freestruct audit` verifies baked output independently.
-- IndexNow support (issue #19): the key file ships during the run; submission
-  is the post-deploy step.
-- Slug-glob scoped config (issue #25): `jsonLd` and `og.scoped` accept a map
-  keyed by page-slug globs, most specific match wins.
-- Per-page OG image generation (issue #22): renders a branded 1200x630 PNG from
-  a consumer SVG template; the optional rasterizer loads lazily and the run
-  stays green with a loud skip when it is not installed.
+- IndexNow support (issue #19): the key file ships during the run; submission is the post-deploy step.
+- Slug-glob scoped config (issue #25): `jsonLd` and `og.scoped` accept a map keyed by page-slug globs, most specific match wins.
+- Per-page OG image generation (issue #22): renders a branded 1200x630 PNG from a consumer SVG template; the optional rasterizer loads lazily and the run stays green with a loud skip when it is not installed.
 
 ## 6. The pack
 
-freestruct ships `packs/public/freestruct-docs-shapes` under the packstruct
-`check` profile - the audit shapes for its own docs output. The interop law
-holds: the pack invokes sibling CLIs, never imports sibling internals.
+freestruct ships `packs/public/freestruct-docs-shapes` under the packstruct `check` profile - the audit shapes for its own docs output. The interop law holds: the pack invokes sibling CLIs, never imports sibling internals.
 
 ## 7. The rehaul ledger (the warts, all closed)
 
-The 2026-10-20 rehaul PRD read the old tree and named twelve warts. All are
-closed:
+The 2026-10-20 rehaul PRD read the old tree and named twelve warts. All are closed:
 
 | # | wart (as read) | closed by |
 |---|---|---|
@@ -143,25 +102,17 @@ closed:
 
 ## 8. Release truth
 
-- **Version is truth-checked.** The battery pins the version across
-  `package.json`, the README, and the CHANGELOG, so a release cannot leave one
-  behind.
-- **Tarball e2e in CI.** `scripts/e2e-install.cjs` packs the real tarball,
-  installs into a throwaway project, runs the README quick start through the bin
-  shim, and asserts the artifacts. It is wired into `test.yml` and is a hard
-  gate in `publish.yml`.
-- **Publish ladder.** Bootstrap manual publish once (npm OIDC cannot create a
-  package), then the Trusted Publisher fires on `v*` tags with provenance.
+- **Version is truth-checked.** The battery pins the version across `package.json`, the README, and the CHANGELOG, so a release cannot leave one behind.
+- **Tarball e2e in CI.** `scripts/e2e-install.cjs` packs the real tarball, installs into a throwaway project, runs the README quick start through the bin shim, and asserts the artifacts. It is wired into `test.yml` and is a hard gate in `publish.yml`.
+- **Publish ladder.** Bootstrap manual publish once (npm OIDC cannot create a package), then the Trusted Publisher fires on `v*` tags with provenance.
 - **Dormant by default.** The publish workflow is merged and inert until a tag.
 
 ## 9. Non-goals
 
 - **No SSG plugin.** freestruct runs over output, never inside a generator.
-- **No competing search index by default.** Pagefind owns the docs search; the
-  built-in index is opt-in.
+- **No competing search index by default.** Pagefind owns the docs search; the built-in index is opt-in.
 - **No silent green.** `--strict` turns report-only classes fatal.
-- **No unescaped XML.** A value that still produces invalid XML is a loud build
-  error, not a bad sitemap.
+- **No unescaped XML.** A value that still produces invalid XML is a loud build error, not a bad sitemap.
 
 ## 10. Working rules
 

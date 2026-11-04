@@ -88,6 +88,7 @@ npm run e2e                  # tarball e2e: fresh install quick start through th
 
 ## Working rules the gates pin down
 
+- **Prose flow (#49).** Living prose never hard-wraps at commit time: paragraphs flow, and `scripts/unwrap-prose.cjs` joins hard-wrapped prose without touching frontmatter, fences, indented code, tables, headings, thematic breaks, or HTML blocks. Dated history keeps its era wording.
 - **Version pin:** everything ships under **1.2.0** (bumped from the 1.1.0 post-stable surface on 2026-10-28, carrying the post-queue engine sweep; the 1.1.0 bump landed 2026-10-25 from the 1.0.0 first stable, superseding the earlier 0.6.0 freeze and the 0.9.0 pin; `labs/TASKS.md` VERSION POLICY has the trail; the battery pin enforces one number everywhere). The manual npm bootstrap is done; tags are still owner-gated - the whole runbook is in [DEPLOY.md](DEPLOY.md).
 - **Engine changes go in `engine/` only.** The templates move via `npm run sync`; guide-facing CLI truth moves via the battery's truthfulness gate. README/config/config-reference are regenerated TOGETHER.
 - **Comment format (gated):** every engine source opens with `// engine/<file>.js - <one-line purpose in English>` (a shebang may sit on line 1; the header follows). Sections are `// ---------- name ----------` banners; the why rides above the code, not after it. `npm run lint:docs` fails on drift.

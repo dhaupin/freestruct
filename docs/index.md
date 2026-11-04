@@ -73,65 +73,40 @@ nav_order: 0
 <div class="lp-card" markdown="1">
 ### Meta + canonical
 
-Full search-engine armor - title, description, a self canonical, plus Open Graph, Twitter and JSON-LD blocks - added only where a page is missing them, so your own settings always win.
-</div>
-<div class="lp-card" markdown="1">
+Full search-engine armor - title, description, a self canonical, plus Open Graph, Twitter and JSON-LD blocks - added only where a page is missing them, so your own settings always win. </div> <div class="lp-card" markdown="1">
 ### `sitemap.xml`
 
-Every page, one entry, real per-page `<lastmod>` dates crawlers can trust - properly escaped XML.
-</div>
-<div class="lp-card" markdown="1">
+Every page, one entry, real per-page `<lastmod>` dates crawlers can trust - properly escaped XML. </div> <div class="lp-card" markdown="1">
 ### `robots.txt`
 
-Waves crawlers in and hands them your sitemap. The pointer stays correct even on sub-path installs.
-</div>
-<div class="lp-card" markdown="1">
+Waves crawlers in and hands them your sitemap. The pointer stays correct even on sub-path installs. </div> <div class="lp-card" markdown="1">
 ### RSS feed
 
-A feed readers actually subscribe to: escaped titles, per-page `pubDate`, honest per-page dates.
-</div>
-<div class="lp-card" markdown="1">
+A feed readers actually subscribe to: escaped titles, per-page `pubDate`, honest per-page dates. </div> <div class="lp-card" markdown="1">
 ### A noindex 404
 
-Dead ends resolve to a 404 that search engines skip. Generated when your tree lacks one; a 404 you ship is finished, not overwritten.
-</div>
-<div class="lp-card" markdown="1">
+Dead ends resolve to a 404 that search engines skip. Generated when your tree lacks one; a 404 you ship is finished, not overwritten. </div> <div class="lp-card" markdown="1">
 ### Cache-busted assets
 
-Every asset URL carries the content-derived build hash, so a CDN that keys on URL or content refetches when your assets change - with optional purge hooks for edge caches that ignore both.
-</div>
-<div class="lp-card" markdown="1">
+Every asset URL carries the content-derived build hash, so a CDN that keys on URL or content refetches when your assets change - with optional purge hooks for edge caches that ignore both. </div> <div class="lp-card" markdown="1">
 ### Sub-path friendly URLs
 
-Canonical, sitemap, feed and 404 links carry `site.url + basePath` exactly once, so sub-path installs just work.
-</div>
-<div class="lp-card" markdown="1">
+Canonical, sitemap, feed and 404 links carry `site.url + basePath` exactly once, so sub-path installs just work. </div> <div class="lp-card" markdown="1">
 ### Link validation
 
-Every internal link is checked on every run - and with `--strict` a broken one fails the build. `freestruct audit` verifies the same truth independently on the baked output.
-</div>
-<div class="lp-card" markdown="1">
+Every internal link is checked on every run - and with `--strict` a broken one fails the build. `freestruct audit` verifies the same truth independently on the baked output. </div> <div class="lp-card" markdown="1">
 ### Scoped config
 
-`jsonLd` and `og.scoped` take slug globs (`/faq` exact, `/blog/*` one segment, `/guides/**` a sub-tree), so page-specific schema and per-directory image variants stay config-side.
-</div>
-<div class="lp-card" markdown="1">
+`jsonLd` and `og.scoped` take slug globs (`/faq` exact, `/blog/*` one segment, `/guides/**` a sub-tree), so page-specific schema and per-directory image variants stay config-side. </div> <div class="lp-card" markdown="1">
 ### Per-page OG images
 
-`ogImageGeneration` renders a branded 1200x630 PNG per page from your SVG template, wired under missing-only.
-</div>
-<div class="lp-card" markdown="1">
+`ogImageGeneration` renders a branded 1200x630 PNG per page from your SVG template, wired under missing-only. </div> <div class="lp-card" markdown="1">
 ### Discovery extras
 
-Opt-in keys that finish the modern head: `search`, `breadcrumb`, `article.scoped`, `verification`, `locales` and `llms`. All missing-only, all pinned.
-</div>
-<div class="lp-card" markdown="1">
+Opt-in keys that finish the modern head: `search`, `breadcrumb`, `article.scoped`, `verification`, `locales` and `llms`. All missing-only, all pinned. </div> <div class="lp-card" markdown="1">
 ### Loud diagnostics
 
-A named cause and an exit code that says which step failed (`1` config, `2` template, `3` output dir, `4` hook failure), never a mystery crash. `--tolerant` keeps experiments soft.
-</div>
-</div>
-</div>
+A named cause and an exit code that says which step failed (`1` config, `2` template, `3` output dir, `4` hook failure), never a mystery crash. `--tolerant` keeps experiments soft. </div> </div> </div>
 
 <div class="lp-section" markdown="1">
 <div class="lp-kicker">It generates HTML too</div>
@@ -143,19 +118,13 @@ A named cause and an exit code that says which step failed (`1` config, `2` temp
 <div class="lp-card" markdown="1">
 ### A noindex `404.html`
 
-Generated when your built tree lacks one. Your own 404 is respected and finished - never overwritten.
-</div>
-<div class="lp-card" markdown="1">
+Generated when your built tree lacks one. Your own 404 is respected and finished - never overwritten. </div> <div class="lp-card" markdown="1">
 ### Real artifacts
 
-`sitemap.xml`, `robots.txt` and `feed.xml` written as files your host serves directly.
-</div>
-<div class="lp-card" markdown="1">
+`sitemap.xml`, `robots.txt` and `feed.xml` written as files your host serves directly. </div> <div class="lp-card" markdown="1">
 ### Packaged templates
 
-The meta/canonical block, Open Graph, Twitter and JSON-LD segments - ready as-is or as a starting point. Stage a copy in `docs/_freestruct/` and it always wins.
-</div>
-<div class="lp-card" markdown="1">
+The meta/canonical block, Open Graph, Twitter and JSON-LD segments - ready as-is or as a starting point. Stage a copy in `docs/_freestruct/` and it always wins. </div> <div class="lp-card" markdown="1">
 ### The `init/` scaffold kit
 
 A commented starter config plus template copies, version-stamped to your install. Copy and go:
@@ -241,25 +210,16 @@ npx freestruct audit
 <div class="lp-card" markdown="1">
 ### Named exit codes
 
-`exit 0` quietly means the tree finished; `1 / 2 / 3 / 4` name exactly which step failed (config, template, output dir, hook failure).
-</div>
-<div class="lp-card" markdown="1">
+`exit 0` quietly means the tree finished; `1 / 2 / 3 / 4` name exactly which step failed (config, template, output dir, hook failure). </div> <div class="lp-card" markdown="1">
 ### Proven fresh install
 
-The tarball e2e proves real pack, real install, real quick start on every run.
-</div>
-<div class="lp-card" markdown="1">
+The tarball e2e proves real pack, real install, real quick start on every run. </div> <div class="lp-card" markdown="1">
 ### Attacked on purpose
 
-An adversarial crashtest pack attacks our own built docs in CI on every push.
-</div>
-<div class="lp-card" markdown="1">
+An adversarial crashtest pack attacks our own built docs in CI on every push. </div> <div class="lp-card" markdown="1">
 ### Docs that hold up
 
-Broken-links-as-failures is how our own Pages deploy runs, and `AGENTS.md` orients a coding agent in one file.
-</div>
-</div>
-</div>
+Broken-links-as-failures is how our own Pages deploy runs, and `AGENTS.md` orients a coding agent in one file. </div> </div> </div>
 
 <div class="lp-band" markdown="1">
 ## Ship docs search engines can actually see
