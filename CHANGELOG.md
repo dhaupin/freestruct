@@ -6,6 +6,14 @@ All notable changes to freestruct will be documented here.
 
 ### Changed
 
+- **The docs lane is now THE one docs lane (the family consolidation).** Every repo that builds docs calls this file; the forks are gone. `coreforge`'s `docs-build.yml` and `govstruct`'s copy were the same runbook under a second name, and the two had already drifted (ruby 3.2 vs 3.4, pagefind `latest` scrape vs npm pin). The lane absorbed the superset of every fork's receipts:
+  - **`pagefind-version: latest`** now resolves through the hardened scrape (token auth + a version guard that refuses a non-semver tag) instead of installing a `latest` npm dist-tag; a concrete pin still installs verbatim. The lane's tools ride ONE install, because a second `npm install --no-save` PRUNES the first (measured).
+  - **`crashtest-ref` is now opt-in** (empty skips the dogfood campaign), so a site without a `crashtest.config.js` can use the lane. This repo and the other crashtest-carrying sites pass a ref.
+  - **`strict` (default true)**, **`freestruct-version`** (exact, never a range - a range floats the engine), and **`freestruct-cmd`** (default installs the pinned npm engine; this repo passes its own bin) are exposed so a consumer needs no local fork.
+  - The lane still ships its own `deploy` job, gated to main inside the lane (issue #44) - every caller inherits the guard.
+  - **The install is lock-aware and the engine run follows it.** `npm ci` runs when the caller carries a `package-lock.json`, else `npm install` (a library like `packstruct` carries no lock, and `setup-node`'s `cache: npm` errors on a lockless repo - the cache is now conditional on `hashFiles`). `Run freestruct` moved to AFTER the pinned-tool install: the lane installs the npm engine in that step, so a consumer that leaves `freestruct-cmd` at its default now has the binary when the run executes.
+  - **All ten family repos call this one lane** at the same pinned SHA: coreforge, crashtest, eyestruct, gistory, govstruct, monoforge, packstruct, poststruct, prestruct (plus this repo's own dogfood). coreforge's `docs-build.yml` fork and govstruct's copy are deleted; coreforge's template stamps the thin caller with a `__LANE_REPO__` token so the fixed `dhaupin/freestruct` ref is never rewritten to the adopter's author.
+
 - **The rename (govstruct PRD 16.5): `flowforge` -> `coreforge`.** Living references to the rig this repo carries now name `coreforge` (comments and docs); the rig itself is renamed, not forked, so nothing behavioral moves. Frozen receipts keep saying `flowforge` (citations like `flowforge#N`, `labs/`, and the rig extraction SHAs in `MANIFEST.md`), because that is what happened.
 
 ### Security

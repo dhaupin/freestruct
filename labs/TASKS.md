@@ -752,3 +752,16 @@ The member `flowforge` is renamed **coreforge** (govstruct PRD 16.5). The rig is
 - **Frozen receipts kept as written:** `flowforge#N` issue citations, the `dhaupin/flowforge @ <sha>` extraction receipts in `MANIFEST.md`, and `labs/` history. A citation is a receipt of what happened, not a live reference.
 - **Receipts:** `npm test` green; `npm run lint:docs` all gates clean; `npm run lint:pins` PASS (18 refs, all SHA-pinned).
 - **No version bump**; a reference sweep, not a released surface.
+
+---
+
+### 2026-11-04 - session: the docs-lane consolidation (this repo is now THE one lane)
+
+The family carried four docs topologies: this repo's `docs-lane.yml`, coreforge's forked `docs-build.yml`, govstruct's copy of that fork, and five inline hand-copies. The two reusable lanes had already drifted apart (ruby 3.2 vs 3.4, pagefind `latest` scrape vs npm pin, no `strict`, no crashtest gate) - the exact drift the lanes were built to cure, recreated one level up. Owner call: consolidate to ONE lane, this one.
+
+- **`.github/workflows/docs-lane.yml`** - rewritten as the superset. Absorbs every fork's receipts: `pagefind-version: latest` resolves through the hardened token-auth scrape + a semver guard (the fork's receipt) instead of a `latest` dist-tag; `crashtest-ref` is now opt-in (empty skips the dogfood leg, so a site with no `crashtest.config.js` can use the lane); `strict` and `freestruct-version` (exact, never a range) are exposed. The lane's tools ride ONE `npm install` - a second `--no-save` install PRUNES the first (measured this session), so crashtest + freestruct + pagefind must be requested together. The `deploy` job stays gated to main inside the lane (issue #44).
+- **`.github/workflows/docs.yml`** - now passes this repo's two dogfood inputs (`freestruct-cmd: node bin/freestruct.mjs`, `crashtest-ref: dc80a7c...`); it is the engine, checked out, not installed from npm. A consumer leaves both at their defaults.
+- **Consumers repointed (this session):** coreforge (fork deleted, template ships the thin caller), govstruct (fork + caller deleted, now calls this lane), crashtest, and the five inline copies (eyestruct, gistory, monoforge, packstruct, poststruct) plus prestruct - all ten repos now name this one lane at `4525537d`.
+- **Lane hardening (same session):** the install step is now LOCK-AWARE - `npm ci` when `package-lock.json` exists, else `npm install` (a library like packstruct carries no lock, and setup-node's `cache: npm` errors on a lockless repo, so the cache is conditional on `hashFiles`). `Run freestruct` MOVED to after the tool install: the lane installs the npm engine inside the tool step, so a consumer that leaves `freestruct-cmd` at its default had no binary when the run came first. `lint:pins`-style caller pins stay `# main` (the SHA is a commit, not a tag).
+- **Receipts:** YAML parses; `docs.yml` calls `./.github/workflows/docs-lane.yml` with the two dogfood inputs; the lane's input/output/job set verified; all ten repos' `docs*.yml` resolve `uses: dhaupin/freestruct/.github/workflows/docs-lane.yml@4525537d`.
+- **No version bump**; a workflow consolidation, not a released surface.

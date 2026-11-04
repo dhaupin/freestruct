@@ -1,16 +1,38 @@
 # engine-side canonical docs lane (issue #31): the runbook this repo's own
-# docs.yml used to inline, promoted to a reusable workflow_call so the other
-# rig copies (coreforge, gistory, eyestruct, crashtest, packstruct, prestruct)
+# docs.yml used to inline, promoted to a workflow_call so the other rig copies
 # can thin out to a caller instead of hand-porting 115 drifted lines.
 #
-# It is deliberately parameterized on the axes the hand-copies drifted on
-# (ruby, node, pagefind, freestruct source), with defaults that match THIS
-# repo's dogfood so freestruct itself calls it with no inputs.
+# This is THE one docs lane. The shell (coreforge) and the factory (monoforge)
+# no longer ship a fork of it: coreforge's docs-build.yml and govstruct's copy
+# were the same runbook under a second name, and the two had already drifted
+# (ruby 3.2 vs 3.4, pagefind `latest` scrape vs npm pin). Every repo that
+# builds docs now calls this file.
 #
-# The receipts the inline version kept are preserved: pagefind is cached in
-# BOTH scopes (node_modules/pagefind AND the scoped @pagefind/<platform>
-# companion - a cache hit that ships only one loses the binary), and every
-# install is pinned (no floating versions = no random deploys).
+# It is deliberately parameterized on the axes the hand-copies drifted on
+# (ruby, node, pagefind, freestruct source, strict), with defaults that match
+# THIS repo's dogfood so freestruct itself calls it with the engine checkout.
+#
+# The receipts the inline version kept are preserved:
+#   - pagefind is cached in BOTH scopes (node_modules/pagefind AND the scoped
+#     @pagefind/<platform> companion - a cache hit that ships only one loses
+#     the binary; the npx fallback died with 'Failed to install either of
+#     [pagefind_extended, pagefind]', measured in CI).
+#   - the hardened pagefind scrape for `latest`: unauthenticated api.github.com
+#     calls get rate-limited from shared runner IPs, an empty VERSION yields a
+#     malformed URL, and a downstream step then fails on the 404 HTML body - so
+#     an unparseable tag refuses loudly instead of proceeding.
+#   - every install is pinned (no floating versions = no random deploys).
+#
+# Caller contract: the calling workflow owns `permissions:`, `concurrency`,
+# the trigger, and (optionally) the deploy job. This workflow only BUILDS the
+# site and uploads the Pages artifact. It also ships its own `deploy` job,
+# gated to main INSIDE the lane (issue #44) so every caller inherits the guard
+# and cannot publish staging by accident; a caller that runs only `build`
+# simply ignores the deploy job.
+#
+# Boundary: freestruct discovers its config at `docs/freestruct.config.yml`
+# relative to the repo root (with a back-compat read of `ssr-config.yml`), so
+# the non-default `docs-path` moves the Jekyll build + upload only.
 name: Docs lane (reusable)
 
 on:
@@ -33,21 +55,33 @@ on:
         type: string
         default: '22'
       pagefind-version:
-        description: Pinned pagefind version (the indexer binary resolves at install)
+        description: Pinned pagefind version, or "latest" to resolve the newest release
         type: string
         default: '1.5.2'
-      crashtest-ref:
-        description: Pinned crashtest ref for the docs dogfood campaign
+      freestruct-version:
+        description: Pinned freestruct semver (an exact version, never a range - a range floats the engine)
         type: string
-        default: dc80a7c7a42e58a532b8ad624b79de2742d1ccbb
+        default: '1.2.0'
       freestruct-cmd:
-        description: How to run freestruct in the caller (this repo dogfoods its own bin; consumers pin the npm package)
+        description: How to run freestruct in the caller. Default installs the pinned npm engine; this repo passes its own bin
         type: string
-        default: node bin/freestruct.mjs
+        default: node node_modules/freestruct/bin/freestruct.mjs
       strict:
         description: Pass --strict (broken internal links fail the build)
         type: boolean
         default: true
+      crashtest-ref:
+        description: Pinned crashtest ref for the docs dogfood campaign. Empty skips the leg
+        type: string
+        default: ''
+      crashtest-cmd:
+        description: How to run crashtest (the dogfood campaign)
+        type: string
+        default: node node_modules/crashtest/bin/crashtest.js run
+    outputs:
+      pagefind-version:
+        description: The pagefind version that was installed
+        value: ${{ jobs.build.outputs.pagefind-version }}
 
 permissions:
   contents: read
@@ -57,6 +91,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      pagefind-version: ${{ steps.pagefind.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -78,14 +114,18 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: ${{ inputs.node-version }}
-          cache: npm
+          # Cache only when a lockfile exists: setup-node's npm cache errors on
+          # a lockless repo (a library like packstruct carries no lock).
+          cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
 
       - name: Install deps
-        run: npm ci --no-audit --no-fund
-
-      # --strict: broken links fail the build (the #4 graduation).
-      - name: Run freestruct
-        run: ${{ inputs.freestruct-cmd }} ${{ inputs.strict && '--strict' || '' }}
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci --no-audit --no-fund
+          else
+            echo "no package-lock.json here; npm install"
+            npm install --no-audit --no-fund
+          fi
 
       # Cached by the pinned gate sha - the github install costs ~7m cold
       # (measured), the campaign ~1s; a cache hit skips the minutes entirely.
@@ -95,20 +135,36 @@ jobs:
         with:
           path: node_modules/crashtest
           key: crashtest-${{ inputs.crashtest-ref }}
-      - name: Install crashtest (cache misses only)
-        if: ${{ steps.ct.outputs['cache-hit'] != 'true' }}
-        run: npm install --no-save --no-audit --no-fund github:dhaupin/crashtest#${{ inputs.crashtest-ref }}
-      - name: Crashtest the built docs
-        run: node node_modules/crashtest/bin/crashtest.js run
 
-      # Pinned + cached: the pagefind npm package resolves a platform
-      # BINARY at install and cost the runner 355s cold (measured); keyed on
-      # the version, a cache hit skips that entirely (same pattern as the
-      # crashtest installer cache).
+      # Resolve pagefind to a CONCRETE version so the cache key is stable and
+      # the install below stays one npm path for both pinned and `latest`.
+      - name: Resolve the pagefind version
+        id: pagefind
+        env:
+          PIN: ${{ inputs.pagefind-version }}
+        run: |
+          if [ "$PIN" = "latest" ]; then
+            VERSION=$(curl -sL \
+              -H "Authorization: Bearer ${{ github.token }}" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/Pagefind/pagefind/releases/latest" \
+              | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/')
+          else
+            VERSION="$PIN"
+          fi
+          case "$VERSION" in
+            [0-9]*.[0-9]*.[0-9]*) ;;
+            *) echo "::error::Could not resolve a pagefind version (got '$VERSION') - likely an API failure."; exit 1 ;;
+          esac
+          echo "pagefind version: v${VERSION}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      # Pinned + cached: the pagefind npm package resolves a platform BINARY
+      # at install and cost the runner 355s cold (measured); keyed on the
+      # version, a cache hit skips that entirely.
       # The runner's native binary lives in the SCOPED companion package
       # (@pagefind/<platform>) - cache BOTH, or a cache hit ships a runner
-      # that can't find its binary (measured in CI: the npx fallback died
-      # with 'Failed to install either of [pagefind_extended, pagefind]').
+      # that can't find its binary (measured in CI).
       - name: Restore pagefind (indexer cache)
         id: pf
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
@@ -116,10 +172,40 @@ jobs:
           path: |
             node_modules/pagefind
             node_modules/@pagefind
-          key: pagefind-${{ inputs.pagefind-version }}-v2
-      - name: Install Pagefind (cache misses only, pinned)
-        if: ${{ steps.pf.outputs['cache-hit'] != 'true' }}
-        run: npm install --no-save --no-audit --no-fund pagefind@${{ inputs.pagefind-version }}
+          key: pagefind-${{ steps.pagefind.outputs.version }}-v2
+
+      # The lane's tools ride ONE install: a second `npm install --no-save`
+      # PRUNES the first (measured), so crashtest, freestruct and pagefind must
+      # be requested together or the last install deletes the earlier ones.
+      # freestruct installs only when the caller runs it from node_modules
+      # (this repo dogfoods its own checkout); crashtest installs only when a
+      # ref is given (the dogfood leg is opt-in, so a site without a
+      # crashtest.config.js is not forced to carry one).
+      - name: Install the lane's pinned tools
+        env:
+          CRASHTEST_REF: ${{ inputs.crashtest-ref }}
+          FREESTRUCT_CMD: ${{ inputs.freestruct-cmd }}
+          FREESTRUCT_VERSION: ${{ inputs.freestruct-version }}
+          PAGEFIND_VERSION: ${{ steps.pagefind.outputs.version }}
+        run: |
+          pkgs=("pagefind@${PAGEFIND_VERSION}")
+          if [ -n "$CRASHTEST_REF" ]; then pkgs+=("github:dhaupin/crashtest#${CRASHTEST_REF}"); fi
+          case "$FREESTRUCT_CMD" in *node_modules*) pkgs+=("freestruct@${FREESTRUCT_VERSION}");; esac
+          echo "installing: ${pkgs[*]}"
+          npm install --no-save --no-audit --no-fund "${pkgs[@]}"
+
+      # --strict: broken links fail the build (the #4 graduation). Runs AFTER
+      # the tool install, so a consumer that installs freestruct from npm
+      # (the default `freestruct-cmd`) has the binary by now; this repo's own
+      # bin needs no install.
+      - name: Run freestruct
+        run: ${{ inputs.freestruct-cmd }} ${{ inputs.strict && '--strict' || '' }}
+
+      # The dogfood campaign: only when a ref is given.
+      - name: Crashtest the built docs
+        if: ${{ inputs.crashtest-ref != '' }}
+        run: ${{ inputs.crashtest-cmd }}
+
       - name: Index search
         run: node node_modules/pagefind/lib/runner/bin.cjs --site ${{ inputs.output-dir }}
 
@@ -131,13 +217,13 @@ jobs:
   deploy:
     needs: build
     # Production Pages deploys are gated to main INSIDE the reusable lane
-    # (issue #44), not in the caller: this is the load-bearing guard. Once
-    # a caller adds staging to its trigger list (as this repo's docs.yml
-    # now does), the trigger no longer keeps staging content out of
-    # production - the deploy job itself has to. Gating here means every
-    # caller inherits the guard and cannot publish staging by accident.
-    # On a staging push github.ref is refs/heads/staging (skips); on a
-    # pull_request it is refs/pull/N/merge (skips); only a main push deploys.
+    # (issue #44), not in the caller: this is the load-bearing guard. Once a
+    # caller adds staging to its trigger list, the trigger no longer keeps
+    # staging content out of production - the deploy job itself has to.
+    # Gating here means every caller inherits the guard and cannot publish
+    # staging by accident. On a staging push github.ref is refs/heads/staging
+    # (skips); on a pull_request it is refs/pull/N/merge (skips); only a main
+    # push deploys.
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
