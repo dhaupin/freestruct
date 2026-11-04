@@ -22,9 +22,9 @@ jobs:
   battery:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: "22"
           cache: npm
@@ -52,7 +52,7 @@ jobs:
       # CRASHTEST_SHA bumped => new cache key => fresh install.
       - name: Restore crashtest (pack selftest installer cache)
         id: ct
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: node_modules/crashtest
           key: crashtest-dc80a7c7a42e58a532b8ad624b79de2742d1ccbb
@@ -69,7 +69,7 @@ jobs:
       # entries module census, not just the manifest shape.
       - name: Restore packstruct (manifest linter cache)
         id: ps
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: node_modules/packstruct
           key: packstruct-f7f4fe2943e2827db4efe6cc448d489cff97feba

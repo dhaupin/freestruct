@@ -59,10 +59,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1
         with:
           ruby-version: ${{ inputs.ruby-version }}
 
@@ -75,7 +75,7 @@ jobs:
         run: cd ${{ inputs.docs-path }} && bundle exec jekyll build
 
       - name: Setup Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: ${{ inputs.node-version }}
           cache: npm
@@ -91,7 +91,7 @@ jobs:
       # (measured), the campaign ~1s; a cache hit skips the minutes entirely.
       - name: Restore crashtest (docs dogfood installer cache)
         id: ct
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: node_modules/crashtest
           key: crashtest-${{ inputs.crashtest-ref }}
@@ -111,7 +111,7 @@ jobs:
       # with 'Failed to install either of [pagefind_extended, pagefind]').
       - name: Restore pagefind (indexer cache)
         id: pf
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: |
             node_modules/pagefind
@@ -124,7 +124,7 @@ jobs:
         run: node node_modules/pagefind/lib/runner/bin.cjs --site ${{ inputs.output-dir }}
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v5
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
           path: ${{ inputs.output-dir }}
 
@@ -146,4 +146,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
