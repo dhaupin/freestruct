@@ -128,10 +128,10 @@ test('package.json is ESM, node >= 20, and ships the house structure (bin + engi
   assert.strictEqual(pkg.main, 'engine/inject.js', 'main points at the engine');
 });
 
-test('publish gate: check composes the battery + audit + claims + pack selftest, and prepublishOnly runs gate (issue #37)', () => {
+test('publish gate: check composes the battery + audit + pins + claims + pack selftest, and prepublishOnly runs gate (issue #37)', () => {
   const pkg = JSON.parse(read('.', 'package.json'));
-  assert.strictEqual(pkg.scripts.check, 'npm test && npm run lint:docs && npm run lint:claims && npm run packs:selftest',
-    'check composes the fast gates');
+  assert.strictEqual(pkg.scripts.check, 'npm test && npm run lint:docs && npm run lint:pins && npm run lint:claims && npm run packs:selftest',
+    'check composes the fast gates (pins, never floats: packstruct#69)');
   // gate adds sync:check, which the local publish path would otherwise skip.
   assert.strictEqual(pkg.scripts.gate, 'npm run sync:check && npm run check',
     'gate runs sync:check before check');
