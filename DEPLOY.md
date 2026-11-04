@@ -42,7 +42,7 @@ The fast-forward is mechanical, not a mistake - skipping it is how `staging` fal
 
 The docs build is the dogfood proof: the Pages site at https://freestruct.creadev.org is produced by the same pipeline a consumer would run, gated at every step.
 
-The runbook lives in `.github/workflows/docs-lane.yml` as a reusable `on: workflow_call` lane (issue #31); `docs.yml` is now a thin caller that uses it with no inputs (this repo dogfoods its own lane). That is the point of the promotion: the other rig projects (flowforge, gistory, eyestruct, crashtest, packstruct, prestruct) call the same lane and thin their drifted hand-copies to a caller file, instead of hand-porting ~115 lines each.
+The runbook lives in `.github/workflows/docs-lane.yml` as a reusable `on: workflow_call` lane (issue #31); `docs.yml` is now a thin caller that uses it with no inputs (this repo dogfoods its own lane). That is the point of the promotion: the other rig projects (coreforge, gistory, eyestruct, crashtest, packstruct, prestruct) call the same lane and thin their drifted hand-copies to a caller file, instead of hand-porting ~115 lines each.
 
 ```text
 Checkout -> Ruby setup -> bundle install -> jekyll build (inline cd: docs/)

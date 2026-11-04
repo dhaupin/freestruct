@@ -4,6 +4,10 @@ All notable changes to freestruct will be documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- **The rename (govstruct PRD 16.5): `flowforge` -> `coreforge`.** Living references to the rig this repo carries now name `coreforge` (comments and docs); the rig itself is renamed, not forked, so nothing behavioral moves. Frozen receipts keep saying `flowforge` (citations like `flowforge#N`, `labs/`, and the rig extraction SHAs in `MANIFEST.md`), because that is what happened.
+
 ### Security
 
 - **Pins, never floats (packstruct#69).** Every GitHub Action `uses:` in `.github/workflows/` names a 40-hex commit SHA (tag kept in the trailing comment), never a floating `@v4`/`@v1`. A new guard, `scripts/check-action-pins.cjs`, refuses any floating ref, a branch, or a `docker://` image; it runs as `npm run lint:pins` inside `npm run check` (composed into the `gate` loop) and CI, and its own battery (`test/check-action-pins.test.js`) proves it bites both ways.

@@ -742,3 +742,13 @@ The owner asked for another walk for bugs/gaps/edges/vulns (after the queue clos
 - `scripts/check-action-pins.cjs` (the "pins, never floats" guard) was a packstruct-only artifact (it landed on packstruct's `fix/sha-pin-actions`). It is now copied byte-identical into every sibling: `crashtest`, `eyestruct`, `freestruct`, `gistory`, `govstruct`, `monoforge`, `poststruct`, `prestruct` (packstruct already had it).
 - Wired as `npm run lint:pins` inside each repo's publish gate (`check` / `gate` / `prepublishOnly`) and CI, and the guard's own battery (`check-action-pins.test.*`) rides `npm test`.
 - Each repo's workflows were already SHA-pinned, so the guard is now mechanical here too. Receipt: `ACTION PINS: PASS (18 ref(s), all SHA-pinned)`, pin battery 8/8, full battery green.
+
+
+## 2026-11-03 - living refs follow the rename (flowforge -> coreforge)
+
+The member `flowforge` is renamed **coreforge** (govstruct PRD 16.5). The rig is renamed, not forked, so this repo's living references follow.
+
+- **Living references updated:** comments and docs that name the rig now say `coreforge` (the shell-edition gate headers, the Jekyll layout/config headers, `Home.jsx` shell-convention notes, and the `--root` gate-convention comments).
+- **Frozen receipts kept as written:** `flowforge#N` issue citations, the `dhaupin/flowforge @ <sha>` extraction receipts in `MANIFEST.md`, and `labs/` history. A citation is a receipt of what happened, not a live reference.
+- **Receipts:** `npm test` green; `npm run lint:docs` all gates clean; `npm run lint:pins` PASS (18 refs, all SHA-pinned).
+- **No version bump**; a reference sweep, not a released surface.

@@ -1,6 +1,6 @@
 # engine-side canonical docs lane (issue #31): the runbook this repo's own
 # docs.yml used to inline, promoted to a reusable workflow_call so the other
-# rig copies (flowforge, gistory, eyestruct, crashtest, packstruct, prestruct)
+# rig copies (coreforge, gistory, eyestruct, crashtest, packstruct, prestruct)
 # can thin out to a caller instead of hand-porting 115 drifted lines.
 #
 # It is deliberately parameterized on the axes the hand-copies drifted on
