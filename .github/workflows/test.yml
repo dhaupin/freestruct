@@ -35,6 +35,12 @@ jobs:
       - name: Battery
         run: npm test
 
+      # The family prestruct floor (^1.2.0) made mechanical. Rides `npm test`
+      # too (the guard's battery is in the test list), but CI runs the leg
+      # explicitly so a broken guard is named, not buried in the battery.
+      - name: Prestruct pin guard (family floor)
+        run: node scripts/check-prestruct-pins.cjs
+
       - name: Docs audit (frontmatter/links/nav/style/truthfulness)
         run: node scripts/run-docs-audit.cjs
 
