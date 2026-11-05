@@ -3345,6 +3345,45 @@ test('audit --external refuses private/loopback/metadata hosts before any socket
   } finally { rmDir(dir); }
 });
 
+test('headCheck refuses a PUBLIC url that redirects to a private host (redirect SSRF guard)', async () => {
+  const { headCheck } = await import('../engine/audit.js');
+  // A real loopback server that answers with a 302 to the metadata IP.
+  // `redirect: 'follow'` would chase it to 169.254.169.254 before the guard
+  // saw the target; headCheck follows by hand and re-checks every hop, so the
+  // private target is never fetched and the refusal names it.
+  const http = await import('node:http');
+  const server = http.createServer((req, res) => {
+    res.writeHead(302, { location: 'http://169.254.169.254/latest/meta-data/' });
+    res.end();
+  });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  const port = server.address().port;
+  try {
+    const problem = await headCheck(`http://127.0.0.1:${port}/go`);
+    assert.ok(/private host/.test(problem), `a redirect to a private host must refuse by name, got ${problem}`);
+  } finally { server.close(); }
+});
+
+test('headCheck resolves a relative redirect Location against the current hop', async () => {
+  const { headCheck } = await import('../engine/audit.js');
+  const http = await import('node:http');
+  const server = http.createServer((req, res) => {
+    if (req.url === '/go') { res.writeHead(302, { location: '/final' }); res.end(); return; }
+    res.writeHead(200); res.end('ok');
+  });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  const port = server.address().port;
+  try {
+    // headCheck guards the HOP target. A relative Location resolves against
+    // the current hop's url - here the loopback server - so the resolved hop
+    // host is private and must be refused by name. That the refusal names the
+    // resolved host (not a malformed-URL error, not "too many redirects")
+    // proves the relative Location was resolved, not dropped.
+    const problem = await headCheck(`http://127.0.0.1:${port}/go`);
+    assert.ok(/redirect to private host 127\.0\.0\.1/.test(problem), `a relative redirect must resolve against the hop and be guarded, got ${problem}`);
+  } finally { server.close(); }
+});
+
 test('absolute hrefs resolve at the output ROOT from nested pages; script/data shapes stay out', () => {
   const dir = scenario('main', {
     'docs/_site/guides/deep.html':

@@ -433,15 +433,36 @@ function collectExternalLinks({ outputDir, pages }) {
 }
 
 /** HEAD with a GET retry (some CDNs refuse HEAD); returns the problem string or null. */
-async function headCheck(url) {
+// Redirects are followed MANUALLY, one hop at a time, and every hop's host is
+// re-checked against the private-host policy. `redirect: 'follow'` would let a
+// public URL answer 302 Location: http://169.254.169.254/ and the runtime would
+// open the socket to the metadata IP before the guard ever saw the target - the
+// guard checks the URL it was handed, not where the server points it. Following
+// by hand keeps the guard on EVERY hop.
+const MAX_REDIRECTS = 5;
+
+export async function headCheck(url) {
   const tryOnce = async (method) => {
-    const res = await fetch(url, {
-      method,
-      redirect: 'follow',
-      signal: AbortSignal.timeout(8000),
-      headers: { 'user-agent': 'freestruct-audit (+https://github.com/dhaupin/freestruct)' },
-    });
-    return res.status >= 400 ? 'HTTP ' + res.status + (res.statusText ? ' ' + res.statusText : '') : null;
+    let current = url;
+    for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+      const res = await fetch(current, {
+        method,
+        redirect: 'manual',
+        signal: AbortSignal.timeout(8000),
+        headers: { 'user-agent': 'freestruct-audit (+https://github.com/dhaupin/freestruct)' },
+      });
+      if (res.status >= 300 && res.status < 400) {
+        const loc = res.headers.get('location');
+        if (loc) {
+          const next = new URL(loc, current);
+          if (isPrivateHostLiteral(next.hostname)) return 'redirect to private host ' + next.hostname + ' (' + PRIVATE_HOST_REASON + ')';
+          current = next.href;
+          continue;
+        }
+      }
+      return res.status >= 400 ? 'HTTP ' + res.status + (res.statusText ? ' ' + res.statusText : '') : null;
+    }
+    return 'too many redirects (>' + MAX_REDIRECTS + ')';
   };
   try {
     return await tryOnce('HEAD');
