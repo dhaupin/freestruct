@@ -3315,6 +3315,36 @@ test('audit --external: the json digest parses with the warns merged; unknown au
   } finally { rmDir(dir); }
 });
 
+test('audit --external refuses private/loopback/metadata hosts before any socket (SSRF guard)', async () => {
+  const { auditExternalLinks } = await import('../engine/audit.js');
+  const { isPrivateHostLiteral } = await import('../engine/hostpolicy.js');
+  // The classifier: metadata IP, loopback, RFC1918, IPv6 unique-local, the
+  // shorthand spellings a four-octet check misses, and the v6 embedded-IPv4
+  // forms the URL parser rewrites to hex before the guard sees them.
+  for (const h of ['127.0.0.1', '10.0.0.5', '169.254.169.254', '192.168.1.1', '172.16.0.1', '100.64.0.1',
+    '2130706433', '0177.0.0.1', '0x7f.0.0.1', '127.1', '::1', '::ffff:127.0.0.1', 'fc00::1', 'fe80::1',
+    'localhost', 'foo.local', 'metadata.google.internal', 'localhost.', 'metadata.google.internal.']) {
+    assert.strictEqual(isPrivateHostLiteral(h), true, `host policy must refuse ${h}`);
+  }
+  for (const h of ['example.com', '8.8.8.8', '172.32.0.1', '100.128.0.1', '2606:4700:4700::1111', 'example.com.']) {
+    assert.strictEqual(isPrivateHostLiteral(h), false, `host policy must NOT refuse the public host ${h}`);
+  }
+  // End-to-end: a baked tree naming private hosts blocks them all without a
+  // socket, and reports each as a WARN by name (never a silent skip).
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fs-ext-'));
+  try {
+    fs.writeFileSync(path.join(dir, 'index.html'),
+      '<a href="http://169.254.169.254/latest/meta-data/">m</a>'
+      + '<a href="http://[::ffff:127.0.0.1]:8080/">l</a>'
+      + '<a href="http://localhost./x">n</a>');
+    const res = await auditExternalLinks({ outputDir: dir, json: true });
+    assert.strictEqual(res.blocked, 3, 'every private host is refused');
+    assert.strictEqual(res.checked, 0, 'a refused URL is never probed');
+    assert.strictEqual(res.warns.length, 3, 'each refusal is a WARN finding');
+    assert.ok(res.warns.every((w) => /SSRF guard/.test(w.msg)), 'the refusal names the SSRF guard');
+  } finally { rmDir(dir); }
+});
+
 test('absolute hrefs resolve at the output ROOT from nested pages; script/data shapes stay out', () => {
   const dir = scenario('main', {
     'docs/_site/guides/deep.html':

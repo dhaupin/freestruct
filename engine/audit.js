@@ -25,6 +25,7 @@
 import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
 import path from 'path';
 import { decodeEntities } from './scan.js';
+import { isPrivateHostLiteral, PRIVATE_HOST_REASON } from './hostpolicy.js';
 
 // FAIL class = the tags core to the engine's own contract. The REST of the
 // injected set (og:url/type/site_name/locale, twitter:description) rides as
@@ -460,14 +461,35 @@ async function headCheck(url) {
  * (report-grade by design: bots get 403/429 legitimately). NEVER exits.
  */
 export async function auditExternalLinks({ outputDir, json = false }) {
-  const empty = { warns: [], checked: 0 };
+  const empty = { warns: [], checked: 0, blocked: 0 };
   if (!existsSync(outputDir)) return empty;
   const pages = walkHtml(outputDir);
   const byUrl = collectExternalLinks({ outputDir, pages });
   if (byUrl.size === 0) return empty;
   const capped = [...byUrl.keys()].slice(0, EXTERNAL_LIMIT);
-  const results = await Promise.all(capped.map(async (url) => [url, await headCheck(url)]));
+
+  // The SSRF guard runs BEFORE any socket: a host that names a private
+  // address is refused here (network-free, deterministic) and never handed to
+  // a probe. A refused URL is a WARN finding, not a silent skip - the same
+  // honesty the rest of the lane carries.
+  const blocked = new Set();
+  for (const url of capped) {
+    let host = null;
+    try { host = new URL(url).hostname; } catch { /* an unparsable absolute URL still probes and fails honestly */ }
+    if (host && isPrivateHostLiteral(host)) blocked.add(url);
+  }
+
+  const allowed = capped.filter((u) => !blocked.has(u));
+  const results = await Promise.all(allowed.map(async (url) => [url, await headCheck(url)]));
   const warns = [];
+  for (const url of capped) {
+    if (!blocked.has(url)) continue;
+    const referencing = byUrl.get(url);
+    const label = referencing.length > 1
+      ? referencing[0] + ' (+' + (referencing.length - 1) + ' more page(s))'
+      : referencing[0];
+    warns.push({ page: label, msg: 'external link ' + url + ': refused: ' + PRIVATE_HOST_REASON });
+  }
   for (const [url, problem] of results) {
     if (!problem) continue;
     const referencing = byUrl.get(url);
@@ -480,8 +502,8 @@ export async function auditExternalLinks({ outputDir, json = false }) {
     warns.push({ page: 'external', msg: 'checked only the first ' + EXTERNAL_LIMIT + ' unique external urls of ' + byUrl.size });
   }
   if (!json && warns.length > 0) {
-    console.log('[freestruct] external link check: ' + capped.length + ' unique url(s) probed');
+    console.log('[freestruct] external link check: ' + allowed.length + ' unique url(s) probed' + (blocked.size ? ', ' + blocked.size + ' refused (SSRF guard)' : ''));
     for (const w of warns) console.log('  WARN ' + w.page + ': ' + w.msg);
   }
-  return { warns, checked: capped.length };
+  return { warns, checked: allowed.length, blocked: blocked.size };
 }
