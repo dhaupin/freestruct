@@ -204,7 +204,7 @@ npx freestruct audit
 <div class="lp-kicker">For agents too</div>
 ## Agent-hardened and CI-proven
 
-<p class="lp-sub">The boring trust facts are pinned by a 189-test battery and run on every push.</p>
+<p class="lp-sub">The boring trust facts are pinned by a 192-test battery and run on every push.</p>
 
 <div class="lp-grid">
 <div class="lp-card" markdown="1">
