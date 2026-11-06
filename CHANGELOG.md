@@ -4,11 +4,6 @@ All notable changes to freestruct will be documented here.
 
 ## [Unreleased]
 
-### Fixed
-
-- **The release ladder's `verify` job no longer races `release`.** `verify` now declares `needs: [publish, release]`, so it waits for the GH release object and its attached tarball before judging them. A bare `needs: publish` ran `verify` CONCURRENTLY with `release`: on a fresh cut the registry read replicas had not settled and the asset was not yet attached, so a publish that in fact succeeded failed red and needed a manual re-run (the packstruct 1.1.0 first cut). `verify` still stands alone in verify-only mode (`publish` and `release` both skipped). The propagation poll budgets also widened: the release-attach poll 120s -> 300s, and the registry poll in `scripts/verify-release.cjs` 120s -> 360s. `test/run.js` pins the dependency so a regression fails by name.
-
-
 ## [1.3.0] - 2026-11-06
 
 The security round since v1.2.0. The opt-in external audit lane - the pass that fetches the URLs a baked tree names - learned to refuse a private host before any socket and to re-check the host on every redirect hop, closing the SSRF primitive in the one lane that dials. The family's docs lane folded into this repo as THE one reusable lane, and a prestruct-pin guard joined the battery. Every fix is battery-pinned; the battery grew 173 -> 192.
@@ -50,6 +45,10 @@ The security round since v1.2.0. The opt-in external audit lane - the pass that 
 - The `verify` job re-runs the trust ladder against what is already served and released: registry latest == the packaged version, the served tarball's sha512 == the registry integrity, provenance present, the full pack ladder on the served tarball, and the release object's asset hashing to the registry bytes. One disconnect reads red after a green publish, which is the point.
 - `scripts/verify-release.cjs` and `scripts/release-notes.cjs` arrive as the family's generic-core copies (the script reads name/version/bin from the caller's `package.json`, so it drops in with zero edits).
 - Every action ref in `publish.yml` is pinned to a commit SHA (pins, never floats).
+
+### Fixed
+
+- **The release ladder's `verify` job no longer races `release`.** `verify` now declares `needs: [publish, release]`, so it waits for the GH release object and its attached tarball before judging them. A bare `needs: publish` ran `verify` CONCURRENTLY with `release`: on a fresh cut the registry read replicas had not settled and the asset was not yet attached, so a publish that in fact succeeded failed red and needed a manual re-run (the packstruct 1.1.0 first cut). `verify` still stands alone in verify-only mode (`publish` and `release` both skipped). The propagation poll budgets also widened: the release-attach poll 120s -> 300s, and the registry poll in `scripts/verify-release.cjs` 120s -> 360s. `test/run.js` pins the dependency so a regression fails by name.
 
 ## [1.2.0] - 2026-10-28
 

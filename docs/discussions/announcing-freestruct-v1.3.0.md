@@ -24,6 +24,8 @@ npm i -D freestruct
 
 **A prestruct-pin floor guard, and pins never float.** A new guard refuses any `prestruct` declaration below the family floor (`^1.2.0`, the release that closes the hooks seam), and every GitHub Action `uses:` in the workflows names a 40-hex commit SHA (tag kept in the trailing comment), never a floating `@v4`/`@v1`.
 
+**The release ladder's `verify` job waits for `release`.** `verify` declares `needs: [publish, release]` (was a bare `needs: publish`), closing a race where it ran CONCURRENTLY with the release mint: on a fresh cut the registry read replicas had not settled and the tarball was not yet attached, so a publish that in fact succeeded failed red and needed a manual re-run (first seen on the packstruct 1.1.0 cut). The release-attach poll widened 120s -> 300s and the registry poll 120s -> 360s, and the release-lane receipt (`test/run.js`) pins the dependency so a regression fails by name.
+
 ## Quality layer
 
 The fixture battery grew 173 -> 192, one red-checked pin per fix. The SSRF legs are hermetic (a classifier table plus a no-socket refusal; the redirect leg drives a real loopback redirect server), so the guard is proven without ever dialing a private address. Every fix was reproduced first, then corrected, then re-pinned. CI runs the full gate set on every push and pull request - the battery, the docs audit, template sync lockstep, the tarball e2e, the crashtest pack selftest, and a live docs deploy that dogfoods freestruct against its own freshly built site.
