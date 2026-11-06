@@ -35,4 +35,4 @@ jobs:
     uses: ./.github/workflows/docs-lane.yml
     with:
       freestruct-cmd: node bin/freestruct.mjs
-      crashtest-ref: dc80a7c7a42e58a532b8ad624b79de2742d1ccbb
+      crashtest-ref: 873828743d7cc715893619e6295cb0a81251a439

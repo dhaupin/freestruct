@@ -35,7 +35,7 @@ jobs:
       - name: Battery
         run: npm test
 
-      # The family prestruct floor (^1.2.0) made mechanical. Rides `npm test`
+      # The family prestruct floor (^1.3.0) made mechanical. Rides `npm test`
       # too (the guard's battery is in the test list), but CI runs the leg
       # explicitly so a broken guard is named, not buried in the battery.
       - name: Prestruct pin guard (family floor)
@@ -61,10 +61,10 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: node_modules/crashtest
-          key: crashtest-dc80a7c7a42e58a532b8ad624b79de2742d1ccbb
+          key: crashtest-873828743d7cc715893619e6295cb0a81251a439
       - name: Install crashtest (cache misses only)
         if: ${{ steps.ct.outputs['cache-hit'] != 'true' }}
-        run: npm install --no-save --no-audit --no-fund github:dhaupin/crashtest#dc80a7c7a42e58a532b8ad624b79de2742d1ccbb
+        run: npm install --no-save --no-audit --no-fund github:dhaupin/crashtest#873828743d7cc715893619e6295cb0a81251a439
       - name: Crashtest pack selftest (hardened holds / regressed trips)
         run: CRASHTEST_BIN=node_modules/crashtest/bin/crashtest.js node scripts/packs-selftest.cjs
 
@@ -78,10 +78,10 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: node_modules/packstruct
-          key: packstruct-f7f4fe2943e2827db4efe6cc448d489cff97feba
+          key: packstruct-5e473120ed73c5a38b88644cc101be492d5dc2a2
       - name: Install packstruct (cache misses only)
         if: ${{ steps.ps.outputs['cache-hit'] != 'true' }}
-        run: npm install --no-save --no-audit --no-fund github:dhaupin/packstruct#f7f4fe2943e2827db4efe6cc448d489cff97feba
+        run: npm install --no-save --no-audit --no-fund github:dhaupin/packstruct#5e473120ed73c5a38b88644cc101be492d5dc2a2
       - name: Packstruct lint (manifest contract + deep module census)
         run: |
           node node_modules/packstruct/bin/cli.mjs lint packs
