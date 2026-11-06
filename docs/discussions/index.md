@@ -25,6 +25,7 @@ Prose on these pages flows - paragraphs keep their natural length, and nothing i
 
 | post | version | live |
 | --- | --- | --- |
+| [Announcing freestruct v1.3.0](/discussions/announcing-freestruct-v1.3.0/) | 1.3.0 | staged for the v1.3.0 tag |
 | [Announcing freestruct v1.2.0](/discussions/announcing-freestruct-v1.2.0/) | 1.2.0 | 2026-11-01 on npm |
 | [Announcing freestruct v1.1.0](/discussions/announcing-freestruct-v1.1.0/) | 1.1.0 | 2026-10-25 on npm |
 | [Announcing freestruct v1.0.0](/discussions/announcing-freestruct-v1.0.0/) | 1.0.0 | 2026-10-22 on npm |

@@ -215,8 +215,17 @@ Two shipped surfaces beyond the engine:
 
 - Versions live in one place: `package.json`, pinned in CI against the README/CHANGELOG truth. Single source, no drift.
 - `CHANGELOG.md` is the changelog; releases are tagged (`v*`) and CHANGELOG-truthful or they don't ship.
-- Current release: **1.2.0** (everything since the v1.1.0 tag: the family sweep, the docs/tooling wave, the post-queue engine sweep, and the issue #41 version-truth census leg; see `labs/TASKS.md` for the version policy).
+- Current release: **1.3.0** (everything since the v1.2.0 tag: the external-audit SSRF guard - the initial host and every redirect hop - the docs-lane consolidation, and the family prestruct-pin guard; see `labs/TASKS.md` for the version policy).
 - Deployment truth lives in [DEPLOY.md](DEPLOY.md): the GitHub Pages pipeline (this repo's own docs site deploys through it) and the npm release runbook.
+
+## v1.3.0
+
+The security round since v1.2.0 - the opt-in external audit lane learned to refuse a private host before any socket and to re-check the host on every redirect hop, so the one lane that dials is no longer an SSRF primitive (battery 173 -> 192):
+
+- External-audit SSRF guard - `--external` classifies each URL's host literal (every v4 shorthand, the IPv6 embedded-IPv4 carriers, the trailing dot, `localhost`/`*.local`) and refuses a private/loopback/link-local target before any probe, reported as a WARN `blocked` finding, never a silent skip
+- Redirect SSRF guard - the probe follows redirects manually and re-runs the host check on EVERY hop, so a public URL answering `302 Location: http://169.254.169.254/` is refused before the socket opens; `MAX_REDIRECTS` bounds the chain
+- Docs lane - this repo is now THE one reusable docs lane the whole family calls (the forks are gone; the lane absorbs the superset of every fork's receipts), plus a prestruct-pin floor guard on the battery
+- Pins, never floats - every GitHub Action ref is a commit SHA, guarded by `scripts/check-action-pins.cjs`
 
 ## v1.2.0
 

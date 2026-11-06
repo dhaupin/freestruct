@@ -207,7 +207,7 @@ State of this list as of Pass 20 (truth-up over the stale entries below it in th
 - No repo-side gate remains open on the freestruct side: battery (49 pins), docs audit (7 gates), template sync, tarball e2e, crashtest pack selftest
   + docs dogfood and the version-truth pin are all CI-green on main.
 
-**Reminder (current truth):** the pin wall enforces 1.2.0 everywhere - the post-queue engine sweep, owner bump applied 2026-10-28 (the 1.1.0 post-stable surface landed 2026-10-25, the 1.0.0 first-stable 2026-10-22). The manual npm bootstrap is done; the tag is the only remaining owner gate.
+**Reminder (current truth):** the pin wall enforces 1.3.0 everywhere - the external-audit SSRF guard, owner bump applied 2026-11-06 (the 1.2.0 post-queue engine sweep landed 2026-10-28, the 1.1.0 post-stable surface 2026-10-25, the 1.0.0 first-stable 2026-10-22). The manual npm bootstrap is done; the tag is the only remaining owner gate.
 
 ### Pass 22 - the issue sweep, all eight open items (done, on 1.0.0)
 
