@@ -4479,7 +4479,15 @@ test('release lane: publish.yml is the single 3-job ladder (publish -> release -
   assert.deepStrictEqual(Object.keys(wf.jobs).sort(), ['publish', 'release', 'verify'],
     'publish.yml carries exactly the family 3-job ladder');
   assert.ok(wf.jobs.release.needs === 'publish', 'release runs after publish');
-  assert.ok(wf.jobs.verify.needs === 'publish', 'verify hangs off publish (runs in verify-only mode too)');
+  // verify judges what the registry and GitHub actually serve, so it must wait
+  // for release to cut the object and attach the tarball - a bare
+  // `needs: publish` let verify race release and red-flag a cut that landed
+  // (the packstruct 1.1.0 first run). The `if` still lets it stand alone in
+  // verify-only mode (publish and release both skipped).
+  assert.deepStrictEqual(wf.jobs.verify.needs, ['publish', 'release'],
+    'verify waits for release (it judges the release object and its asset)');
+  assert.includes(read('.', PUBLISH_WF), "inputs.mode == 'verify-only'",
+    'verify still stands alone in verify-only mode');
 });
 
 test('release lane: the publish job refuses 0.x, gates tag==version, and runs the composed gate', () => {
