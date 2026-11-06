@@ -4,6 +4,10 @@ All notable changes to freestruct will be documented here.
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-06
+
+The security round since v1.2.0. The opt-in external audit lane - the pass that fetches the URLs a baked tree names - learned to refuse a private host before any socket and to re-check the host on every redirect hop, closing the SSRF primitive in the one lane that dials. The family's docs lane folded into this repo as THE one reusable lane, and a prestruct-pin guard joined the battery. Every fix is battery-pinned; the battery grew 173 -> 192.
+
 ### Changed
 
 - **The docs lane is now THE one docs lane (the family consolidation).** Every repo that builds docs calls this file; the forks are gone. `coreforge`'s `docs-build.yml` and `govstruct`'s copy were the same runbook under a second name, and the two had already drifted (ruby 3.2 vs 3.4, pagefind `latest` scrape vs npm pin). The lane absorbed the superset of every fork's receipts:

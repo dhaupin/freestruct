@@ -164,7 +164,7 @@ test('packs:selftest degrades gracefully without a crashtest checkout (named ski
 
 // ---------- version truth (issue #7) ----------
 
-test('README, package.json and CHANGELOG agree on one version (1.2.0 owner pin)', () => {
+test('README, package.json and CHANGELOG agree on one version (1.3.0 owner pin)', () => {
   const pkg = JSON.parse(read('.', 'package.json'));
   const readme = read('.', 'README.md');
   const changelog = read('.', 'CHANGELOG.md');
@@ -178,7 +178,7 @@ test('README, package.json and CHANGELOG agree on one version (1.2.0 owner pin)'
   // 1.1.0 on 2026-10-25 with the first post-stable surface, and to 1.2.0 on
   // 2026-10-28 with the post-queue engine sweep. The manual npm bootstrap is
   // done; only the tag remains owner-gated (see labs/TASKS.md VERSION POLICY).
-  assert.strictEqual(pkg.version, '1.2.0', 'version pinned at 1.2.0 by owner call - see the VERSION POLICY in labs/TASKS.md first');
+  assert.strictEqual(pkg.version, '1.3.0', 'version pinned at 1.3.0 by owner call - see the VERSION POLICY in labs/TASKS.md first');
 });
 
 // ---------- version-truth census (issue #41) ----------
@@ -4536,13 +4536,13 @@ test('verify-release helper: the pack ladder passes on THIS tree and refuses a s
   try {
     const packed = spawnSync('npm', ['pack', '--pack-destination', dest], { cwd: ROOT, encoding: 'utf8', timeout: 120000 });
     assert.strictEqual(packed.status, 0, `npm pack failed: ${packed.stderr}`);
-    const tgz = path.join(dest, 'freestruct-1.2.0.tgz');
+    const tgz = path.join(dest, 'freestruct-1.3.0.tgz');
     assert.ok(fs.existsSync(tgz), `npm pack produced nothing at ${tgz}`);
     const rv = spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'verify-release.cjs'), '--pack', tgz], { cwd: ROOT, encoding: 'utf8', timeout: 300000 });
     const out = rv.stdout + rv.stderr;
     assert.strictEqual(rv.status, 0, `the pack ladder failed on this tree (${rv.status}):\n${out}`);
-    assert.includes(out, 'PASS identity: freestruct@1.2.0', 'the tarball identity is judged');
-    assert.includes(out, 'PASS installed bin freestruct --version -> 1.2.0', 'the installed bin answers --version');
+    assert.includes(out, 'PASS identity: freestruct@1.3.0', 'the tarball identity is judged');
+    assert.includes(out, 'PASS installed bin freestruct --version -> 1.3.0', 'the installed bin answers --version');
     assert.ok(!/SKIP consumer install[\s\S]*VERIFIED/.test(out) || out.includes('SKIP consumer install'),
       'a network skip is named, never silent');
   } finally { rmDir(dest); }
@@ -4553,7 +4553,7 @@ test('verify-release helper: the pack ladder passes on THIS tree and refuses a s
   const bad = fs.mkdtempSync(path.join(os.tmpdir(), 'freestruct-badpack-'));
   try {
     fs.mkdirSync(path.join(bad, 'package', 'labs'), { recursive: true });
-    fs.writeFileSync(path.join(bad, 'package', 'package.json'), JSON.stringify({ name: 'freestruct', version: '1.2.0' }));
+    fs.writeFileSync(path.join(bad, 'package', 'package.json'), JSON.stringify({ name: 'freestruct', version: '1.3.0' }));
     fs.writeFileSync(path.join(bad, 'package', 'labs', 'secret.md'), 'should never ship');
     const badTgz = path.join(bad, 'bad.tgz');
     const tar = spawnSync('tar', ['-czf', badTgz, '-C', bad, 'package'], { encoding: 'utf8' });
@@ -4575,7 +4575,7 @@ test('verify-release helper: the pack ladder survives a phone npm whose --dry-ru
   try {
     const packed = spawnSync('npm', ['pack', '--pack-destination', work], { cwd: ROOT, encoding: 'utf8', timeout: 120000 });
     assert.strictEqual(packed.status, 0, `npm pack failed: ${packed.stderr}`);
-    const tgz = path.join(work, 'freestruct-1.2.0.tgz');
+    const tgz = path.join(work, 'freestruct-1.3.0.tgz');
     const bin = path.join(work, 'bin');
     fs.mkdirSync(bin);
     const realNpm = spawnSync('which', ['npm'], { encoding: 'utf8' }).stdout.trim();
