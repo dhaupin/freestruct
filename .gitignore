@@ -9,6 +9,9 @@ docs/_site/
 docs/.bundle/
 docs/vendor/
 docs/.jekyll-cache/
+docs/.jekyll-metadata
+docs/pagefind/
+docs/pagefind*
 
 # --- toolchain caches that must never enter git ---
 .npm/
