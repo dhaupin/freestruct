@@ -23,6 +23,11 @@ jsonLd:
     url: https://github.com/your-github-handle
     jobTitle: My Docs maintainer
 
+# Auto BreadcrumbList per page (a trail from the URL tree: site root -> path
+# segments -> the page title; the home page ships none). On by default here so
+# a new site is discoverable from birth.
+breadcrumb: true
+
 # The rest is optional; see the README Configuration table for the list.
 # basePath: /project-docs      # when the output tree is served under a prefix
 # searchIndex: true            # opt-in: generate search.json

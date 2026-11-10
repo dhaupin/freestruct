@@ -771,3 +771,9 @@ The family carried four docs topologies: this repo's `docs-lane.yml`, coreforge'
 
 
 - **The .gitignore docs block carries the in-tree Jekyll + pagefind products (2026-11-10 sweep, coreforge#48).** Propagated from the coreforge adopter sweep (dhaupin/coreforge#52): a local `npm run docs` / `bundle exec jekyll build` + pagefind run drops its products beside the source, and the belt-and-suspenders block named only some of them. It now carries `docs/.jekyll-cache/`, `docs/.jekyll-metadata`, `docs/pagefind/`, and `docs/pagefind*`, so a local build leaves no untracked noise. No version bump.
+
+---
+
+### 2026-11-03 - session: breadcrumbs in the init kit
+
+The family breadcrumb sweep (prestruct engine `breadcrumb: true` + the struct-repo configs) surfaced that freestruct's init kit scaffolded sites without the trail, even though the engine has carried auto `BreadcrumbList` since 1.1.0. Added `breadcrumb: true` to `init/docs/freestruct.config.yml` (with a short comment); it is a known key, so the starter stays schema-clean. Receipts: `node test/run.js` 192/192. No version bump.

@@ -4,6 +4,13 @@ All notable changes to freestruct will be documented here.
 
 ## [Unreleased]
 
+### 2026-11-03 - breadcrumbs in the init kit
+
+Google Search Console showed the family's properties under a breadcrumbs enhancement with 0 results. freestruct has carried auto `BreadcrumbList` since 1.1.0, but the init kit did not turn it on, so a freshly scaffolded site shipped without the trail. `init/docs/freestruct.config.yml` now carries `breadcrumb: true` (the starter is the family default, so a new site is discoverable from birth). `breadcrumb` is a known key, so the kit stays schema-clean (the issue #33 starter-config test asserts exactly that).
+
+- Receipts: `node test/run.js` 192/192, including the init-kit schema-clean assertion.
+- No version bump; a starter-config default.
+
 ### Changed
 
 - **The pack teeth and the manifest lint move to the current family cuts.** `test.yml` and `docs.yml` re-pin their crashtest checkout from `dc80a7c7` (v1.0.0-era) to `8738287` (v1.3.0), and `test.yml`'s packstruct install moves `f7f4fe29` (v1.0.0-era) to `5e473120` (v1.1.0). The install-cache keys move with the pins. Re-run: `packs-selftest` holds the hardened tree (8/8 REFUSED) and trips every planted regression, and `packstruct lint packs --deep` censuses the one pack (9 ids) clean.
