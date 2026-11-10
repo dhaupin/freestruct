@@ -13,14 +13,14 @@
 # trimmed here so freestruct's audit grades the engine's own output.
 ---
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ page.title | default: "freestruct docs" }} | freestruct</title>
     <meta name="description" content="{{ page.description | default: 'Post-build SEO layer for static doc sites' }}">
     <link rel="icon" type="image/svg+xml" href="{{ site.baseurl }}/icon.svg">
-    <meta name="color-scheme" content="dark light">
+    <meta name="color-scheme" content="light dark">
     <style>
         :root {
             --paper: #10131a; --surface: #0d1017; --raised: #1d2430;
@@ -184,13 +184,12 @@
         }
     </style>
     <script>
-        // Theme bootstrap (before first paint): the default tokens are dark,
-        // so only a persisted light theme needs flipping. Keep the key and
+        // Theme bootstrap (before first paint): the default tokens are light,
+        // so only a persisted dark theme needs flipping. Keep the key and
         // the palette in sync with the toggle handler below.
         try {
-            if (localStorage.getItem('freestruct-theme') === 'light') {
-                document.documentElement.dataset.theme = 'light';
-            }
+            document.documentElement.dataset.theme =
+                localStorage.getItem('freestruct-theme') === 'dark' ? 'dark' : 'light';
         } catch (e) {}
     </script>
 </head>

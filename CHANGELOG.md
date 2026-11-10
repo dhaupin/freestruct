@@ -4,6 +4,14 @@ All notable changes to freestruct will be documented here.
 
 ## [Unreleased]
 
+### 2026-11-10 - light mode by default (web + docs)
+
+Owner directive: the family defaults to light. The product sites and docs sites shipped dark-first (a persisted `light` was the opt-in); now light is the first paint and a persisted `dark` theme is the opt-in. Shape: `<html>` pins `data-theme="light"`, the pre-paint bootstrap applies only a persisted `dark`, and the `theme-color` meta flips to the light paper. The CSS token blocks are untouched (the light block is already the second half of one set), so no palette, toggle handler, or gate changed.
+
+- `docs/_layouts/default.html` - `<html data-theme="light">`; bootstrap applies only a persisted `dark`; `color-scheme` `light dark`.
+- Receipts: `npm test` 11/11; `npm run check` green (all docs gates).
+
+
 ### 2026-11-03 - breadcrumbs in the init kit
 
 Google Search Console showed the family's properties under a breadcrumbs enhancement with 0 results. freestruct has carried auto `BreadcrumbList` since 1.1.0, but the init kit did not turn it on, so a freshly scaffolded site shipped without the trail. `init/docs/freestruct.config.yml` now carries `breadcrumb: true` (the starter is the family default, so a new site is discoverable from birth). `breadcrumb` is a known key, so the kit stays schema-clean (the issue #33 starter-config test asserts exactly that).
