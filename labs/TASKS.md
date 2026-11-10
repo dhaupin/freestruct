@@ -771,3 +771,18 @@ The family carried four docs topologies: this repo's `docs-lane.yml`, coreforge'
 
 
 - **The .gitignore docs block carries the in-tree Jekyll + pagefind products (2026-11-10 sweep, coreforge#48).** Propagated from the coreforge adopter sweep (dhaupin/coreforge#52): a local `npm run docs` / `bundle exec jekyll build` + pagefind run drops its products beside the source, and the belt-and-suspenders block named only some of them. It now carries `docs/.jekyll-cache/`, `docs/.jekyll-metadata`, `docs/pagefind/`, and `docs/pagefind*`, so a local build leaves no untracked noise. No version bump.
+
+---
+
+### 2026-11-03 - session: breadcrumbs in the init kit
+
+The family breadcrumb sweep (prestruct engine `breadcrumb: true` + the struct-repo configs) surfaced that freestruct's init kit scaffolded sites without the trail, even though the engine has carried auto `BreadcrumbList` since 1.1.0. Added `breadcrumb: true` to `init/docs/freestruct.config.yml` (with a short comment); it is a known key, so the starter stays schema-clean. Receipts: `node test/run.js` 192/192. No version bump.
+
+---
+
+### 2026-11-10 - light mode by default (web + docs)
+
+Owner directive: the family defaults to light. The product sites and docs sites shipped dark-first (a persisted `light` was the opt-in); now light is the first paint and a persisted `dark` theme is the opt-in. Shape: `<html>` pins `data-theme="light"`, the pre-paint bootstrap applies only a persisted `dark`, and the `theme-color` meta flips to the light paper. The CSS token blocks are untouched (the light block is already the second half of one set), so no palette, toggle handler, or gate changed.
+
+- `docs/_layouts/default.html` - `<html data-theme="light">`; bootstrap applies only a persisted `dark`; `color-scheme` `light dark`.
+- Receipts: `npm test` 11/11; `npm run check` green (all docs gates).
