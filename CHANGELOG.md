@@ -8,6 +8,9 @@ All notable changes to freestruct will be documented here.
 
 The presentation and family-plumbing round since v1.3.0 - no engine-surface change; the battery holds at 192. The product and docs sites flip to light-first, the init kit turns on the breadcrumb trail, and the family's shared plumbing (the staging fast-forward sync, the Dependabot flow) lands. Every change is CI-green on `main`.
 
+### 2026-11-12 - the Dependabot flow lands (railyard#31)
+
+`.github/dependabot.yml` now carries the family flow: a weekly (Monday) pass, grouped minor/patch updates in one pull request, majors alone, and the `github-actions` ecosystem so the SHA-pinned refs move without a hand-edit. npm directories `/`. The config header names the family caveat - a tool whose output is committed as canon can have a "minor" release that changes the canon (the eyestruct 1.1.0 overlay case), so a bump arrives as a pull request that runs CI. The shape is proved and guarded on the parent (`dhaupin/creadev` PR #38; `dhaupin/railyard#31`). No version bump.
 
 ### 2026-11-12 - the staging fast-forward sync (family plumbing)
 
