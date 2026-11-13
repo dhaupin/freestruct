@@ -4,10 +4,24 @@ All notable changes to freestruct will be documented here.
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-11-13
+
+The pack-distribution fix: the `freestruct-docs-shapes` pack now rides the published tarball (poststruct#79). No engine-surface change; the battery holds at 192.
+
+### Fixed (2026-11-13)
+
+- **The pack now rides the published tarball (poststruct#79).** `package.json` `files` listed `bin/`, `engine/`, `init/` (plus the two `!init` negations) but not `packs/`, so `npm pack` shipped zero pack bytes and `npm i freestruct` (and a `github:` dependency, which honours `files` too) installed a tree with no `node_modules/freestruct/packs/`. The family arms every verdict by an EXACT npm pin, so the `freestruct-docs-shapes` pack (static-host wire truths: hostile-traversal refusal, generated-404 noindex, noindex artifact leaks, query-independent canonicals, XML artifact shape) was committed and green yet undeliverable.
+  - `packs/` joins the whitelist (`!init/node_modules` / `!init/dist` still exclude the kit's build products), so a consumer arms `node_modules/freestruct/packs/public/freestruct-docs-shapes` from the pin. `test/distribution.test.cjs` pins the contract: `files` carries `packs/` and every committed pack dir is delivered.
+  - The publish lane's verify job passes `--allowed "packs/"` (the family default forbids `packs/` in the served-tarball scan, so without the flag the ladder would refuse the new bytes by prefix); `test/run.js` invokes the same ladder with `--allow packs/`, the flag the publish lane passes.
+  - The patch cut 1.4.0 -> 1.4.1 moves the version-truth surfaces in the same commit (README current-release line + `## v1.4.1` section, AGENTS/CONTRIBUTING/DEPLOY pins, the labs reminder, the `publish.yml` tag example, the docs-lane `freestruct-version` default, `init/VERSION`, and the battery pin + tarball e2e refs).
+
 ## [1.4.0] - 2026-11-13
 
 The presentation and family-plumbing round since v1.3.0 - no engine-surface change; the battery holds at 192. The product and docs sites flip to light-first, the init kit turns on the breadcrumb trail, and the family's shared plumbing (the staging fast-forward sync, the Dependabot flow) lands. Every change is CI-green on `main`.
 
+### 2026-11-12 - the Dependabot flow lands (railyard#31)
+
+`.github/dependabot.yml` now carries the family flow: a weekly (Monday) pass, grouped minor/patch updates in one pull request, majors alone, and the `github-actions` ecosystem so the SHA-pinned refs move without a hand-edit. npm directories `/`. The config header names the family caveat - a tool whose output is committed as canon can have a "minor" release that changes the canon (the eyestruct 1.1.0 overlay case), so a bump arrives as a pull request that runs CI. The shape is proved and guarded on the parent (`dhaupin/creadev` PR #38; `dhaupin/railyard#31`). No version bump.
 
 ### 2026-11-12 - the staging fast-forward sync (family plumbing)
 

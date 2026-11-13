@@ -207,7 +207,7 @@ State of this list as of Pass 20 (truth-up over the stale entries below it in th
 - No repo-side gate remains open on the freestruct side: battery (49 pins), docs audit (7 gates), template sync, tarball e2e, crashtest pack selftest
   + docs dogfood and the version-truth pin are all CI-green on main.
 
-**Reminder (current truth):** the pin wall enforces 1.4.0 everywhere - the light-mode + breadcrumb-kit + family-plumbing round, owner bump applied 2026-11-13 (the 1.3.0 external-audit SSRF guard landed 2026-11-06, the 1.2.0 post-queue engine sweep 2026-10-28, the 1.1.0 post-stable surface 2026-10-25, the 1.0.0 first-stable 2026-10-22).
+**Reminder (current truth):** the pin wall enforces 1.4.1 everywhere - the pack-distribution fix (poststruct#79), owner bump applied 2026-11-13 (the 1.4.0 light-mode + breadcrumb-kit + family-plumbing round landed 2026-11-13 (the 1.3.0 external-audit SSRF guard landed 2026-11-06, the 1.2.0 post-queue engine sweep 2026-10-28, the 1.1.0 post-stable surface 2026-10-25, the 1.0.0 first-stable 2026-10-22).
 
 ### Pass 22 - the issue sweep, all eight open items (done, on 1.0.0)
 
@@ -800,6 +800,15 @@ Owner directive: "make sure all the fam has a ff-sync workflow, including the co
 
 ---
 
+### 2026-11-12 - session: the Dependabot flow lands (railyard#31)
+
+- **Change.** Added `.github/dependabot.yml` (weekly Monday, grouped minor/patch, majors alone, plus the `github-actions` ecosystem). npm directories `/`.
+- **Shape (receipt).** `dhaupin/creadev` PR #38 (`fca49c6`); the family-wide rollout is tracked on `dhaupin/railyard#31`.
+- **Guard.** railyard's `scripts/check-dependabot.cjs` (the shape) + `scripts/check-dependabot.test.cjs` (it bites), wired into railyard CI.
+- **No version bump.**
+
+---
+
 ### 2026-11-13 - session: the v1.4.0 cut (unlock)
 
 Owner directive: "Why is freestruct frozen? We can prob unlock that now."
@@ -808,4 +817,15 @@ Owner directive: "Why is freestruct frozen? We can prob unlock that now."
 - **The cut (1.3.0 -> 1.4.0, minor).** The presentation + family-plumbing round: light-first on the product and docs sites, the breadcrumb opt-in in the init kit, the staging fast-forward sync, the Dependabot flow, and the gitignore/pin housekeeping. No engine-surface change, so the battery holds at 192.
 - **The surfaces moved (the issue #41 census set + the issue #7 triple).** `package.json`, `package-lock.json`, `init/VERSION`, the README current-release line + a new `## v1.4.0` section, the AGENTS/CONTRIBUTING/DEPLOY pins, the labs reminder line, the `publish.yml` tag example, the docs-lane `freestruct-version` default, and the battery's version pin + pack-e2e tarball refs. The `[Unreleased]` arc folds under a dated `[1.4.0] - 2026-11-13` section (a fresh `[Unreleased]` stays on top). Adds the v1.4.0 release post, its index row, and the nav entry.
 - **A stale claim retired.** `DEPLOY.md` still said "no tags exist yet" - false since 2026-10-22 (four tags exist, and every release since 0.9.0 rode this OIDC ladder). Rewritten to "Live."
+- **No tag yet** - the tag is the owner gate (the ladder publishes on `v*`).
+
+---
+
+### 2026-11-13 - session: the v1.4.1 pack-distribution fix (poststruct#79)
+
+Owner directive: "some might be missing their `/packs/public` that should be bundled with the release... make sure all repos ship their default `/packs/public` includes."
+
+- **The gap (measured).** `package.json` `files` carried `bin/`, `engine/`, `init/` (plus `!init/node_modules` / `!init/dist`) but not `packs/`. npm honours `files`, so `npm pack --dry-run` listed zero pack bytes and `npm i freestruct` installed a tree with no `node_modules/freestruct/packs/` - the `freestruct-docs-shapes` pack was committed and green yet undeliverable, while the family arms every verdict by an EXACT npm pin. This is the family law poststruct#79 named, and freestruct was one of four publishing repos that still violated it (with eyestruct, packstruct, prestruct).
+- **The fix (the poststruct#79 shape).** `packs/` joins the `files` whitelist. The publish lane's verify job passes `--allowed "packs/"` - the family-default forbidden scan refuses `packs/` by prefix, so the flag de-asserts exactly that drift. `test/distribution.test.cjs` pins the two halves (`files` carries `packs/`, every committed pack dir is delivered); it runs from the root `test` script alongside the pin tests, never inside `test/run.js`, so the issue #43 battery-size census is untouched. `test/run.js` invokes the same ladder with `--allow packs/`, the flag the publish lane passes.
+- **The cut (1.4.0 -> 1.4.1, patch).** A new version is the only way a fixed `files` reaches npm, and v1.4.0 was already released (tag + npm latest + GH release, 2026-11-13). The version-truth surfaces moved in the same commit: `package.json`, `package-lock.json`, `init/VERSION`, the README current-release line + a new `## v1.4.1` section, the AGENTS/CONTRIBUTING/DEPLOY pins, the labs reminder line, the `publish.yml` tag example, the docs-lane `freestruct-version` default, and the battery pin + tarball e2e refs. Adds the v1.4.1 release post, its index row, and the nav entry.
 - **No tag yet** - the tag is the owner gate (the ladder publishes on `v*`).
