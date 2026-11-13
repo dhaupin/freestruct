@@ -4,6 +4,11 @@ All notable changes to freestruct will be documented here.
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-11-13
+
+The presentation and family-plumbing round since v1.3.0 - no engine-surface change; the battery holds at 192. The product and docs sites flip to light-first, the init kit turns on the breadcrumb trail, and the family's shared plumbing (the staging fast-forward sync, the Dependabot flow) lands. Every change is CI-green on `main`.
+
+
 ### 2026-11-12 - the staging fast-forward sync (family plumbing)
 
 `staging` is a permanent mirror of `main`, so a merge-commit promotion drifts the two by one every time. This repo carried no sync job, so each promotion needed a manual fast-forward. `.github/workflows/staging-ff-sync.yml` now closes that gap: on every push to `main` it runs `git push origin origin/main:refs/heads/staging` - a fast-forward-only refspec, never a merge, never a force-push, and it fails loudly if `staging` ever moves ahead of `main`. The same canon ships in every family repo (and the coreforge site template). No version bump.
