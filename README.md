@@ -215,8 +215,14 @@ Two shipped surfaces beyond the engine:
 
 - Versions live in one place: `package.json`, pinned in CI against the README/CHANGELOG truth. Single source, no drift.
 - `CHANGELOG.md` is the changelog; releases are tagged (`v*`) and CHANGELOG-truthful or they don't ship.
-- Current release: **1.4.0** (everything since the v1.3.0 tag: light mode by default on the product and docs sites, the breadcrumb opt-in in the init kit, and the family plumbing - the staging fast-forward sync and the Dependabot flow; see `labs/TASKS.md` for the version policy).
+- Current release: **1.4.1** (the pack-distribution fix - the packs now ride the published tarball, poststruct#79; everything since the v1.3.0 tag: light mode by default on the product and docs sites, the breadcrumb opt-in in the init kit, and the family plumbing - the staging fast-forward sync and the Dependabot flow; see `labs/TASKS.md` for the version policy).
 - Deployment truth lives in [DEPLOY.md](DEPLOY.md): the GitHub Pages pipeline (this repo's own docs site deploys through it) and the npm release runbook.
+
+## v1.4.1
+
+The pack-distribution fix (no engine-surface change; battery 192):
+
+- **The `freestruct-docs-shapes` pack now rides the published tarball (poststruct#79)** - `package.json` `files` carried `bin/`, `engine/`, `init/` but not `packs/`, so `npm pack` shipped zero pack bytes and `npm i freestruct` installed a tree with no `node_modules/freestruct/packs/`. `packs/` joins the whitelist, the publish lane's verify job passes `--allowed "packs/"` (the family default forbids `packs/`), and `test/distribution.test.cjs` pins the contract so a refactor that drops the whitelist fails CI instead of a consumer's install
 
 ## v1.4.0
 
