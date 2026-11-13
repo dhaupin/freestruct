@@ -70,7 +70,7 @@ Deployment needs the GitHub Pages environment (`github-pages`) already configure
 
 Every push and pull request runs:
 
-1. `npm test` - the fixture battery (192 pins), including the version-truth pin that enforces the triple agreement (README / package.json / CHANGELOG) and the issue #41 census leg that derives the version from package.json and refuses every living surface (README line, AGENTS/CONTRIBUTING/DEPLOY pins, the pass-log reminder, the `publish.yml` tag example, `init/VERSION`) that drifted, plus the issue #43 count census that derives the battery size and engine module count from source; the pinned **1.3.0** (owner call, 2026-11-06).
+1. `npm test` - the fixture battery (192 pins), including the version-truth pin that enforces the triple agreement (README / package.json / CHANGELOG) and the issue #41 census leg that derives the version from package.json and refuses every living surface (README line, AGENTS/CONTRIBUTING/DEPLOY pins, the pass-log reminder, the `publish.yml` tag example, `init/VERSION`) that drifted, plus the issue #43 count census that derives the battery size and engine module count from source; the pinned **1.4.0** (owner call, 2026-11-13).
 2. Docs audit (`npm run lint:docs`) - frontmatter, links, nav symmetry, style, truthfulness, English-only language gate, and the engine-header comment format gate.
 3. Tarball e2e (`npm run e2e`) - real `npm pack` -> install into a throwaway project -> run the README quick start through the bin shim -> assert artifacts + injections + exit shapes.
 4. Crashtest pack selftest (`npm run packs:selftest`) - the pack must hold a hardened Freestruct build and trip a deliberately regressed one.
@@ -82,7 +82,7 @@ The tarball e2e is also a hard gate inside `publish.yml` - no tag publishes unle
 
 ## 3. npm release (`publish.yml`, the 3-job ladder)
 
-**Dormant by design.** The workflow fires on `v*` tags only, and no tags exist yet - the first publish is a manual owner step (npm OIDC cannot create a brand-new package). There is no `NPM_TOKEN` secret anywhere; runs get provenance automatically per npm Trusted Publishers.
+**Live.** The workflow fires on `v*` tags only. The manual bootstrap published 0.9.0, and every release since (v1.0.0, v1.1.0, v1.2.0, v1.3.0) rode this OIDC ladder to npm. There is no `NPM_TOKEN` secret anywhere; runs get provenance automatically per npm Trusted Publishers.
 
 One tag drives the whole ladder end-to-end, and nothing is earned by a green publish step alone - the family lesson is that publish CAN go green while the registry result is wrong, because nothing asserted the tarball between proof-of-publish and proof-of-work:
 
@@ -127,7 +127,7 @@ NPM_TOKEN=npm_xxx node scripts/ship-from-download.cjs \
 
 The token rides `NPM_TOKEN` (or `NPM_SHIP_TOKEN`, or `--token-file`), expands from env into a staged one-line `.npmrc` that is unlinked in a finally - it never lands in argv (ps-safe), on disk, or in the log. Refusals are named with exit 0/1/2; `--clean` removes only the staged root, on every exit, so a failed run cannot block the retry.
 
-The version truth is enforced in CI: the battery pin refuses any README / package.json / CHANGELOG triplet that disagrees, and the issue #41 census leg derives the version from package.json and refuses every living surface that hand-copied it (README line, AGENTS/CONTRIBUTING/DEPLOY pins, the pass-log reminder, the `publish.yml` tag example, `init/VERSION`) - range pins (`^1.0.0`), dated era rows and other packages' versions stay out of scope. Everything currently ships under one number, `1.3.0` (bumped from the 1.2.0 surface on 2026-11-06, carrying the external-audit SSRF guard; the trail: the 0.6.0 freeze was lifted to 0.9.0, promoted to 1.0.0 on 2026-10-22, then to 1.1.0 on 2026-10-25, then to 1.2.0 on 2026-10-28; `labs/TASKS.md` VERSION POLICY has the trail) - a future bump is one edit in those three places plus `init/VERSION`, then the pin keeps them honest.
+The version truth is enforced in CI: the battery pin refuses any README / package.json / CHANGELOG triplet that disagrees, and the issue #41 census leg derives the version from package.json and refuses every living surface that hand-copied it (README line, AGENTS/CONTRIBUTING/DEPLOY pins, the pass-log reminder, the `publish.yml` tag example, `init/VERSION`) - range pins (`^1.0.0`), dated era rows and other packages' versions stay out of scope. Everything currently ships under one number, `1.4.0` (bumped from the 1.3.0 security round on 2026-11-13; the trail: the 0.6.0 freeze was lifted to 0.9.0, promoted to 1.0.0 on 2026-10-22, then to 1.1.0 on 2026-10-25, then to 1.2.0 on 2026-10-28, then to 1.3.0 on 2026-11-06; `labs/TASKS.md` VERSION POLICY has the trail) - a future bump is one edit in those three places plus `init/VERSION`, then the pin keeps them honest.
 
 ---
 

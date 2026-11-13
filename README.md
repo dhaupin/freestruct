@@ -215,8 +215,18 @@ Two shipped surfaces beyond the engine:
 
 - Versions live in one place: `package.json`, pinned in CI against the README/CHANGELOG truth. Single source, no drift.
 - `CHANGELOG.md` is the changelog; releases are tagged (`v*`) and CHANGELOG-truthful or they don't ship.
-- Current release: **1.3.0** (everything since the v1.2.0 tag: the external-audit SSRF guard - the initial host and every redirect hop - the docs-lane consolidation, and the family prestruct-pin guard; see `labs/TASKS.md` for the version policy).
+- Current release: **1.4.0** (everything since the v1.3.0 tag: light mode by default on the product and docs sites, the breadcrumb opt-in in the init kit, and the family plumbing - the staging fast-forward sync and the Dependabot flow; see `labs/TASKS.md` for the version policy).
 - Deployment truth lives in [DEPLOY.md](DEPLOY.md): the GitHub Pages pipeline (this repo's own docs site deploys through it) and the npm release runbook.
+
+## v1.4.0
+
+Everything since the v1.3.0 tag - the presentation and family-plumbing round (no engine-surface change; battery 192):
+
+- Light mode by default - the product site and docs site shipped dark-first with a persisted `light` as the opt-in; now light is the first paint and a persisted `dark` is the opt-in. `<html data-theme="light">`, the pre-paint bootstrap applies only a persisted `dark`, and `theme-color` flips to the light paper. The CSS token blocks are untouched, so no palette or toggle handler moved
+- Breadcrumb opt-in in the init kit - a freshly scaffolded site now ships `breadcrumb: true` (the engine has carried auto `BreadcrumbList` since 1.1.0, but the starter left it off, so new sites were undiscoverable from birth). The key is known, so the starter stays schema-clean
+- The staging fast-forward sync - `staging` is a permanent mirror of `main`, and a merge-commit promotion drifts the two by one every time. `.github/workflows/staging-ff-sync.yml` closes the gap with a fast-forward-only refspec (`git push origin origin/main:refs/heads/staging`), never a merge, never a force-push
+- The Dependabot flow - `.github/dependabot.yml` (weekly, grouped minor/patch, majors alone, plus the `github-actions` ecosystem so the SHA-pinned refs move)
+- The `.gitignore` docs block now carries the in-tree Jekyll + pagefind products, and the family pins (crashtest pack teeth, packstruct manifest lint, the prestruct `^1.3.0` floor) move to the current cuts
 
 ## v1.3.0
 
