@@ -38,8 +38,8 @@ name: publish
 # package (npm/cli#8544), so claim freestruct once from a dev machine
 # (DEPLOY.md), then a Trusted Publisher entry on npmjs.com
 # (user dhaupin, repo freestruct, workflow publish.yml). From then on:
-#   git tag v1.4.0
-#   git push origin v1.4.0
+#   git tag v1.4.1
+#   git push origin v1.4.1
 #
 # verify-only dispatch mode: no publish, no release minting - the verify job
 # re-runs the trust ladder against what is ALREADY published and released.
@@ -201,5 +201,5 @@ jobs:
           V="$(node -p "require('./package.json').version")"
           EXPECTED_EXPORTS="$(node -p "Object.keys(require('./package.json').exports).join(',')")"
           FS_PROBE="const m=require('freestruct');if(typeof m.runInject!=='function')process.exit(1);if(m.EXIT_OK!==0)process.exit(1)"
-          node scripts/verify-release.cjs --npm --version "$V" --exports "$EXPECTED_EXPORTS" --probe "$FS_PROBE"
+          node scripts/verify-release.cjs --npm --version "$V" --exports "$EXPECTED_EXPORTS" --probe "$FS_PROBE" --allowed "packs/"
           node scripts/verify-release.cjs --gh --tag "v$V" --asset "freestruct-$V.tgz"

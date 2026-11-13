@@ -1,6 +1,6 @@
 {
   "name": "freestruct",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Post-build SEO layer for static doc sites - works with any SSG",
   "homepage": "https://github.com/dhaupin/freestruct#readme",
   "bugs": "https://github.com/dhaupin/freestruct/issues",
@@ -20,6 +20,7 @@
     "bin/",
     "engine/",
     "init/",
+    "packs/",
     "!init/node_modules",
     "!init/dist"
   ],
@@ -28,7 +29,7 @@
     "sync": "node scripts/sync-templates.mjs",
     "sync:check": "node scripts/sync-templates.mjs check",
     "inject": "node bin/freestruct.mjs",
-    "test": "node test/run.js && node --test test/check-action-pins.test.js && node --test test/check-prestruct-pins.test.js",
+    "test": "node test/run.js && node --test test/check-action-pins.test.js && node --test test/check-prestruct-pins.test.js && node --test test/distribution.test.cjs",
     "e2e": "node scripts/e2e-install.cjs",
     "lint:docs": "node scripts/run-docs-audit.cjs",
     "lint:claims": "node scripts/check-fiction-signatures.cjs",
