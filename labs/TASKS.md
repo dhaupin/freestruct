@@ -207,7 +207,7 @@ State of this list as of Pass 20 (truth-up over the stale entries below it in th
 - No repo-side gate remains open on the freestruct side: battery (49 pins), docs audit (7 gates), template sync, tarball e2e, crashtest pack selftest
   + docs dogfood and the version-truth pin are all CI-green on main.
 
-**Reminder (current truth):** the pin wall enforces 1.3.0 everywhere - the external-audit SSRF guard, owner bump applied 2026-11-06 (the 1.2.0 post-queue engine sweep landed 2026-10-28, the 1.1.0 post-stable surface 2026-10-25, the 1.0.0 first-stable 2026-10-22). The manual npm bootstrap is done; the tag is the only remaining owner gate.
+**Reminder (current truth):** the pin wall enforces 1.4.0 everywhere - the light-mode + breadcrumb-kit + family-plumbing round, owner bump applied 2026-11-13 (the 1.3.0 external-audit SSRF guard landed 2026-11-06, the 1.2.0 post-queue engine sweep 2026-10-28, the 1.1.0 post-stable surface 2026-10-25, the 1.0.0 first-stable 2026-10-22).
 
 ### Pass 22 - the issue sweep, all eight open items (done, on 1.0.0)
 
@@ -797,3 +797,15 @@ Owner directive: "make sure all the fam has a ff-sync workflow, including the co
 - **The fix (`.github/workflows/staging-ff-sync.yml`).** On every push to `main` (and on `workflow_dispatch`), the job runs `git push origin origin/main:refs/heads/staging` - a fast-forward-only refspec. `git push` refuses a non-fast-forward update, so a divergence fails the job loudly instead of rewriting history; never a merge, never a force-push.
 - **The canon.** Byte-identical to coreforge's copy (`staging-ff-sync.yml`, the monoforge#20 shape), so the family's plumbing is one file. The coreforge site template already ships it (`templates/site/.github/workflows/staging-ff-sync.yml`), so a stamped repo inherits it from birth.
 - **No version bump** - CI plumbing, no product surface.
+
+---
+
+### 2026-11-13 - session: the v1.4.0 cut (unlock)
+
+Owner directive: "Why is freestruct frozen? We can prob unlock that now."
+
+- **The "freeze" was a stale pointer, not a policy (measured).** The only `VERSION POLICY` block in this log is the 0.6.0-era one (line 16), long superseded (0.6.0 -> 0.9.0 -> 1.0.0 -> 1.1.0 -> 1.2.0 -> 1.3.0). What actually pinned the tree was a hardcoded battery assertion (`test/run.js`, "1.3.0 owner pin") whose message points at that dead block. No open issue, PR, or note held the repo - `main` was 13 commits past the `v1.3.0` tag, all "no version bump" housekeeping.
+- **The cut (1.3.0 -> 1.4.0, minor).** The presentation + family-plumbing round: light-first on the product and docs sites, the breadcrumb opt-in in the init kit, the staging fast-forward sync, the Dependabot flow, and the gitignore/pin housekeeping. No engine-surface change, so the battery holds at 192.
+- **The surfaces moved (the issue #41 census set + the issue #7 triple).** `package.json`, `package-lock.json`, `init/VERSION`, the README current-release line + a new `## v1.4.0` section, the AGENTS/CONTRIBUTING/DEPLOY pins, the labs reminder line, the `publish.yml` tag example, the docs-lane `freestruct-version` default, and the battery's version pin + pack-e2e tarball refs. The `[Unreleased]` arc folds under a dated `[1.4.0] - 2026-11-13` section (a fresh `[Unreleased]` stays on top). Adds the v1.4.0 release post, its index row, and the nav entry.
+- **A stale claim retired.** `DEPLOY.md` still said "no tags exist yet" - false since 2026-10-22 (four tags exist, and every release since 0.9.0 rode this OIDC ladder). Rewritten to "Live."
+- **No tag yet** - the tag is the owner gate (the ladder publishes on `v*`).

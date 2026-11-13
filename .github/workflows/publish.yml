@@ -38,8 +38,8 @@ name: publish
 # package (npm/cli#8544), so claim freestruct once from a dev machine
 # (DEPLOY.md), then a Trusted Publisher entry on npmjs.com
 # (user dhaupin, repo freestruct, workflow publish.yml). From then on:
-#   git tag v1.3.0
-#   git push origin v1.3.0
+#   git tag v1.4.0
+#   git push origin v1.4.0
 #
 # verify-only dispatch mode: no publish, no release minting - the verify job
 # re-runs the trust ladder against what is ALREADY published and released.

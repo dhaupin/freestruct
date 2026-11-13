@@ -16,7 +16,7 @@ Electrically honest design rules that PRs must keep:
 - **Config-first, no magic** - unknown/retired keys warn loudly; fatal errors exit 1/2/3 by kind
 - **Escaped-or-fail XML** - generated XML either escapes everything or the build refuses loudly
 - **basePath is one contract** - every generated URL (canonical, sitemap loc, robots pointer, feed links, 404 home link) goes through `pageUrlFor`
-- **The version is pinned at 1.3.0** (bumped from the 1.2.0 post-queue engine sweep on 2026-11-06) until the owner moves it again
+- **The version is pinned at 1.4.0** (bumped from the 1.3.0 security round on 2026-11-13) until the owner moves it again
 
 Where to change things: the runtime lives in `engine/` (one orchestrator + fourteen modules; see the [engineering-decisions page](https://freestruct.creadev.org/engineering-decisions)), templates are canonical at `engine/_freestruct/`, and the consumer scaffold kit is `init/`. `docs/` is both the documented site and the worked example.
 
