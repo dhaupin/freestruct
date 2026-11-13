@@ -800,6 +800,15 @@ Owner directive: "make sure all the fam has a ff-sync workflow, including the co
 
 ---
 
+### 2026-11-12 - session: the Dependabot flow lands (railyard#31)
+
+- **Change.** Added `.github/dependabot.yml` (weekly Monday, grouped minor/patch, majors alone, plus the `github-actions` ecosystem). npm directories `/`.
+- **Shape (receipt).** `dhaupin/creadev` PR #38 (`fca49c6`); the family-wide rollout is tracked on `dhaupin/railyard#31`.
+- **Guard.** railyard's `scripts/check-dependabot.cjs` (the shape) + `scripts/check-dependabot.test.cjs` (it bites), wired into railyard CI.
+- **No version bump.**
+
+---
+
 ### 2026-11-13 - session: the v1.4.0 cut (unlock)
 
 Owner directive: "Why is freestruct frozen? We can prob unlock that now."
