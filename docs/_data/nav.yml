@@ -98,3 +98,10 @@
       url: /discussions/announcing-freestruct-v1.0.0/
     - title: Announcing freestruct v0.9.0
       url: /discussions/announcing-freestruct-v0.9.0/
+
+- title: Surfaces
+  items:
+    - title: npm
+      url: https://www.npmjs.com/package/freestruct
+    - title: GitHub
+      url: https://github.com/dhaupin/freestruct

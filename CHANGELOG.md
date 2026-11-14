@@ -4,6 +4,10 @@ All notable changes to freestruct will be documented here.
 
 ## [Unreleased]
 
+### 2026-11-14 - the npm package link joins every surface (parity pass)
+
+The docs footer already linked npm; the docs nav did not. The nav now carries a `Surfaces` group (npm + GitHub), and `test/npm-parity.test.cjs` proves the docs link the published `package.json` name, so a rename or a dropped surface reds instead of shipping a package nobody can find. No version bump.
+
 ## [1.4.1] - 2026-11-13
 
 The pack-distribution fix: the `freestruct-docs-shapes` pack now rides the published tarball (poststruct#79). No engine-surface change; the battery holds at 192.

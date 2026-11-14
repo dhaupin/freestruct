@@ -820,3 +820,14 @@ Owner directive: "some might be missing their `/packs/public` that should be bun
 - **The fix (the poststruct#79 shape).** `packs/` joins the `files` whitelist. The publish lane's verify job passes `--allowed "packs/"` - the family-default forbidden scan refuses `packs/` by prefix, so the flag de-asserts exactly that drift. `test/distribution.test.cjs` pins the two halves (`files` carries `packs/`, every committed pack dir is delivered); it runs from the root `test` script alongside the pin tests, never inside `test/run.js`, so the issue #43 battery-size census is untouched. `test/run.js` invokes the same ladder with `--allow packs/`, the flag the publish lane passes.
 - **The cut (1.4.0 -> 1.4.1, patch).** A new version is the only way a fixed `files` reaches npm, and v1.4.0 was already released (tag + npm latest + GH release, 2026-11-13). The version-truth surfaces moved in the same commit: `package.json`, `package-lock.json`, `init/VERSION`, the README current-release line + a new `## v1.4.1` section, the AGENTS/CONTRIBUTING/DEPLOY pins, the labs reminder line, the `publish.yml` tag example, the docs-lane `freestruct-version` default, and the battery pin + tarball e2e refs. Adds the v1.4.1 release post, its index row, and the nav entry.
 - **No tag yet** - the tag is the owner gate (the ladder publishes on `v*`).
+
+---
+
+### 2026-11-14 - session: the npm link parity pass
+
+Every family project publishes to npm; the project's own surfaces did not always say so. This session closes that gap and holds it with a test.
+
+- **Surfaces.** The docs footer, the docs nav, and the landing nav each link the npm package where they did not before.
+- **Proof.** A new npm-parity test proves each shipped surface links the published `package.json` name, so a rename or a dropped surface reds instead of shipping a package nobody can find.
+- **Battery + lint:docs green.**
+- **No version bump.**
