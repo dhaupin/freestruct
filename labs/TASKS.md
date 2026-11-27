@@ -1,5 +1,8 @@
 # freestruct - running task log
 
+**2026-11-03 - the npm parity gate earned its teeth.** The family law is "a new law ships with a test", but this gate had stopped biting: it passed if any one of several surfaces carried the npm link, so a deleted footer link went unnoticed (measured: docs layout link removed, old gate 3 pass / 0 fail). Rewritten as a predicate over an explicit REQUIRED surface list, resolving the literal URL, {{ site.npm_url }} and {{ site.title }} against docs/_config.yml, with two mutation tests proving a stripped surface and a wrong-package link are both refused. Verified both ways: clean tree green, deleted link red (2 fail). freestruct is ESM but keeps its node:test files as .cjs in test/; the gate follows that.
+
+
 > **Purpose:** pass-by-pass history of the v1.0.0 rehaul. What was done, what
 > is in flight, what's next. If a session crashes, this file + the git diff are
 > the recovery state. Companion doc: `labs/prd-freestruct.md` (the PRD / plan).
